@@ -16,8 +16,15 @@ import {
   insertVariantsRaw,
   deleteImagesRaw,
   deleteVariantsRaw,
+  deleteProductVariants,
+  insertProductVariant,
+  insertVariantValues,
+  insertVariantSkus,
   RawImage,
   RawVariant,
+  ProductVariant,
+  VariantValue,
+  VariantSku,
 } from '../database/repositories';
 import { closeDatabase, getPool } from '../database/db';
 import { createChildLogger } from '../utils/logger';
@@ -98,6 +105,7 @@ async function main(): Promise<void> {
         // Clean up old data if re-running
         await deleteImagesRaw(prod.id);
         await deleteVariantsRaw(prod.id);
+        await deleteProductVariants(prod.id); // NEW: cleanup normalized variants
 
         // Insert into products_raw
         await insertProductRaw({
@@ -152,13 +160,14 @@ async function main(): Promise<void> {
           logger.info('Images inserted', { count: images.length });
         }
 
-        // Insert variants
+        // Insert variants (PARALLEL WRITE: both old flat structure and new normalized structure)
         if (detailed.variants && detailed.variants.skus.length > 0) {
           const colorOption = detailed.variants.options.find(o =>
             o.name.includes('颜色') || o.name.includes('色') || o.name.includes('款')
           );
           const optionName = colorOption?.name || detailed.variants.options[0]?.name || '颜色';
 
+          // OLD STRUCTURE: Flat variant rows (backwards compatibility)
           const variants: RawVariant[] = detailed.variants.skus.map((sku, i) => ({
             productId: prod.id,
             optionName,
@@ -171,6 +180,66 @@ async function main(): Promise<void> {
           }));
 
           await insertVariantsRaw(variants);
+
+          // NEW STRUCTURE: Normalized multi-dimensional variants
+          // Group by option/dimension name to handle multi-variant products (e.g., Color + Size)
+          const dimensionMap = new Map<string, Set<string>>();
+          
+          for (const sku of detailed.variants.skus) {
+            for (const [dimName, valueName] of Object.entries(sku.optionValues)) {
+              if (!dimensionMap.has(dimName)) {
+                dimensionMap.set(dimName, new Set());
+              }
+              dimensionMap.get(dimName)!.add(valueName);
+            }
+          }
+
+          const variantIdMap = new Map<string, number>(); // dimension name -> variant ID
+
+          // Insert variant dimensions
+          let sortOrder = 0;
+          for (const [dimName, valuesSet] of dimensionMap.entries()) {
+            const variantId = await insertProductVariant({
+              productId: prod.id,
+              variantNameZh: dimName,
+              sortOrder: sortOrder++,
+            });
+            variantIdMap.set(dimName, variantId);
+
+            // Insert values for this dimension
+            const values: VariantValue[] = Array.from(valuesSet).map((valueName, idx) => {
+              // Find image for this value (if exists)
+              const skuWithValue = detailed.variants!.skus.find(s => s.optionValues[dimName] === valueName);
+              const imageUrl = skuWithValue?.image ? get1688FullImageUrl(skuWithValue.image) : undefined;
+
+              return {
+                variantId,
+                valueNameZh: valueName,
+                imageUrl,
+                sortOrder: idx,
+              };
+            });
+
+            await insertVariantValues(values);
+          }
+
+          // Insert SKU combinations
+          const skus: VariantSku[] = detailed.variants.skus.map((sku) => ({
+            productId: prod.id,
+            variantValuesJson: sku.optionValues, // e.g., {"颜色": "红色", "尺寸": "大"}
+            priceCny: sku.priceCNY,
+            stock: sku.stock || 0,
+            available: sku.available,
+            imageUrl: sku.image ? get1688FullImageUrl(sku.image) : undefined,
+          }));
+
+          await insertVariantSkus(skus);
+
+          logger.info('Variants inserted (dual-write)', {
+            oldFormat: variants.length,
+            dimensions: dimensionMap.size,
+            skuCombinations: skus.length,
+          });
         }
 
         // Update title_zh in products table

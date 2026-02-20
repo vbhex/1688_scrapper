@@ -15,6 +15,9 @@ import {
   getVariantsRaw,
   insertProductEN,
   insertVariantsEN,
+  getProductVariantsWithValues,
+  updateVariantNameTranslation,
+  updateVariantValueTranslation,
   VariantEN,
 } from '../database/repositories';
 import { closeDatabase } from '../database/db';
@@ -154,6 +157,9 @@ async function main(): Promise<void> {
           await insertVariantsEN(variantsEn);
         }
 
+        // NEW: Translate normalized variant structure
+        await translateNormalizedVariants(prod.id);
+
         await updateStatus(prod.id, 'translated');
         translated++;
         logger.info('Product translated', {
@@ -178,6 +184,60 @@ async function main(): Promise<void> {
     logger.error('Task 4 failed', { error: (error as Error).message });
   } finally {
     closeDatabase();
+  }
+}
+
+/**
+ * Translate normalized variant structure (dimensions and values).
+ */
+async function translateNormalizedVariants(productId: number): Promise<void> {
+  const { translateText } = await import('../services/translator');
+  
+  const variants = await getProductVariantsWithValues(productId);
+  if (variants.length === 0) return;
+
+  for (const variant of variants) {
+    // Translate dimension name if not already translated
+    if (!variant.variantNameEn && variant.variantNameZh) {
+      try {
+        const translatedName = await translateText(variant.variantNameZh);
+        await updateVariantNameTranslation(variant.id!, translatedName);
+        logger.info('Translated variant dimension', {
+          productId,
+          zh: variant.variantNameZh,
+          en: translatedName,
+        });
+      } catch (error) {
+        logger.warn('Failed to translate variant dimension', {
+          productId,
+          dimension: variant.variantNameZh,
+          error: (error as Error).message,
+        });
+      }
+    }
+
+    // Translate each value
+    for (const value of variant.values) {
+      if (!value.valueNameEn && value.valueNameZh) {
+        try {
+          const translatedValue = await translateText(value.valueNameZh);
+          const cleanValue = cleanVariantName(translatedValue);
+          await updateVariantValueTranslation(value.id!, cleanValue);
+          logger.info('Translated variant value', {
+            productId,
+            dimension: variant.variantNameZh,
+            zh: value.valueNameZh,
+            en: cleanValue,
+          });
+        } catch (error) {
+          logger.warn('Failed to translate variant value', {
+            productId,
+            value: value.valueNameZh,
+            error: (error as Error).message,
+          });
+        }
+      }
+    }
   }
 }
 

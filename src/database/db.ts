@@ -171,6 +171,49 @@ async function initializeSchema(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // ──────────────────────────────────────────────────────────────────
+    // NEW: Normalized variant structure (multi-dimensional support)
+    // ──────────────────────────────────────────────────────────────────
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS product_variants (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        variant_name_zh VARCHAR(100) NOT NULL,
+        variant_name_en VARCHAR(100),
+        sort_order INT DEFAULT 0,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        INDEX idx_product_id (product_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS variant_values (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        variant_id INT NOT NULL,
+        value_name_zh VARCHAR(200) NOT NULL,
+        value_name_en VARCHAR(200),
+        image_url VARCHAR(1000),
+        sort_order INT DEFAULT 0,
+        FOREIGN KEY (variant_id) REFERENCES product_variants(id) ON DELETE CASCADE,
+        INDEX idx_variant_id (variant_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS variant_skus (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        sku_code VARCHAR(100),
+        variant_values_json JSON NOT NULL,
+        price_cny DECIMAL(10,2),
+        stock INT DEFAULT 0,
+        available BOOLEAN DEFAULT TRUE,
+        image_url VARCHAR(1000),
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        INDEX idx_product_id (product_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     logger.info('Database schema initialized');
   } finally {
     connection.release();

@@ -334,3 +334,168 @@ export async function getVariantsEN(productId: number): Promise<VariantEN[]> {
   );
   return rows as any[];
 }
+
+// ─── NEW: Normalized variant structure ────────────────────────────────
+
+export interface ProductVariant {
+  id?: number;
+  productId: number;
+  variantNameZh: string;
+  variantNameEn?: string;
+  sortOrder: number;
+}
+
+export interface VariantValue {
+  id?: number;
+  variantId: number;
+  valueNameZh: string;
+  valueNameEn?: string;
+  imageUrl?: string;
+  sortOrder: number;
+}
+
+export interface VariantSku {
+  id?: number;
+  productId: number;
+  skuCode?: string;
+  variantValuesJson: Record<string, string>; // e.g., {"颜色": "红色", "尺寸": "大"}
+  priceCny: number;
+  stock: number;
+  available: boolean;
+  imageUrl?: string;
+}
+
+/**
+ * Insert a variant dimension (e.g., "颜色", "尺寸").
+ * Returns the variant ID.
+ */
+export async function insertProductVariant(variant: ProductVariant): Promise<number> {
+  const p = await getPool();
+  const [result] = await p.execute<ResultSetHeader>(
+    `INSERT INTO product_variants (product_id, variant_name_zh, variant_name_en, sort_order)
+     VALUES (?, ?, ?, ?)`,
+    [variant.productId, variant.variantNameZh, variant.variantNameEn || null, variant.sortOrder]
+  );
+  return result.insertId;
+}
+
+/**
+ * Insert variant values (e.g., "红色", "蓝色") for a variant dimension.
+ */
+export async function insertVariantValues(values: VariantValue[]): Promise<void> {
+  if (values.length === 0) return;
+  const p = await getPool();
+  const vals = values.map(v => [
+    v.variantId, v.valueNameZh, v.valueNameEn || null, v.imageUrl || null, v.sortOrder
+  ]);
+  const placeholders = vals.map(() => '(?, ?, ?, ?, ?)').join(', ');
+  await p.execute(
+    `INSERT INTO variant_values (variant_id, value_name_zh, value_name_en, image_url, sort_order)
+     VALUES ${placeholders}`,
+    vals.flat()
+  );
+}
+
+/**
+ * Insert SKU combinations (e.g., {"颜色": "红色", "尺寸": "大"} = ¥50).
+ */
+export async function insertVariantSkus(skus: VariantSku[]): Promise<void> {
+  if (skus.length === 0) return;
+  const p = await getPool();
+  const vals = skus.map(s => [
+    s.productId, s.skuCode || null, JSON.stringify(s.variantValuesJson),
+    s.priceCny, s.stock, s.available ? 1 : 0, s.imageUrl || null
+  ]);
+  const placeholders = vals.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+  await p.execute(
+    `INSERT INTO variant_skus (product_id, sku_code, variant_values_json, price_cny, stock, available, image_url)
+     VALUES ${placeholders}`,
+    vals.flat()
+  );
+}
+
+/**
+ * Get all variant dimensions and their values for a product.
+ */
+export async function getProductVariantsWithValues(productId: number): Promise<Array<ProductVariant & { values: VariantValue[] }>> {
+  const p = await getPool();
+  
+  const [dimensions] = await p.execute<RowDataPacket[]>(
+    `SELECT id, product_id AS productId, variant_name_zh AS variantNameZh,
+            variant_name_en AS variantNameEn, sort_order AS sortOrder
+     FROM product_variants WHERE product_id = ? ORDER BY sort_order`,
+    [productId]
+  );
+  
+  const results: Array<ProductVariant & { values: VariantValue[] }> = [];
+  
+  for (const dim of dimensions as any[]) {
+    const [values] = await p.execute<RowDataPacket[]>(
+      `SELECT id, variant_id AS variantId, value_name_zh AS valueNameZh,
+              value_name_en AS valueNameEn, image_url AS imageUrl, sort_order AS sortOrder
+       FROM variant_values WHERE variant_id = ? ORDER BY sort_order`,
+      [dim.id]
+    );
+    
+    results.push({
+      ...dim,
+      values: values as any[]
+    });
+  }
+  
+  return results;
+}
+
+/**
+ * Get all SKU combinations for a product.
+ */
+export async function getVariantSkus(productId: number, availableOnly: boolean = false): Promise<VariantSku[]> {
+  const p = await getPool();
+  let query = `SELECT id, product_id AS productId, sku_code AS skuCode,
+                      variant_values_json AS variantValuesJson, price_cny AS priceCny,
+                      stock, available, image_url AS imageUrl
+               FROM variant_skus WHERE product_id = ?`;
+  if (availableOnly) {
+    query += ' AND available = TRUE';
+  }
+  query += ' ORDER BY price_cny';
+  
+  const [rows] = await p.execute<RowDataPacket[]>(query, [productId]);
+  
+  return (rows as any[]).map(row => ({
+    ...row,
+    variantValuesJson: typeof row.variantValuesJson === 'string' 
+      ? JSON.parse(row.variantValuesJson) 
+      : row.variantValuesJson
+  }));
+}
+
+/**
+ * Update English translation for a variant dimension name.
+ */
+export async function updateVariantNameTranslation(variantId: number, variantNameEn: string): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    'UPDATE product_variants SET variant_name_en = ? WHERE id = ?',
+    [variantNameEn, variantId]
+  );
+}
+
+/**
+ * Update English translation for a variant value name.
+ */
+export async function updateVariantValueTranslation(valueId: number, valueNameEn: string): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    'UPDATE variant_values SET value_name_en = ? WHERE id = ?',
+    [valueNameEn, valueId]
+  );
+}
+
+/**
+ * Delete all normalized variant data for a product (CASCADE will handle values and SKUs).
+ */
+export async function deleteProductVariants(productId: number): Promise<void> {
+  const p = await getPool();
+  await p.execute('DELETE FROM product_variants WHERE product_id = ?', [productId]);
+}

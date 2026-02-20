@@ -53,9 +53,13 @@ export interface ImageTranslationResult {
 
 type OcrProvider = 'google' | 'baidu' | 'tesseract';
 
+// Track if Baidu picture translation API works (it requires separate activation)
+let baiduPicTranslationFailed = false;
+
 function getOcrProvider(): OcrProvider {
   if (config.google.apiKey) return 'google';
-  if (config.baidu.translateAppId && config.baidu.translateSecret) return 'baidu';
+  // Only use Baidu picture translation if credentials exist AND it hasn't persistently failed
+  if (config.baidu.translateAppId && config.baidu.translateSecret && !baiduPicTranslationFailed) return 'baidu';
   return 'tesseract';
 }
 
@@ -358,12 +362,12 @@ async function extractTextWithBaiduPictureTranslate(imageBuffer: Buffer): Promis
       }
     }
 
-    // Try primary endpoint first (urlencoded)
+    // Try primary endpoint (urlencoded)
     let data = await callBaiduPicApi(BAIDU_PIC_TRANSLATE_URL, workingBuffer, 'urlencoded');
 
     // If image size error, retry with smaller image
     if (data.error_code === '517') {
-      logger.warn('Baidu Picture Translation returned 517 (image too large), retrying smaller');
+      logger.warn('Baidu Picture Translation returned 517, retrying with smaller image');
       try {
         const sharp = require('sharp');
         workingBuffer = await sharp(workingBuffer)
@@ -372,38 +376,16 @@ async function extractTextWithBaiduPictureTranslate(imageBuffer: Buffer): Promis
           .toBuffer();
         data = await callBaiduPicApi(BAIDU_PIC_TRANSLATE_URL, workingBuffer, 'urlencoded');
       } catch (err) {
-        logger.warn('Failed to resize image for Baidu Picture Translation retry', {
-          error: (err as Error).message,
-        });
+        logger.warn('Failed to resize image', { error: (err as Error).message });
       }
     }
 
-    // Try pictrans signature variant (some docs use this)
+    // If still failing with 517, the API is likely not activated for this account
     if (data.error_code === '517') {
-      logger.warn('Primary endpoint still 517, trying pictrans signature variant');
-      data = await callBaiduPictransApi(BAIDU_PIC_TRANSLATE_URL_ALT, workingBuffer);
-    }
-
-    // Fallback to alternate endpoints if still 517
-    if (data.error_code === '517') {
-      logger.warn('Pictrans variant still 517, trying alternate host');
-      data = await callBaiduPicApi(BAIDU_PIC_TRANSLATE_URL_ALT_HOST, workingBuffer, 'urlencoded');
-    }
-
-    if (data.error_code === '517') {
-      logger.warn('Alternate host still 517, trying alternate host 2 with pictrans');
-      data = await callBaiduPictransApi(BAIDU_PIC_TRANSLATE_URL_ALT_HOST_2, workingBuffer);
-    }
-
-    // Final fallbacks: try multipart uploads
-    if (data.error_code === '517') {
-      logger.warn('Still 517, trying multipart binary');
-      data = await callBaiduPicApi(BAIDU_PIC_TRANSLATE_URL, workingBuffer, 'multipartBinary');
-    }
-
-    if (data.error_code === '517') {
-      logger.warn('Still 517, trying multipart base64');
-      data = await callBaiduPicApi(BAIDU_PIC_TRANSLATE_URL, workingBuffer, 'multipartBase64');
+      logger.warn('Baidu Picture Translation API not available (error 517 persists). Falling back to Tesseract.js for OCR.');
+      baiduPicTranslationFailed = true;
+      // Fall back to Tesseract immediately for this image
+      return await extractTextWithTesseract(imageBuffer);
     }
 
     if (data.error_code) {
@@ -462,15 +444,29 @@ async function getTesseractWorker(): Promise<any> {
 
   const Tesseract = require('tesseract.js');
   const projectRoot = path.resolve(__dirname, '..', '..');
-  const localTessdata = path.join(projectRoot, 'data', 'tessdata');
-  const useLocal = fs.existsSync(path.join(localTessdata, 'chi_sim.traineddata'));
 
-  if (useLocal) {
+  // Check multiple possible locations for trained data files
+  const possiblePaths = [
+    projectRoot,                                    // repo root (chi_sim.traineddata)
+    path.join(projectRoot, 'data', 'tessdata'),     // data/tessdata/
+  ];
+
+  let tessDataPath: string | null = null;
+  for (const p of possiblePaths) {
+    if (fs.existsSync(path.join(p, 'chi_sim.traineddata'))) {
+      tessDataPath = p;
+      break;
+    }
+  }
+
+  if (tessDataPath) {
+    logger.info('Using local Tesseract trained data', { path: tessDataPath });
     tesseractWorker = await Tesseract.createWorker(['chi_sim', 'eng'], 1, {
-      langPath: localTessdata,
+      langPath: tessDataPath,
       gzip: false,
     });
   } else {
+    logger.info('No local Tesseract data found, will download from CDN');
     tesseractWorker = await Tesseract.createWorker(['chi_sim', 'eng'], 1);
   }
 
@@ -787,10 +783,11 @@ export async function translateImageFromBuffer(
 
     logger.info(`Found ${textRegions.length} Chinese text regions in image`);
 
-    // Step 2: Translate text
-    const translatedRegions = provider === 'baidu'
-      ? textRegions
-      : await translateTextRegions(textRegions);
+    // Step 2: Translate text (Baidu picture API returns pre-translated text; others need translation)
+    const needsTranslation = textRegions.some(r => !r.translatedText);
+    const translatedRegions = needsTranslation
+      ? await translateTextRegions(textRegions)
+      : textRegions;
 
     // Step 3: Overlay translated text
     ensureDirectoryExists(path.dirname(outputPath));

@@ -20,8 +20,7 @@ import fs from 'fs';
 import path from 'path';
 import { createChildLogger } from '../utils/logger';
 import { config } from '../config';
-import { downloadImage, ensureDirectoryExists, sleep } from '../utils/helpers';
-import { translateText } from './translator';
+import { ensureDirectoryExists, sleep } from '../utils/helpers';
 
 const FormData = require('form-data');
 
@@ -582,38 +581,15 @@ export async function terminateImageTranslationWorker(): Promise<void> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// Text Translation
+// Helpers
 // ═══════════════════════════════════════════════════════════════════════════
 
 function containsChinese(text: string): boolean {
   return /[\u4e00-\u9fff\u3400-\u4dbf]/.test(text);
 }
 
-async function translateTextRegions(regions: TextRegion[]): Promise<TextRegion[]> {
-  const translated: TextRegion[] = [];
-
-  for (const region of regions) {
-    try {
-      const translatedText = await translateText(region.text);
-      translated.push({
-        ...region,
-        translatedText: translatedText || region.text,
-      });
-      await sleep(100); // Rate limiting
-    } catch (error) {
-      logger.error('Translation failed for text region', { text: region.text, error: (error as Error).message });
-      translated.push({
-        ...region,
-        translatedText: region.text, // Fallback to original
-      });
-    }
-  }
-
-  return translated;
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
-// Image Processing — Overlay Translated Text
+// Image Processing — Remove Chinese Text
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
@@ -625,75 +601,86 @@ async function translateTextRegions(regions: TextRegion[]): Promise<TextRegion[]
  * - node-canvas (more flexible, similar to HTML5 Canvas API)
  * - External service like Cloudinary or ImageMagick
  */
-async function overlayTranslatedText(
+/**
+ * Remove Chinese text from image by painting over text regions with
+ * a blurred/sampled background color. No English text is overlaid —
+ * the goal is a clean image with no text artifacts.
+ */
+async function removeChineseText(
   imageBuffer: Buffer,
   textRegions: TextRegion[],
   outputPath: string
 ): Promise<boolean> {
   try {
-    // Check if Sharp is available
     let sharp: any;
     try {
       sharp = require('sharp');
     } catch {
-      logger.warn('Sharp not installed, saving image without text overlay');
+      logger.warn('Sharp not installed, saving image without text removal');
       fs.writeFileSync(outputPath, imageBuffer);
       return true;
     }
 
-    // Load the image
-    const image = sharp(imageBuffer);
-    const metadata = await image.metadata();
-
+    const metadata = await sharp(imageBuffer).metadata();
     if (!metadata.width || !metadata.height) {
       logger.error('Could not read image dimensions');
       return false;
     }
 
-    // Create SVG overlay with white rectangles and text
-    const svgOverlays: string[] = [];
+    // Create a heavily blurred version of the image to sample background colors
+    const blurredBuffer = await sharp(imageBuffer)
+      .blur(30)
+      .toBuffer();
+
+    // Build mask patches: for each text region, extract the blurred area and composite it
+    const composites: Array<{ input: Buffer; top: number; left: number }> = [];
 
     for (const region of textRegions) {
-      const { x, y, width, height } = region.boundingBox;
-      
-      // Create a white rectangle to cover original text
-      svgOverlays.push(
-        `<rect x="${x}" y="${y}" width="${width}" height="${height}" fill="white" />`
-      );
+      let { x, y, width, height } = region.boundingBox;
 
-      // Calculate font size based on bounding box height
-      const fontSize = Math.max(10, Math.min(height * 0.7, 50));
+      // Add padding around text region for cleaner removal
+      const pad = Math.max(2, Math.round(height * 0.1));
+      x = Math.max(0, x - pad);
+      y = Math.max(0, y - pad);
+      width = Math.min(metadata.width - x, width + pad * 2);
+      height = Math.min(metadata.height - y, height + pad * 2);
 
-      // Add translated text (simple positioning)
-      // Note: This is a basic implementation. For better results, you'd want to:
-      // - Match font style
-      // - Handle text wrapping
-      // - Better positioning
-      svgOverlays.push(
-        `<text x="${x + 2}" y="${y + height * 0.75}" font-size="${fontSize}" fill="black" font-family="Arial, sans-serif">${escapeXml(region.translatedText)}</text>`
-      );
+      if (width <= 0 || height <= 0) continue;
+
+      try {
+        // Extract the blurred region as a patch
+        const patch = await sharp(blurredBuffer)
+          .extract({ left: x, top: y, width, height })
+          .toBuffer();
+
+        composites.push({ input: patch, top: y, left: x });
+      } catch (err) {
+        logger.debug('Failed to extract blur patch, skipping region', {
+          region: { x, y, width, height },
+          error: (err as Error).message,
+        });
+      }
     }
 
-    const svgOverlay = `
-      <svg width="${metadata.width}" height="${metadata.height}">
-        ${svgOverlays.join('\n')}
-      </svg>
-    `;
+    if (composites.length === 0) {
+      // No regions to remove, save original
+      fs.writeFileSync(outputPath, imageBuffer);
+      return true;
+    }
 
-    // Composite the SVG overlay onto the image
-    await image
-      .composite([{
-        input: Buffer.from(svgOverlay),
-        top: 0,
-        left: 0,
-      }])
+    // Composite all blurred patches over the original image
+    await sharp(imageBuffer)
+      .composite(composites)
       .toFile(outputPath);
 
-    logger.debug('Image with translated text overlay created', { outputPath });
+    logger.debug('Chinese text removed from image', {
+      outputPath,
+      regionsRemoved: composites.length,
+    });
     return true;
   } catch (error) {
-    logger.error('Failed to overlay translated text', { error: (error as Error).message });
-    
+    logger.error('Failed to remove Chinese text', { error: (error as Error).message });
+
     // Fallback: save original image
     try {
       fs.writeFileSync(outputPath, imageBuffer);
@@ -702,15 +689,6 @@ async function overlayTranslatedText(
       return false;
     }
   }
-}
-
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -787,20 +765,15 @@ export async function translateImageFromBuffer(
 
     logger.info(`Found ${textRegions.length} Chinese text regions in image`);
 
-    // Step 2: Translate text (Baidu picture API returns pre-translated text; others need translation)
-    const needsTranslation = textRegions.some(r => !r.translatedText);
-    const translatedRegions = needsTranslation
-      ? await translateTextRegions(textRegions)
-      : textRegions;
-
-    // Step 3: Overlay translated text
+    // Step 2: Remove Chinese text from image (paint over with blurred background)
+    // No English overlay — produces clean images without text artifacts
     ensureDirectoryExists(path.dirname(outputPath));
-    const success = await overlayTranslatedText(imageBuffer, translatedRegions, outputPath);
+    const success = await removeChineseText(imageBuffer, textRegions, outputPath);
 
     return {
       originalUrl,
       translatedImagePath: outputPath,
-      textRegions: translatedRegions,
+      textRegions,
       success,
     };
   } catch (error) {

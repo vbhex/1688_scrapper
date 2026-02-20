@@ -21,6 +21,7 @@ import path from 'path';
 import { createChildLogger } from '../utils/logger';
 import { config } from '../config';
 import { ensureDirectoryExists, sleep } from '../utils/helpers';
+import { baiduOcrService } from './baiduOcr';
 
 const FormData = require('form-data');
 
@@ -50,14 +51,16 @@ export interface ImageTranslationResult {
 
 // ─── Provider Detection ───────────────────────────────────────────────────
 
-type OcrProvider = 'google' | 'baidu' | 'tesseract';
+type OcrProvider = 'google' | 'baidu' | 'baidu_ocr' | 'tesseract';
 
 // Track if Baidu picture translation API works (it requires separate activation)
 let baiduPicTranslationFailed = false;
 
 function getOcrProvider(): OcrProvider {
   if (config.google.apiKey) return 'google';
-  // Only use Baidu picture translation if credentials exist AND it hasn't persistently failed
+  // Try Baidu OCR first (better Chinese text recognition)
+  if (config.baidu.translateAppId && config.baidu.translateSecret) return 'baidu_ocr';
+  // Fallback to Baidu picture translation
   if (config.baidu.translateAppId && config.baidu.translateSecret && !baiduPicTranslationFailed) return 'baidu';
   return 'tesseract';
 }
@@ -433,6 +436,45 @@ async function extractTextWithBaiduPictureTranslate(imageBuffer: Buffer): Promis
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Baidu OCR API — Enhanced Chinese Text Recognition
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function extractTextWithBaiduOcr(imageBuffer: Buffer): Promise<TextRegion[]> {
+  try {
+    logger.info('Using Baidu OCR for Chinese text extraction');
+    
+    const regions = await baiduOcrService.extractChineseTextRegions(imageBuffer);
+    
+    if (regions.length === 0) {
+      logger.info('Baidu OCR found no Chinese text');
+      return [];
+    }
+
+    // Convert to TextRegion format
+    const textRegions: TextRegion[] = regions.map(region => ({
+      text: region.text,
+      translatedText: '', // Will be filled later
+      boundingBox: region.boundingBox,
+      vertices: [
+        { x: region.boundingBox.x, y: region.boundingBox.y },
+        { x: region.boundingBox.x + region.boundingBox.width, y: region.boundingBox.y },
+        { x: region.boundingBox.x + region.boundingBox.width, y: region.boundingBox.y + region.boundingBox.height },
+        { x: region.boundingBox.x, y: region.boundingBox.y + region.boundingBox.height },
+      ],
+    }));
+
+    logger.info(`Baidu OCR detected ${textRegions.length} Chinese text regions`);
+    return textRegions;
+  } catch (error) {
+    logger.error('Baidu OCR extraction failed', { 
+      error: (error as Error).message 
+    });
+    // Fallback to Tesseract if Baidu OCR fails
+    return await extractTextWithTesseract(imageBuffer);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Tesseract.js — Extract Text with Positions
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -754,6 +796,8 @@ export async function translateImageFromBuffer(
     let textRegions: TextRegion[] = [];
     if (provider === 'google') {
       textRegions = await extractTextWithGoogleVision(imageBuffer);
+    } else if (provider === 'baidu_ocr') {
+      textRegions = await extractTextWithBaiduOcr(imageBuffer);
     } else if (provider === 'baidu') {
       textRegions = await extractTextWithBaiduPictureTranslate(imageBuffer);
     } else {

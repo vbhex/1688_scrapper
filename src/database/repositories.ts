@@ -499,3 +499,14 @@ export async function deleteProductVariants(productId: number): Promise<void> {
   const p = await getPool();
   await p.execute('DELETE FROM product_variants WHERE product_id = ?', [productId]);
 }
+
+/**
+ * Update the Chinese text detection status for an image.
+ */
+export async function updateImageChineseTextStatus(rawImageId: number, hasChineseText: boolean, confidence: number): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    'UPDATE products_images SET has_chinese_text = ?, confidence = ? WHERE id = ?',
+    [hasChineseText, confidence, rawImageId]
+  );
+}

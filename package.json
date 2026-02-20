@@ -1,0 +1,35 @@
+{
+  "name": "1688-scrapper",
+  "version": "1.0.0",
+  "description": "1688.com product scraper, image checker, and translator",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "./node_modules/.bin/tsc",
+    "task:discover": "npm run build && node dist/tasks/task1-discover.js",
+    "task:scrape": "npm run build && node dist/tasks/task2-scrape-details.js",
+    "task:images": "npm run build && node dist/tasks/task3-image-check.js",
+    "task:translate": "npm run build && node dist/tasks/task4-translate.js"
+  },
+  "keywords": [
+    "1688",
+    "scraper",
+    "automation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.0.0",
+    "mysql2": "^3.16.3",
+    "puppeteer": "^24.36.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "tesseract.js": "^7.0.0",
+    "winston": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}

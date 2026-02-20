@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+
+# Scraped data, Chrome profiles, cookies
+data/
+
+# Logs (all formats)
+logs/
+
+# Downloaded images (temporary)
+temp_images/
+
+# Session cookies
+*.cookies.json
+
+# IDE / Editor
+.vscode/
+.idea/
+.cursorrules
+.claude/
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.temp

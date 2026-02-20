@@ -515,47 +515,50 @@ async function preprocessImageForOCR(imageBuffer: Buffer, strategy: 'grayscale' 
 async function extractTextWithTesseract(imageBuffer: Buffer): Promise<TextRegion[]> {
   try {
     const worker = await getTesseractWorker();
-    
+
     // Try multiple preprocessing strategies
     const strategies: Array<'original' | 'grayscale' | 'contrast'> = ['original', 'grayscale', 'contrast'];
     let bestResult: TextRegion[] = [];
-    
+
     for (const strategy of strategies) {
       logger.debug(`Trying Tesseract with '${strategy}' preprocessing`);
       const preprocessed = await preprocessImageForOCR(imageBuffer, strategy);
-      
-      // Use better OCR parameters for Chinese text
-      const { data } = await worker.recognize(preprocessed, {
-        rotateAuto: true,
-      });
+
+      // Tesseract.js v5: pass { blocks: true } as output option to get structured data with bboxes
+      const { data } = await worker.recognize(preprocessed, {}, { blocks: true });
 
       const textRegions: TextRegion[] = [];
 
-      // Process lines instead of words for better Chinese text detection
-      for (const line of data.lines || []) {
-        if (!line.text || !containsChinese(line.text)) continue;
-        if (line.confidence < 30) continue; // Skip low confidence
+      // Extract lines from blocks → paragraphs → lines hierarchy (v5 API)
+      const blocks = data.blocks || [];
+      for (const block of blocks) {
+        for (const para of (block.paragraphs || [])) {
+          for (const line of (para.lines || [])) {
+            if (!line.text || !containsChinese(line.text)) continue;
+            if (line.confidence < 30) continue; // Skip low confidence
 
-        const bbox = line.bbox;
-        textRegions.push({
-          text: line.text,
-          translatedText: '',
-          boundingBox: {
-            x: bbox.x0,
-            y: bbox.y0,
-            width: bbox.x1 - bbox.x0,
-            height: bbox.y1 - bbox.y0,
-          },
-        });
+            const bbox = line.bbox;
+            textRegions.push({
+              text: line.text.trim(),
+              translatedText: '',
+              boundingBox: {
+                x: bbox.x0,
+                y: bbox.y0,
+                width: bbox.x1 - bbox.x0,
+                height: bbox.y1 - bbox.y0,
+              },
+            });
+          }
+        }
       }
 
       logger.debug(`Tesseract '${strategy}' detected ${textRegions.length} regions`);
-      
+
       // Keep best result (most text detected)
       if (textRegions.length > bestResult.length) {
         bestResult = textRegions;
       }
-      
+
       // If we got good results, stop trying
       if (textRegions.length >= 5) {
         break;

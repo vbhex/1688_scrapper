@@ -153,6 +153,24 @@ async function initializeSchema(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS products_images_translated (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        raw_image_id INT NOT NULL,
+        original_image_url VARCHAR(1000) NOT NULL,
+        translated_image_url VARCHAR(1000) NOT NULL,
+        cos_key VARCHAR(500),
+        text_regions_count INT DEFAULT 0,
+        success BOOLEAN DEFAULT TRUE,
+        translated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        FOREIGN KEY (raw_image_id) REFERENCES products_images_raw(id) ON DELETE CASCADE,
+        UNIQUE KEY unique_raw_image (raw_image_id),
+        INDEX idx_product_success (product_id, success)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     logger.info('Database schema initialized');
   } finally {
     connection.release();

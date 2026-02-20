@@ -60,7 +60,7 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 
 ---
 
-## Pipeline: 4 Tasks
+## Pipeline: 5 Tasks
 
 Each task is a standalone CLI script. Run them in sequence.
 
@@ -98,6 +98,17 @@ node dist/tasks/task3-image-check.js --limit 10
 node dist/tasks/task4-translate.js --limit 10
 ```
 
+### Task 5: Image Translation (`src/tasks/task5-translate-images.ts`)
+- **Input**: Products with status `images_checked` or `translated`
+- **Output**: `products_images_translated` table; status → `images_translated`
+- **What it does**: Translates Chinese text IN images to English using OCR + translation + image overlay
+
+```bash
+node dist/tasks/task5-translate-images.js --limit 10
+# Or with --force to retranslate existing images
+node dist/tasks/task5-translate-images.js --limit 10 --force
+```
+
 ### npm shortcuts
 
 ```bash
@@ -105,12 +116,13 @@ npm run task:discover -- --category earphones --limit 20
 npm run task:scrape -- --limit 10
 npm run task:images -- --limit 10
 npm run task:translate -- --limit 10
+npm run task:translate-images -- --limit 10
 ```
 
 ### Full pipeline script
 
 ```bash
-bash run-pipeline.sh    # Runs all 4 tasks across all categories
+bash run-pipeline.sh    # Runs all 5 tasks across all categories
 ```
 
 ---
@@ -120,7 +132,7 @@ bash run-pipeline.sh    # Runs all 4 tasks across all categories
 ### `products` (main table, tracks status)
 - `id`, `id_1688` (unique), `status`, `url`, `title_zh`, `category`, `thumbnail_url`
 - `raw_data` (JSON, legacy — normalized tables are the source of truth)
-- Status flow: `discovered` → `detail_scraped` → `images_checked` → `translated`
+- Status flow: `discovered` → `detail_scraped` → `images_checked` → `translated` → `images_translated`
 
 ### `products_raw` (Task 2 output)
 - `product_id` (FK, unique), `title_zh`, `description_zh`, `specifications_zh` (JSON), `price_cny`, `min_order_qty`, `seller_name`, `seller_rating`
@@ -140,6 +152,9 @@ bash run-pipeline.sh    # Runs all 4 tasks across all categories
 ### `products_variants_en` (Task 4 output)
 - `product_id` (FK), `option_name_en`, `option_value_en`, `option_value_zh`, `price_usd`, `color_family`, `sort_order`
 
+### `products_images_translated` (Task 5 output)
+- `product_id` (FK), `raw_image_id` (FK, unique), `original_image_url`, `translated_image_path`, `text_regions_count`, `success`
+
 ---
 
 ## Key File Map
@@ -150,7 +165,7 @@ src/
   models/product.ts                 — All interfaces, ProductStatus, ProductRecord
 
   database/
-    db.ts                           — MySQL pool, schema init (8 tables)
+    db.ts                           — MySQL pool, schema init (9 tables)
     repositories.ts                 — CRUD for all normalized tables
 
   scrapers/1688Scraper.ts           — Puppeteer scraper for 1688.com (~1600 lines)
@@ -158,6 +173,7 @@ src/
   services/
     translator.ts                   — Baidu/Google Translate (auto-detected)
     imageAnalyzer.ts                — Google Vision / Tesseract.js (auto-detected)
+    imageTranslator.ts              — Image text translation with overlay (NEW)
     priceConverter.ts               — CNY→USD conversion with caching
 
   tasks/
@@ -165,6 +181,7 @@ src/
     task2-scrape-details.ts         — Full detail scraping into normalized tables
     task3-image-check.ts            — Image OCR analysis
     task4-translate.ts              — Translation + price conversion
+    task5-translate-images.ts       — Image text translation (NEW)
 
   utils/
     helpers.ts                      — isBannedBrand(), findClosestColorFamily(), etc.

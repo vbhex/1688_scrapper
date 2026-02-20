@@ -15,6 +15,14 @@ export interface Config {
     translateAppId: string;
     translateSecret: string;
   };
+  tencent: {
+    secretId: string;
+    secretKey: string;
+    cos: {
+      bucketName: string;
+      region: string;
+    };
+  };
   filters: {
     minPriceCNY: number;
     maxPriceCNY: number;
@@ -89,6 +97,14 @@ export function loadConfig(): Config {
     baidu: {
       translateAppId: getEnvVar('BAIDU_TRANSLATE_APPID', ''),
       translateSecret: getEnvVar('BAIDU_TRANSLATE_SECRET', ''),
+    },
+    tencent: {
+      secretId: getEnvVar('TENCENT_SECRET_ID', ''),
+      secretKey: getEnvVar('TENCENT_SECRET_KEY', ''),
+      cos: {
+        bucketName: getEnvVar('COS_BUCKET_NAME', ''),
+        region: getEnvVar('COS_REGION', 'ap-guangzhou'),
+      },
     },
     filters: {
       minPriceCNY: getEnvNumber('MIN_PRICE_CNY', 37),

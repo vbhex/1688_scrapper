@@ -240,12 +240,6 @@ async function baiduTranslateBatch(texts: string[]): Promise<string[]> {
 // Unified API (auto-detects provider)
 // ═══════════════════════════════════════════════════════════════════════
 
-async function translateText(text: string): Promise<string> {
-  const provider = getProvider();
-  if (provider === 'baidu') return baiduTranslateText(text);
-  return googleTranslateText(text);
-}
-
 async function translateBatch(texts: string[]): Promise<string[]> {
   const provider = getProvider();
 
@@ -275,6 +269,16 @@ async function translateBatch(texts: string[]): Promise<string[]> {
 // ═══════════════════════════════════════════════════════════════════════
 // Public API (unchanged interface for callers)
 // ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * Translates a single text string from Chinese to English
+ * Auto-detects provider (Baidu or Google) based on config
+ */
+export async function translateText(text: string): Promise<string> {
+  const provider = getProvider();
+  if (provider === 'baidu') return baiduTranslateText(text);
+  return googleTranslateText(text);
+}
 
 export async function translateTitle(title: string): Promise<string> {
   logger.info('Translating title', { title: title.substring(0, 50), provider: getProvider() });

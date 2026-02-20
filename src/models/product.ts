@@ -71,6 +71,7 @@ export type ProductStatus =
   | 'detail_scraped'
   | 'images_checked'
   | 'translated'
+  | 'images_translated'
   | 'skipped'
   | 'failed';
 

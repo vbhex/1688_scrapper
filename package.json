@@ -8,7 +8,8 @@
     "task:discover": "npm run build && node dist/tasks/task1-discover.js",
     "task:scrape": "npm run build && node dist/tasks/task2-scrape-details.js",
     "task:images": "npm run build && node dist/tasks/task3-image-check.js",
-    "task:translate": "npm run build && node dist/tasks/task4-translate.js"
+    "task:translate": "npm run build && node dist/tasks/task4-translate.js",
+    "task:translate-images": "npm run build && node dist/tasks/task5-translate-images.js"
   },
   "keywords": [
     "1688",
@@ -19,11 +20,14 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.6.0",
+    "cos-nodejs-sdk-v5": "^2.14.0",
     "dotenv": "^16.0.0",
+    "form-data": "^4.0.5",
     "mysql2": "^3.16.3",
     "puppeteer": "^24.36.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "sharp": "^0.33.0",
     "tesseract.js": "^7.0.0",
     "winston": "^3.0.0"
   },

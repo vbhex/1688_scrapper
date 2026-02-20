@@ -528,25 +528,34 @@ async function extractTextWithTesseract(imageBuffer: Buffer): Promise<TextRegion
 
       const textRegions: TextRegion[] = [];
 
-      // Extract lines from blocks → paragraphs → lines hierarchy (v5 API)
+      // Use WORD-level bounding boxes for precise text removal (line-level is too wide)
       const blocks = data.blocks || [];
       for (const block of blocks) {
         for (const para of (block.paragraphs || [])) {
           for (const line of (para.lines || [])) {
-            if (!line.text || !containsChinese(line.text)) continue;
-            if (line.confidence < 30) continue; // Skip low confidence
+            for (const word of (line.words || [])) {
+              if (!word.text || !containsChinese(word.text)) continue;
+              if (word.confidence < 70) continue; // Strict: skip noisy detections
 
-            const bbox = line.bbox;
-            textRegions.push({
-              text: line.text.trim(),
-              translatedText: '',
-              boundingBox: {
-                x: bbox.x0,
-                y: bbox.y0,
-                width: bbox.x1 - bbox.x0,
-                height: bbox.y1 - bbox.y0,
-              },
-            });
+              const bbox = word.bbox;
+              const w = bbox.x1 - bbox.x0;
+              const h = bbox.y1 - bbox.y0;
+
+              // Skip tiny detections (noise) and oversized ones (false positives)
+              if (w < 10 || h < 10) continue;
+              if (w > 400 || h > 200) continue;
+
+              textRegions.push({
+                text: word.text.trim(),
+                translatedText: '',
+                boundingBox: {
+                  x: bbox.x0,
+                  y: bbox.y0,
+                  width: w,
+                  height: h,
+                },
+              });
+            }
           }
         }
       }
@@ -627,9 +636,9 @@ async function removeChineseText(
       return false;
     }
 
-    // Create a heavily blurred version of the image to sample background colors
+    // Create a moderately blurred version to sample background colors (lower = more natural)
     const blurredBuffer = await sharp(imageBuffer)
-      .blur(30)
+      .blur(15)
       .toBuffer();
 
     // Build mask patches: for each text region, extract the blurred area and composite it

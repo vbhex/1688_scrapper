@@ -447,7 +447,8 @@ async function getTesseractWorker(): Promise<any> {
 
   // Check multiple possible locations for trained data files
   const possiblePaths = [
-    projectRoot,                                    // repo root (chi_sim.traineddata)
+    path.join(projectRoot, 'tessdata'),             // tessdata/ in repo root
+    projectRoot,                                    // repo root directly
     path.join(projectRoot, 'data', 'tessdata'),     // data/tessdata/
   ];
 

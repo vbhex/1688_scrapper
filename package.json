@@ -9,7 +9,8 @@
     "task:scrape": "npm run build && node dist/tasks/task2-scrape-details.js",
     "task:images": "npm run build && node dist/tasks/task3-image-check.js",
     "task:translate": "npm run build && node dist/tasks/task4-translate.js",
-    "task:translate-images": "npm run build && node dist/tasks/task5-translate-images.js"
+    "task:translate-images": "npm run build && node dist/tasks/task5-translate-images.js",
+    "task:ae-enrich": "npm run build && node dist/tasks/task5-ae-enrich.js"
   },
   "keywords": [
     "1688",

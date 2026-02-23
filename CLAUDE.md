@@ -98,15 +98,13 @@ node dist/tasks/task3-image-check.js --limit 10
 node dist/tasks/task4-translate.js --limit 10
 ```
 
-### Task 5: Image Translation (`src/tasks/task5-translate-images.ts`)
-- **Input**: Products with status `images_checked` or `translated`
-- **Output**: `products_images_translated` table; status → `images_translated`
-- **What it does**: Translates Chinese text IN images to English using OCR + translation + image overlay
+### Task 5: AliExpress Enrichment (`src/tasks/task5-ae-enrich.ts`)
+- **Input**: Products with status `translated`
+- **Output**: `products_ae_match` table; status → `ae_enriched` or `skipped`
+- **What it does**: Checks if product images contain Chinese text. If yes, searches AliExpress for the same product — uses AE images/English info if found, skips if not. Clean products advance directly.
 
 ```bash
-node dist/tasks/task5-translate-images.js --limit 10
-# Or with --force to retranslate existing images
-node dist/tasks/task5-translate-images.js --limit 10 --force
+node dist/tasks/task5-ae-enrich.js --limit 10
 ```
 
 ### npm shortcuts
@@ -116,7 +114,7 @@ npm run task:discover -- --category earphones --limit 20
 npm run task:scrape -- --limit 10
 npm run task:images -- --limit 10
 npm run task:translate -- --limit 10
-npm run task:translate-images -- --limit 10
+npm run task:ae-enrich -- --limit 10
 ```
 
 ### Full pipeline script
@@ -127,12 +125,25 @@ bash run-pipeline.sh    # Runs all 5 tasks across all categories
 
 ---
 
+## Image Strategy — CRITICAL RULE
+
+**Chinese text in product images CANNOT be reliably translated or removed.** Instead, follow this approach:
+
+1. **No Chinese text in images** → Use the 1688 images directly. Product proceeds through pipeline normally.
+2. **Chinese text detected in images** → Search AliExpress for the SAME product:
+   - **Found on AliExpress** → Use AliExpress images + English title/description. Keep 1688 pricing (we source from 1688).
+   - **NOT found on AliExpress** → **Skip the product entirely.** Do not list products with Chinese text images.
+
+This rule is enforced by Task 5 (AE Enrichment). The old image translation approach (OCR + overlay/blur) has been retired because the quality is not good enough for production listings.
+
+---
+
 ## Database Schema (`1688_source`)
 
 ### `products` (main table, tracks status)
 - `id`, `id_1688` (unique), `status`, `url`, `title_zh`, `category`, `thumbnail_url`
 - `raw_data` (JSON, legacy — normalized tables are the source of truth)
-- Status flow: `discovered` → `detail_scraped` → `images_checked` → `translated` → `images_translated`
+- Status flow: `discovered` → `detail_scraped` → `images_checked` → `translated` → `ae_enriched`
 
 ### `products_raw` (Task 2 output)
 - `product_id` (FK, unique), `title_zh`, `description_zh`, `specifications_zh` (JSON), `price_cny`, `min_order_qty`, `seller_name`, `seller_rating`
@@ -152,8 +163,8 @@ bash run-pipeline.sh    # Runs all 5 tasks across all categories
 ### `products_variants_en` (Task 4 output)
 - `product_id` (FK), `option_name_en`, `option_value_en`, `option_value_zh`, `price_usd`, `color_family`, `sort_order`
 
-### `products_images_translated` (Task 5 output)
-- `product_id` (FK), `raw_image_id` (FK, unique), `original_image_url`, `translated_image_path`, `text_regions_count`, `success`
+### `products_ae_match` (Task 5 output)
+- `product_id` (FK, unique), `ae_product_id`, `ae_url`, `ae_title`, `ae_images` (JSON), `ae_description`, `match_score`, `has_chinese_images` (whether 1688 images had Chinese text)
 
 ---
 
@@ -173,7 +184,8 @@ src/
   services/
     translator.ts                   — Baidu/Google Translate (auto-detected)
     imageAnalyzer.ts                — Google Vision / Tesseract.js (auto-detected)
-    imageTranslator.ts              — Image text translation with overlay (NEW)
+    imageTranslator.ts              — Image text translation (DEPRECATED — retired)
+    aeSearcher.ts                   — AliExpress product search + matching (NEW)
     priceConverter.ts               — CNY→USD conversion with caching
 
   tasks/
@@ -181,7 +193,7 @@ src/
     task2-scrape-details.ts         — Full detail scraping into normalized tables
     task3-image-check.ts            — Image OCR analysis
     task4-translate.ts              — Translation + price conversion
-    task5-translate-images.ts       — Image text translation (NEW)
+    task5-ae-enrich.ts              — AliExpress enrichment for products with Chinese images (NEW)
 
   utils/
     helpers.ts                      — isBannedBrand(), findClosestColorFamily(), etc.
@@ -219,5 +231,7 @@ git pull origin main
 
 This project produces data in `1688_source` database. Downstream projects read from it:
 
-- **AliExpress AutoStore** (`/Library/WebServer/Documents/autostore/aliexpress/`): Takes translated products and generates AliExpress bulk upload Excel files (Task 5+)
-- Future: Shopify, eBay, or other marketplace integrations
+- **AliExpress** (`/Library/WebServer/Documents/autostore/aliexpress/`): Takes translated/enriched products → Excel generation → bulk upload → polish
+- **Amazon** (`/Library/WebServer/Documents/autostore/amazon/`): Amazon store listing
+- **eBay** (`/Library/WebServer/Documents/autostore/ebay/`): eBay store listing
+- **Etsy** (`/Library/WebServer/Documents/autostore/etsy/`): Etsy store listing

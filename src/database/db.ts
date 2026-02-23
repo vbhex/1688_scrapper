@@ -172,7 +172,28 @@ async function initializeSchema(): Promise<void> {
     `);
 
     // ──────────────────────────────────────────────────────────────────
-    // NEW: Normalized variant structure (multi-dimensional support)
+    // AliExpress enrichment — stores AE match data for products
+    // with Chinese text in images
+    // ──────────────────────────────────────────────────────────────────
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS products_ae_match (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL UNIQUE,
+        has_chinese_images BOOLEAN NOT NULL DEFAULT FALSE,
+        ae_product_id VARCHAR(100),
+        ae_url VARCHAR(1000),
+        ae_title VARCHAR(500),
+        ae_images JSON,
+        ae_description LONGTEXT,
+        match_score DECIMAL(5,2) DEFAULT 0,
+        matched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        INDEX idx_product_id (product_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // ──────────────────────────────────────────────────────────────────
+    // Normalized variant structure (multi-dimensional support)
     // ──────────────────────────────────────────────────────────────────
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS product_variants (

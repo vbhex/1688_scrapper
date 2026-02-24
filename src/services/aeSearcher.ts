@@ -49,6 +49,7 @@ const GENERIC_TERMS = new Set([
   'usb', 'led', 'lcd', '3d', '5g', '2g', '4g', 'dc', 'ac', 'hd', '1080p',
   '720p', '4k', '8k', 'mp3', 'mp4', 'fm', 'am', 'tv', 'pc', 'dj', 'uk',
   'us', 'eu', 'au', 'ip65', 'ip67', 'ip68', 'ip44', 'ce', 'ul',
+  'e-commerce', 'hi-fi', 'wi-fi', 'hi-res', 'in-ear', 'on-ear', 'over-ear',
 ]);
 
 // ─── Model Number Extraction ────────────────────────────────────────────

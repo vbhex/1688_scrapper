@@ -14,7 +14,7 @@
 import { RowDataPacket } from 'mysql2/promise';
 import { getPool, closeDatabase } from '../database/db';
 import { getProductsByStatusWithLimit, updateStatus } from '../database/repositories';
-import { findMatchingAeProduct, closeBrowser } from '../services/aeSearcher';
+import { findMatchingAeProduct } from '../services/aeSearcher';
 import { ProductStatus } from '../models/product';
 import { createChildLogger } from '../utils/logger';
 
@@ -189,8 +189,6 @@ async function main() {
         skipped++;
       }
 
-      // Rate limit between AE searches
-      await new Promise(r => setTimeout(r, 3000));
     } catch (error) {
       log(`  ERROR: ${(error as Error).message}`);
       logger.error('AE enrichment failed for product', {
@@ -200,8 +198,6 @@ async function main() {
       skipped++;
     }
   }
-
-  await closeBrowser();
 
   log(`\n========================================`);
   log(`AE Enrichment complete!`);
@@ -216,7 +212,6 @@ async function main() {
 
 main().catch(err => {
   console.error('Fatal error:', err);
-  closeBrowser().catch(() => {});
   closeDatabase();
   process.exit(1);
 });

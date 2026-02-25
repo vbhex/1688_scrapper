@@ -101,6 +101,12 @@ run_task "Translate (limit 300)" \
   "node dist/tasks/task4-translate.js --limit 300"
 
 echo ""
+echo "=== STEP 5: AE ENRICHMENT ==="
+echo "  (Replaces Chinese-text images with AliExpress images, skips products with no match)"
+run_task "AE Enrich (limit 300)" \
+  "node dist/tasks/task5-ae-enrich.js --limit 300"
+
+echo ""
 echo "=== FINAL STATUS ==="
 mysql -u root -p***REMOVED*** 1688_source -e "
   SELECT status, category, COUNT(*) as cnt

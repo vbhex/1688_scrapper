@@ -111,13 +111,17 @@ export function loadConfig(): Config {
       maxPriceCNY: getEnvNumber('MAX_PRICE_CNY', 500),
       minOrderQty: getEnvNumber('MIN_ORDER_QTY', 1),
       priceMarkup: getEnvNumber('PRICE_MARKUP', 2),
+      // STRATEGIC PIVOT 2026-03-05: 3C → Clothing & Apparel
+      // Old 3C categories removed. Do NOT add them back.
+      // Full rationale: documents/aliexpress-store/PLATFORM_PIVOT_3C_TO_CLOTHING.md
       categories: getEnvArray('CATEGORIES', [
-        'earphones', 'smart watches', 'speakers', 'action cameras',
-        'wireless charger', 'gaming mouse', 'mechanical keyboard', 'power bank',
-        'ip camera', 'portable projector', 'translator', 'lavalier microphone',
-        'usb hub', 'webcam', 'solar panel', 'smart ring', 'gps tracker',
-        'soundbar', 'vr glasses', 'gimbal stabilizer', 'power station',
-        'smart doorbell', 'phone cooler', 'sim router',
+        // Women's
+        'womens dresses', 'womens tops', 'womens hoodies',
+        'womens sets', 'womens jackets', 'womens pants',
+        // Men's
+        'mens tshirts', 'mens hoodies', 'mens shirts', 'mens pants',
+        // Unisex / Trending
+        'streetwear', 'kids clothing',
       ]),
       excludeBrands: getEnvArray('EXCLUDE_BRANDS', [
         'apple', 'iphone', 'ipad', 'airpods', 'airpod', 'inpods', 'macbook',

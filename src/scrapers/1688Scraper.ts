@@ -19,6 +19,21 @@ const COOKIES_FILE = path.join(COOKIES_DIR, '1688-cookies.json');
 
 // Chinese keyword mapping for 1688.com search (Chinese-language site)
 const categoryKeywords: Record<string, string> = {
+  // ── Clothing & Apparel (ACTIVE — current main category) ──────────────────
+  'womens dresses':  '连衣裙',          // women's dresses (all styles)
+  'womens tops':     '女士T恤',         // women's T-shirts & casual tops
+  'womens hoodies':  '女士卫衣',        // women's hoodies & sweatshirts
+  'womens sets':     '女士套装',        // women's matching 2-piece sets
+  'womens jackets':  '女士外套',        // women's jackets & outerwear
+  'womens pants':    '女士休闲裤',      // women's trousers, leggings, yoga pants
+  'mens tshirts':    '男士T恤',         // men's T-shirts & casual tees
+  'mens hoodies':    '男士卫衣',        // men's hoodies & sweatshirts
+  'mens shirts':     '男士衬衫',        // men's casual & formal shirts
+  'mens pants':      '男士休闲裤',      // men's trousers, joggers, cargo pants
+  'streetwear':      '潮牌卫衣',        // unisex streetwear & trendy tops
+  'kids clothing':   '儿童T恤',         // kids' tops, sets & basics
+
+  // ── 3C / Consumer Electronics (RETIRED 2026-03-05 — keep for legacy DB lookups) ──
   'earphones': '蓝牙耳机',
   'speakers': '蓝牙音箱',
   'action cameras': '运动相机',

@@ -124,15 +124,21 @@ export function loadConfig(): Config {
         'streetwear', 'kids clothing',
       ]),
       excludeBrands: getEnvArray('EXCLUDE_BRANDS', [
+        // 3C / electronics (keep — still filter if they appear in search)
         'apple', 'iphone', 'ipad', 'airpods', 'airpod', 'inpods', 'macbook',
-        'huaqiangbei',
-        'samsung', 'galaxy buds',
-        'sony', 'bose', 'jbl', 'beats', 'nike', 'adidas',
+        'huaqiangbei', 'samsung', 'galaxy buds', 'sony', 'bose', 'jbl', 'beats',
         'google pixel', 'microsoft', 'nintendo', 'dyson', 'gopro', 'dji',
-        'gucci', 'louis vuitton', 'prada', 'rolex', 'sennheiser',
         'lenovo', 'huawei', 'xiaomi', 'oppo', 'vivo', 'oneplus',
         'logitech', 'razer', 'corsair', 'steelseries', 'hyperx', 'cherry', 'bloody',
-        'remax', 'ldnio', 'anker', 'baseus',
+        'remax', 'ldnio', 'anker', 'baseus', 'sennheiser',
+        // Fashion / clothing (Clothing & Apparel pivot — AliExpress trademark violations)
+        'nike', 'adidas', 'puma', 'new balance', 'under armour', 'reebok',
+        'gucci', 'louis vuitton', 'prada', 'rolex', 'chanel', 'hermes', 'burberry',
+        'versace', 'balenciaga', 'cartier',
+        'zara', 'h&m', 'shein', 'uniqlo', 'mango', 'topshop',
+        'lululemon', 'gymshark',
+        'supreme', 'off-white', 'stone island', 'palace', 'stüssy', 'stussy',
+        'bape', 'a bathing ape', 'north face', 'patagonia', 'columbia',
       ]),
     },
     runtime: {

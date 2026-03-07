@@ -1492,7 +1492,12 @@ export class Scraper1688 {
           if (!itemEls) continue;
           const values = Array.from(itemEls)
             .map(el => el.textContent?.trim() || '')
-            .filter(v => v.length > 0 && v.length < 30 && !v.startsWith('¥') && !v.match(/^\d+\.\d+$/));
+            .filter(v => v.length > 0 && v.length < 30
+              && !v.startsWith('¥')           // filter price strings
+              && !v.match(/^\d+\.\d+$/)       // filter bare decimal numbers
+              && !v.includes('库存')           // filter stock count strings (e.g. "库存83件")
+              && !v.match(/^\d+件$/)          // filter bare count strings (e.g. "83件")
+            );
           if (values.length > 0) options.push({ name: dimName, values });
         }
       }

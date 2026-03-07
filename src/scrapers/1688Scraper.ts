@@ -1252,6 +1252,10 @@ export class Scraper1688 {
   private async extractVariants(): Promise<ProductVariants | null> {
     if (!this.page) return null;
 
+    // Scroll down to trigger lazy-loading of SKU section (intersection observer pattern)
+    await this.page.evaluate(() => window.scrollTo(0, 600));
+    await sleep(1500);
+
     // Strategy A: Parse [data-module*="sku"] DOM element text
     const fromSKUModule = await this.page.evaluate(() => {
       const skuDiv = document.querySelector('[data-module*="sku"]');
@@ -1399,6 +1403,136 @@ export class Scraper1688 {
     if (fromJS && fromJS.options.length > 0) {
       logger.debug('Variants extracted via __INIT_DATA__ JS variable');
       return fromJS as ProductVariants;
+    }
+
+    // Strategy C: Modern 1688 React DOM — extract from rendered option labels/buttons
+    // Scroll a bit more to ensure SKU section is fully rendered
+    await this.page.evaluate(() => window.scrollTo(0, 800));
+    await sleep(1000);
+
+    const fromDom = await this.page.evaluate(() => {
+      // Modern 1688 product pages (2024+) render SKU options as labelled sections
+      // Container selectors for the SKU property block
+      const containerSelectors = [
+        '[class*="od-sku"]',
+        '[class*="sku-module"]',
+        '[class*="offer-attr"]',
+        '[class*="sku-wrap"]',
+        '[class*="sku-property"]',
+        '[class*="attr-wrap"]',
+        '[class*="product-sku"]',
+        '[class*="detail-sku"]',
+      ];
+
+      let skuContainer: Element | null = null;
+      for (const sel of containerSelectors) {
+        skuContainer = document.querySelector(sel);
+        if (skuContainer) break;
+      }
+
+      if (!skuContainer) {
+        // Log what's in the DOM to help debug
+        const allClasses = Array.from(document.querySelectorAll('[class]'))
+          .map(e => e.className?.toString() || '')
+          .filter(c => c.length > 0)
+          .join('\n')
+          .substring(0, 2000);
+        (window as any).__skuDebugClasses = allClasses;
+        return null;
+      }
+
+      // Extract title+options pairs from the SKU container
+      const titleSelectors = [
+        '[class*="sku-title"]', '[class*="attr-title"]',
+        '[class*="prop-title"]', '[class*="label"]',
+      ];
+      const itemSelectors = [
+        '[class*="sku-item"]', '[class*="attr-item"]',
+        '[class*="prop-item"]', '[class*="option-item"]',
+        'button', 'span[class*="item"]',
+      ];
+
+      const options: Array<{ name: string; values: string[] }> = [];
+
+      // Try to find dimension title elements
+      let titleEls: NodeListOf<Element> | null = null;
+      for (const sel of titleSelectors) {
+        const found = skuContainer.querySelectorAll(sel);
+        if (found.length > 0) { titleEls = found; break; }
+      }
+
+      if (!titleEls || titleEls.length === 0) {
+        // Fallback: extract all text nodes and look for 颜色/尺码 patterns
+        const text = skuContainer.textContent || '';
+        const colorMatch = text.match(/颜色[分类]?[：:]?\s*([^\n尺码]+)/);
+        const sizeMatch = text.match(/尺[码寸][：:]?\s*([^\n颜色]+)/);
+        if (colorMatch || sizeMatch) {
+          if (colorMatch) {
+            const vals = colorMatch[1].split(/[\s，,]+/).filter(v => v.trim().length > 0 && v.trim().length < 30);
+            if (vals.length > 0) options.push({ name: '颜色', values: vals });
+          }
+          if (sizeMatch) {
+            const vals = sizeMatch[1].split(/[\s，,]+/).filter(v => v.trim().length > 0 && v.trim().length < 10);
+            if (vals.length > 0) options.push({ name: '尺码', values: vals });
+          }
+        }
+        if (options.length === 0) return null;
+      } else {
+        for (const titleEl of Array.from(titleEls)) {
+          const dimName = titleEl.textContent?.trim().replace(/[：:]\s*$/, '') || '';
+          if (!dimName) continue;
+          // Find the sibling items
+          const parent = titleEl.parentElement;
+          if (!parent) continue;
+          let itemEls: NodeListOf<Element> | null = null;
+          for (const sel of itemSelectors) {
+            const found = parent.querySelectorAll(sel);
+            if (found.length > 0) { itemEls = found; break; }
+          }
+          if (!itemEls) continue;
+          const values = Array.from(itemEls)
+            .map(el => el.textContent?.trim() || '')
+            .filter(v => v.length > 0 && v.length < 30);
+          if (values.length > 0) options.push({ name: dimName, values });
+        }
+      }
+
+      if (options.length === 0) return null;
+
+      // Build flat SKU list from option cross-product (no per-SKU price from DOM)
+      const skus: Array<{ optionValues: Record<string, string>; priceCNY: number; available: boolean }> = [];
+      if (options.length === 1) {
+        for (const val of options[0].values) {
+          skus.push({ optionValues: { [options[0].name]: val }, priceCNY: 0, available: true });
+        }
+      } else if (options.length >= 2) {
+        for (const v1 of options[0].values) {
+          for (const v2 of options[1].values) {
+            skus.push({ optionValues: { [options[0].name]: v1, [options[1].name]: v2 }, priceCNY: 0, available: true });
+          }
+        }
+      }
+
+      return { options, skus };
+    });
+
+    if (fromDom && fromDom.options.length > 0 && fromDom.skus.length > 0) {
+      // Log debug classes if available
+      const debugClasses = await this.page.evaluate(() => (window as any).__skuDebugClasses || null);
+      if (debugClasses) {
+        logger.debug('SKU container not found — page classes sample', { classes: debugClasses.substring(0, 500) });
+      }
+      logger.debug('Variants extracted via modern DOM (Strategy C)', {
+        options: fromDom.options.map(o => `${o.name}: ${o.values.length}`),
+        skuCount: fromDom.skus.length,
+      });
+      return fromDom as ProductVariants;
+    }
+
+    // Log debug classes when all strategies fail
+    const debugClasses = await this.page.evaluate(() => (window as any).__skuDebugClasses || null);
+    if (debugClasses) {
+      logger.debug('All variant strategies failed — page classes sample', { classes: debugClasses.substring(0, 500) });
     }
 
     return null;

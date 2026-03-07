@@ -1452,7 +1452,8 @@ export class Scraper1688 {
         'button', 'span[class*="item"]',
       ];
 
-      const options: Array<{ name: string; values: string[] }> = [];
+      // options: values + per-value image URLs (color dimension has images; size does not)
+      const options: Array<{ name: string; values: string[]; images: (string | undefined)[] }> = [];
 
       // Try to find dimension title elements
       let titleEls: NodeListOf<Element> | null = null;
@@ -1462,18 +1463,18 @@ export class Scraper1688 {
       }
 
       if (!titleEls || titleEls.length === 0) {
-        // Fallback: extract all text nodes and look for 颜色/尺码 patterns
+        // Fallback: extract all text nodes and look for 颜色/尺码 patterns (no images in text fallback)
         const text = skuContainer.textContent || '';
         const colorMatch = text.match(/颜色[分类]?[：:]?\s*([^\n尺码]+)/);
         const sizeMatch = text.match(/尺[码寸][：:]?\s*([^\n颜色]+)/);
         if (colorMatch || sizeMatch) {
           if (colorMatch) {
             const vals = colorMatch[1].split(/[\s，,]+/).filter(v => v.trim().length > 0 && v.trim().length < 30);
-            if (vals.length > 0) options.push({ name: '颜色', values: vals });
+            if (vals.length > 0) options.push({ name: '颜色', values: vals, images: vals.map(() => undefined) });
           }
           if (sizeMatch) {
             const vals = sizeMatch[1].split(/[\s，,]+/).filter(v => v.trim().length > 0 && v.trim().length < 10);
-            if (vals.length > 0) options.push({ name: '尺码', values: vals });
+            if (vals.length > 0) options.push({ name: '尺码', values: vals, images: vals.map(() => undefined) });
           }
         }
         if (options.length === 0) return null;
@@ -1490,35 +1491,56 @@ export class Scraper1688 {
             if (found.length > 0) { itemEls = found; break; }
           }
           if (!itemEls) continue;
-          const values = Array.from(itemEls)
-            .map(el => el.textContent?.trim() || '')
-            .filter(v => v.length > 0 && v.length < 30
-              && !v.startsWith('¥')           // filter price strings
-              && !v.match(/^\d+\.\d+$/)       // filter bare decimal numbers
-              && !v.includes('库存')           // filter stock count strings (e.g. "库存83件")
-              && !v.match(/^\d+件$/)          // filter bare count strings (e.g. "83件")
-            );
-          if (values.length > 0) options.push({ name: dimName, values });
+          // Extract text + image URL from each option item
+          const rawItems = Array.from(itemEls).map(el => {
+            const text = (el.textContent?.trim() || '');
+            // Look for <img> inside the option button/label — color swatches have thumbnails
+            const img = el.querySelector('img');
+            const rawSrc = img?.src || img?.getAttribute('data-src') || img?.getAttribute('data-lazy-src') || '';
+            // Strip protocol-relative prefix if present; strip thumbnail suffix (e.g. _100x100.jpg)
+            const imageUrl = rawSrc
+              ? rawSrc.replace(/^\/\//, 'https://').replace(/\.(jpg|jpeg|png)(_[^"'?]*)?$/i, '.$1')
+              : undefined;
+            return { text, imageUrl: imageUrl || undefined };
+          }).filter(item =>
+            item.text.length > 0 && item.text.length < 30
+            && !item.text.startsWith('¥')
+            && !item.text.match(/^\d+\.\d+$/)
+            && !item.text.includes('库存')
+            && !item.text.match(/^\d+件$/)
+          );
+          if (rawItems.length > 0) {
+            options.push({
+              name: dimName,
+              values: rawItems.map(i => i.text),
+              images: rawItems.map(i => i.imageUrl),
+            });
+          }
         }
       }
 
       if (options.length === 0) return null;
 
-      // Build flat SKU list from option cross-product (no per-SKU price from DOM)
-      const skus: Array<{ optionValues: Record<string, string>; priceCNY: number; available: boolean }> = [];
+      // Build flat SKU list from option cross-product
+      // Color (first dim) images are attached to each SKU so DB can store per-color images
+      const skus: Array<{ optionValues: Record<string, string>; image?: string; priceCNY: number; available: boolean }> = [];
       if (options.length === 1) {
-        for (const val of options[0].values) {
-          skus.push({ optionValues: { [options[0].name]: val }, priceCNY: 0, available: true });
+        for (let i = 0; i < options[0].values.length; i++) {
+          const val = options[0].values[i];
+          skus.push({ optionValues: { [options[0].name]: val }, image: options[0].images[i], priceCNY: 0, available: true });
         }
       } else if (options.length >= 2) {
-        for (const v1 of options[0].values) {
+        // First dimension is assumed to be color (has images); second is size (no images)
+        for (let i = 0; i < options[0].values.length; i++) {
+          const v1 = options[0].values[i];
+          const colorImage = options[0].images[i];
           for (const v2 of options[1].values) {
-            skus.push({ optionValues: { [options[0].name]: v1, [options[1].name]: v2 }, priceCNY: 0, available: true });
+            skus.push({ optionValues: { [options[0].name]: v1, [options[1].name]: v2 }, image: colorImage, priceCNY: 0, available: true });
           }
         }
       }
 
-      return { options, skus };
+      return { options: options.map(o => ({ name: o.name, values: o.values })), skus };
     });
 
     if (fromDom && fromDom.options.length > 0 && fromDom.skus.length > 0) {

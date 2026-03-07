@@ -1492,7 +1492,7 @@ export class Scraper1688 {
           if (!itemEls) continue;
           const values = Array.from(itemEls)
             .map(el => el.textContent?.trim() || '')
-            .filter(v => v.length > 0 && v.length < 30);
+            .filter(v => v.length > 0 && v.length < 30 && !v.startsWith('¥') && !v.match(/^\d+\.\d+$/));
           if (values.length > 0) options.push({ name: dimName, values });
         }
       }

@@ -1002,6 +1002,7 @@ export class Scraper1688 {
       // Scroll to trigger lazy-loading before first extraction
       await this.scrollToLoadContent();
 
+      let emptyPageCount = 0;
       while (products.length < maxProducts) {
         // Wait for product list to load — try multiple selectors
         await this.page.waitForSelector(
@@ -1019,9 +1020,16 @@ export class Scraper1688 {
           count: pageProducts.length,
         });
 
-        // If 0 products found, log diagnostics
+        // If 0 products found, log diagnostics and stop after 2 consecutive empty pages
         if (pageProducts.length === 0) {
           await this.logDiagnostics(page);
+          emptyPageCount++;
+          if (emptyPageCount >= 2) {
+            logger.warn('Two consecutive empty pages, stopping search', { page });
+            break;
+          }
+        } else {
+          emptyPageCount = 0;
         }
 
         for (const product of pageProducts) {

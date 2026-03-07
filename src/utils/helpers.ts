@@ -125,6 +125,9 @@ export function isBannedBrand(text: string): boolean {
     '拉科斯特',      // Lacoste
     '雨果博斯',      // Hugo Boss
     '迈克科尔斯',    // Michael Kors
+    // Adidas brand symbols used in titles to evade brand filter
+    '三叶草',        // Adidas Originals clover logo (三叶草 = three-leaf clover)
+    '三条杠',        // Adidas three stripes signature
   ];
 
   const lowerText = text.toLowerCase();

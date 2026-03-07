@@ -59,41 +59,72 @@ export function isAppleBrand(text: string): boolean {
 }
 
 // CRITICAL: Never scrape/list products from major brands — AliExpress will punish the store
+// Updated for Clothing & Apparel pivot — keep 3C brands + add clothing-specific
 export function isBannedBrand(text: string): boolean {
   const bannedBrands = [
-    // Apple ecosystem
+    // 3C / electronics
     'apple', 'iphone', 'ipad', 'ipod', 'airpods', 'airpod', 'inpods', 'macbook',
     'imac', 'mac mini', 'mac pro', 'apple watch', 'homepod', 'airtag',
-    // Shenzhen clone market
-    'huaqiangbei',
-    // Samsung
-    'samsung', 'galaxy buds', 'galaxy watch', 'galaxy tab',
-    // Sony
+    'huaqiangbei', 'samsung', 'galaxy buds', 'galaxy watch', 'galaxy tab',
     'sony', 'playstation', 'walkman', 'xperia', 'wf-1000', 'wh-1000',
-    // Google
     'google pixel', 'pixel buds', 'chromecast', 'nest hub',
-    // Bose / JBL / Beats
     'bose', 'jbl', 'beats by dre', 'beats studio', 'beats solo', 'beats fit',
-    // Nike / Adidas / Puma
-    'nike', 'adidas', 'puma', 'new balance', 'under armour',
-    // Microsoft / Xbox
     'microsoft', 'xbox', 'surface pro', 'surface laptop',
-    // Nintendo
     'nintendo', 'switch oled',
-    // Chinese tech brands (AliExpress flags these)
     'huawei', 'freebuds', 'xiaomi', 'oppo', 'vivo', 'oneplus', 'lenovo',
-    // PC peripherals / gaming brands
     'logitech', 'razer', 'corsair', 'steelseries', 'hyperx',
     'cherry', 'asus rog', 'zowie', 'bloody',
-    // Accessory brands (trademarked, flagged by AliExpress)
     'remax', 'ldnio', 'anker', 'baseus',
-    // Dyson / LG
     'dyson', 'lg electronics',
-    // Premium audio/camera/fashion
     'sennheiser', 'bang & olufsen', 'b&o', 'marshall',
     'gopro', 'dji', 'canon', 'nikon', 'fujifilm',
+    // Fashion / clothing (Clothing & Apparel pivot) — English
+    'nike', 'adidas', 'puma', 'new balance', 'under armour', 'reebok',
     'rolex', 'cartier', 'gucci', 'louis vuitton', 'prada', 'hermes', 'chanel',
+    'burberry', 'versace', 'balenciaga', 'dior', 'fendi', 'givenchy',
+    'zara', 'h&m', 'shein', 'uniqlo', 'mango', 'topshop',
+    'lululemon', 'gymshark',
+    'supreme', 'off-white', 'stone island', 'palace', 'stüssy', 'stussy',
+    'bape', 'a bathing ape',
     'north face', 'patagonia', 'columbia',
+    'ralph lauren', 'polo ralph', 'tommy hilfiger', 'calvin klein', 'lacoste',
+    'hugo boss', 'michael kors', 'coach', 'kate spade', 'fila',
+    'gap', "levi's", 'levis',
+    // Chinese brand names — CRITICAL: 1688 titles are in Chinese
+    '耐克',          // Nike
+    '阿迪达斯',      // Adidas
+    '彪马',          // Puma
+    '新百伦',        // New Balance
+    '安德玛',        // Under Armour
+    '锐步',          // Reebok
+    '优衣库',        // Uniqlo
+    '北面',          // The North Face
+    '哥伦比亚',      // Columbia
+    '古驰',          // Gucci
+    '路易威登',      // Louis Vuitton
+    '普拉达',        // Prada
+    '香奈儿',        // Chanel
+    '巴宝莉',        // Burberry
+    '博柏利',        // Burberry (alternate)
+    '范思哲',        // Versace
+    '巴黎世家',      // Balenciaga
+    '迪奥',          // Dior
+    '爱马仕',        // Hermès
+    '卡地亚',        // Cartier
+    '劳力士',        // Rolex
+    '李宁',          // Li-Ning (major Chinese brand)
+    '安踏',          // Anta (major Chinese brand)
+    '特步',          // Xtep
+    '匹克',          // Peak
+    '鸿星尔克',      // Erke
+    '361°', '361度', // 361°
+    '斐乐',          // Fila (in China)
+    '拉夫劳伦',      // Ralph Lauren
+    '汤米',          // Tommy Hilfiger
+    '卡尔文克莱恩',  // Calvin Klein
+    '拉科斯特',      // Lacoste
+    '雨果博斯',      // Hugo Boss
+    '迈克科尔斯',    // Michael Kors
   ];
 
   const lowerText = text.toLowerCase();

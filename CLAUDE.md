@@ -28,10 +28,10 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 
 | Machine | IP | Role | Tasks |
 |---------|-----|------|-------|
-| **China MacBook** | `192.168.1.5` (static) | Inside China firewall, primary scraping | Tasks 1-4 (using Baidu/Tesseract) |
+| **China MacBook** | `192.168.31.5` (static) | Inside China firewall, primary scraping | Tasks 1-4 (using Baidu/Tesseract) |
 | **Main Computer** | localhost | Outside China firewall | Tasks 3-4 (using Google APIs) |
 
-- SSH: `blueidea@192.168.1.5`, password `112233`
+- SSH: `blueidea@192.168.31.5`, password `112233`
 - SSH flags needed: `-o PreferredAuthentications=password -o PubkeyAuthentication=no`
 - Remote commands need: `export PATH=/opt/homebrew/bin:$PATH && source ~/.nvm/nvm.sh`
 - MySQL runs on China MacBook: root / `***REMOVED***`, database `1688_source`

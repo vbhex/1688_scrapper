@@ -18,20 +18,38 @@ const COOKIES_DIR = path.resolve(__dirname, '../../data');
 const COOKIES_FILE = path.join(COOKIES_DIR, '1688-cookies.json');
 
 // Chinese keyword mapping for 1688.com search (Chinese-language site)
+// STRATEGY (2026-03-10): Use niche/style-specific terms to avoid AliExpress "Duplicate Laying"
+// failures. Generic terms (女士T恤, 男士T恤) yield commodity items already sold by thousands
+// of AliExpress sellers. Style modifiers (印花, oversize, Y2K, 波西米亚, etc.) return
+// differentiated products that pass AliExpress's duplicate check.
 const categoryKeywords: Record<string, string> = {
-  // ── Clothing & Apparel (ACTIVE — current main category) ──────────────────
-  'womens dresses':  '连衣裙',          // women's dresses (all styles)
-  'womens tops':     '女士T恤',         // women's T-shirts & casual tops
-  'womens hoodies':  '女士卫衣',        // women's hoodies & sweatshirts
-  'womens sets':     '女士套装',        // women's matching 2-piece sets
-  'womens jackets':  '女士外套',        // women's jackets & outerwear
-  'womens pants':    '女士休闲裤',      // women's trousers, leggings, yoga pants
-  'mens tshirts':    '男士T恤',         // men's T-shirts & casual tees
-  'mens hoodies':    '男士卫衣',        // men's hoodies & sweatshirts
-  'mens shirts':     '男士衬衫',        // men's casual & formal shirts
-  'mens pants':      '男士休闲裤',      // men's trousers, joggers, cargo pants
-  'streetwear':      '潮牌卫衣',        // unisex streetwear & trendy tops
-  'kids clothing':   '儿童T恤',         // kids' tops, sets & basics
+  // ── Clothing & Apparel — Women's ─────────────────────────────────────────
+  'womens dresses':   '连衣裙',             // women's dresses (broad — dresses have enough variety)
+  'womens boho':      '波西米亚连衣裙',      // bohemian/ethnic dresses — highly distinctive, low competition
+  'womens floral':    '碎花裙',             // floral print skirts & dresses — popular, differentiated
+  'womens tops':      '女士印花T恤',        // printed women's tops — avoids plain commodity tees
+  'womens hoodies':   '女士oversize卫衣',   // oversized hoodies — trending style, fewer exact duplicates
+  'womens sets':      '女士运动套装',       // athletic/leisure sets — differentiated from plain sets
+  'womens jackets':   '女士外套',           // jackets & outerwear — broad OK (outerwear is unique by design)
+  'womens pants':     '女士休闲裤',         // trousers, joggers — broad OK
+  'womens cardigan':  '女士针织开衫',       // knit cardigans — knitwear category less saturated
+  'womens sweater':   '女士毛衣',           // sweaters — seasonal, distinct from tees
+
+  // ── Clothing & Apparel — Men's ───────────────────────────────────────────
+  'mens graphic':     '男士印花T恤',        // graphic/printed tees — avoids plain commodity tees
+  'mens hoodies':     '男士连帽卫衣印花',   // printed hooded sweatshirts — graphic = differentiated
+  'mens shirts':      '男士花衬衫',         // patterned/Hawaiian shirts — highly distinctive
+  'mens pants':       '男士休闲裤',         // casual trousers — broad OK
+  'mens cargo':       '男士工装裤',         // cargo pants — trending style, differentiated
+
+  // ── Clothing & Apparel — Unisex / Streetwear ─────────────────────────────
+  'streetwear':       'Y2K潮流服装',        // Y2K streetwear — specific trending style
+  'unisex graphic':   '情侣潮牌T恤',        // couples/matching graphic tees — niche
+
+  // ── Legacy CLI names (kept for backward compatibility with old DB records) ─
+  'womens tshirts':   '女士印花T恤',        // alias
+  'mens tshirts':     '男士印花T恤',        // alias
+  'kids clothing':    '儿童T恤',            // kids — PAUSED (no AE Mother & Kids template yet)
 
   // ── 3C / Consumer Electronics (RETIRED 2026-03-05 — keep for legacy DB lookups) ──
   'earphones': '蓝牙耳机',

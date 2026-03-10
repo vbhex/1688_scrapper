@@ -114,16 +114,25 @@ export function loadConfig(): Config {
       // STRATEGIC PIVOT 2026-03-05: 3C → Clothing & Apparel
       // Old 3C categories removed. Do NOT add them back.
       // Full rationale: documents/aliexpress-store/PLATFORM_PIVOT_3C_TO_CLOTHING.md
+      //
+      // SEARCH TERM STRATEGY (2026-03-10): Use niche/style-specific terms.
+      // Root cause of "Duplicate Laying" failures: generic search terms return commodity
+      // items (plain tees/hoodies) already sold by thousands of AliExpress sellers.
+      // Fix: add style/design modifiers (印花, oversize, Y2K, 波西米亚) to yield
+      // differentiated products that pass AliExpress's duplicate check.
+      // Full mapping: src/scrapers/1688Scraper.ts → categoryKeywords
       categories: getEnvArray('CATEGORIES', [
-        // Women's
-        'womens dresses', 'womens tops', 'womens hoodies',
-        'womens sets', 'womens jackets', 'womens pants',
-        // Men's
-        'mens tshirts', 'mens hoodies', 'mens shirts', 'mens pants',
-        // Unisex / Trending
-        'streetwear',
-        // 'kids clothing' REMOVED — AliExpress requires Mother & Kids templates.
-        // Do NOT add back until those templates are downloaded.
+        // Women's — broad OK (outerwear, pants, dresses have enough variety naturally)
+        'womens dresses', 'womens jackets', 'womens pants',
+        // Women's — niched (plain tees/hoodies were failing as "Duplicate Laying")
+        'womens boho', 'womens floral', 'womens tops', 'womens hoodies',
+        'womens sets', 'womens cardigan', 'womens sweater',
+        // Men's — niched
+        'mens graphic', 'mens hoodies', 'mens shirts', 'mens pants', 'mens cargo',
+        // Unisex / Streetwear — niche styles
+        'streetwear', 'unisex graphic',
+        // 'kids clothing' PAUSED — AliExpress requires Mother & Kids templates.
+        // Do NOT add back until those templates are downloaded and excel-gen supports them.
       ]),
       excludeBrands: getEnvArray('EXCLUDE_BRANDS', [
         // 3C / electronics (keep — still filter if they appear in search)

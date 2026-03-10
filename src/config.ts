@@ -121,18 +121,38 @@ export function loadConfig(): Config {
       // Fix: add style/design modifiers (印花, oversize, Y2K, 波西米亚) to yield
       // differentiated products that pass AliExpress's duplicate check.
       // Full mapping: src/scrapers/1688Scraper.ts → categoryKeywords
+      // STRATEGY (2026-03-10): Target AliExpress OPPORTUNITY categories — sheets with
+      // few sellers. Root cause of "too many similar products" failures: generic
+      // TShirts/HoodiesSweatshirts/CasualPants sheets have millions of sellers.
+      // Fix: route to entirely different sheets (Skirts, Jumpsuits, Blazers, Leggings,
+      //      NightgownsSleepshirts, PoloShirts, Shorts, Suits, DenimJacket, Cardigan).
+      // All target sheets confirmed in templates/fresh-download/column-defs.json (624 sheets).
       categories: getEnvArray('CATEGORIES', [
-        // Women's — broad OK (outerwear, pants, dresses have enough variety naturally)
-        'womens dresses', 'womens jackets', 'womens pants',
-        // Women's — niched (plain tees/hoodies were failing as "Duplicate Laying")
-        'womens boho', 'womens floral', 'womens tops', 'womens hoodies',
-        'womens sets', 'womens cardigan', 'womens sweater',
-        // Men's — niched
-        'mens graphic', 'mens hoodies', 'mens shirts', 'mens pants', 'mens cargo',
-        // Unisex / Streetwear — niche styles
-        'streetwear', 'unisex graphic',
-        // 'kids clothing' PAUSED — AliExpress requires Mother & Kids templates.
-        // Do NOT add back until those templates are downloaded and excel-gen supports them.
+        // Women's — OPPORTUNITY (low-competition AE sheets)
+        'womens skirts',      // → Skirts
+        'womens jumpsuits',   // → Jumpsuits
+        'womens blazers',     // → Blazers
+        'womens leggings',    // → Leggings
+        'womens sleepwear',   // → NightgownsSleepshirts
+        'womens cardigan',    // → Cardigan
+        // Women's — BROAD (enough natural variety to avoid duplicate check)
+        'womens dresses',     // → Dresses
+        'womens jackets',     // → Jackets
+        'womens sets',        // → PantSets
+        // Men's — OPPORTUNITY
+        'mens polo',          // → PoloShirts
+        'mens shorts',        // → Shorts
+        'mens suits',         // → Suits
+        'mens cargo',         // → CargoPants
+        // Men's — broad OK (patterned shirts pass naturally)
+        'mens shirts',        // → Shirts
+        // Unisex
+        'denim jackets',      // → DenimJacket
+        // REMOVED — AliExpress "too many similar products" rejection:
+        // 'womens tops', 'womens hoodies', 'mens tshirts', 'mens hoodies',
+        // 'mens pants', 'streetwear', 'mens graphic', 'unisex graphic'
+        // PAUSED — AliExpress requires Mother & Kids templates, not Clothing & Apparel:
+        // 'kids clothing'
       ]),
       excludeBrands: getEnvArray('EXCLUDE_BRANDS', [
         // 3C / electronics (keep — still filter if they appear in search)

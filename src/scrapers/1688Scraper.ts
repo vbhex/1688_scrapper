@@ -24,32 +24,55 @@ const COOKIES_FILE = path.join(COOKIES_DIR, '1688-cookies.json');
 // differentiated products that pass AliExpress's duplicate check.
 const categoryKeywords: Record<string, string> = {
   // ── Clothing & Apparel — Women's ─────────────────────────────────────────
-  'womens dresses':   '连衣裙',             // women's dresses (broad — dresses have enough variety)
-  'womens boho':      '波西米亚连衣裙',      // bohemian/ethnic dresses — highly distinctive, low competition
-  'womens floral':    '碎花裙',             // floral print skirts & dresses — popular, differentiated
-  'womens tops':      '女士印花T恤',        // printed women's tops — avoids plain commodity tees
-  'womens hoodies':   '女士oversize卫衣',   // oversized hoodies — trending style, fewer exact duplicates
-  'womens sets':      '女士运动套装',       // athletic/leisure sets — differentiated from plain sets
-  'womens jackets':   '女士外套',           // jackets & outerwear — broad OK (outerwear is unique by design)
-  'womens pants':     '女士休闲裤',         // trousers, joggers — broad OK
-  'womens cardigan':  '女士针织开衫',       // knit cardigans — knitwear category less saturated
-  'womens sweater':   '女士毛衣',           // sweaters — seasonal, distinct from tees
+  // OPPORTUNITY CATEGORIES (low AliExpress competition — platform has few sellers):
+  'womens skirts':    '女士半身裙',          // skirts → AE Skirts sheet — moderate competition
+  'womens jumpsuits': '女士连体裤',          // jumpsuits/rompers → AE Jumpsuits — low competition
+  'womens blazers':   '女士西装外套',        // blazer/suit jackets → AE Blazers — professional niche
+  'womens leggings':  '女士瑜伽裤',          // yoga/fitness leggings → AE Leggings — active niche
+  'womens sleepwear': '女士睡衣套装',        // pajamas/loungewear → AE NightgownsSleepshirts — low comp.
+  'womens cardigan':  '女士针织开衫',        // knitwear cardigans → AE Cardigan — seasonal, niche
+  // Broad categories (still OK — enough natural variety to pass duplicate check):
+  'womens dresses':   '连衣裙',             // → AE Dresses — sub-types vary enough
+  'womens jackets':   '女士外套',           // → AE Jackets — outerwear is unique by design
+  'womens sets':      '女士套装',           // → AE PantSets (broad matching sets)
+  // Legacy / style-niched (kept for backward compat with existing DB records):
+  'womens boho':      '波西米亚连衣裙',      // bohemian dresses → routes to Dresses
+  'womens floral':    '碎花半身裙',          // floral skirts → routes to Skirts
+  'womens sweater':   '女士毛衣',           // sweaters → routes to Cardigan sheet
 
   // ── Clothing & Apparel — Men's ───────────────────────────────────────────
-  'mens graphic':     '男士印花T恤',        // graphic/printed tees — avoids plain commodity tees
-  'mens hoodies':     '男士连帽卫衣印花',   // printed hooded sweatshirts — graphic = differentiated
-  'mens shirts':      '男士花衬衫',         // patterned/Hawaiian shirts — highly distinctive
-  'mens pants':       '男士休闲裤',         // casual trousers — broad OK
-  'mens cargo':       '男士工装裤',         // cargo pants — trending style, differentiated
+  // OPPORTUNITY CATEGORIES:
+  'mens polo':        '男士Polo衫',          // polo shirts → AE PoloShirts — less generic than tees
+  'mens shorts':      '男士休闲短裤',        // casual shorts → AE Shorts — seasonal, spring/summer
+  'mens suits':       '男士西装套装',        // suit sets → AE Suits — professional, low reseller count
+  'mens cargo':       '男士工装裤',          // cargo pants → AE CargoPants — trending utility niche
+  // Broad (still OK — natural variety):
+  'mens shirts':      '男士花衬衫',         // patterned/Hawaiian shirts → AE Shirts — distinctive
 
-  // ── Clothing & Apparel — Unisex / Streetwear ─────────────────────────────
-  'streetwear':       'Y2K潮流服装',        // Y2K streetwear — specific trending style
-  'unisex graphic':   '情侣潮牌T恤',        // couples/matching graphic tees — niche
+  // ── Unisex ───────────────────────────────────────────────────────────────
+  'denim jackets':    '男女牛仔外套',        // denim jackets (unisex) → AE DenimJacket — specific item
+
+  // ── REMOVED (AliExpress "too many similar products" rejection) ────────────
+  // 'womens tops'    → WomensTops/TShirts — millions of sellers
+  // 'womens hoodies' → HoodiesSweatshirts — hundreds of thousands of sellers
+  // 'mens tshirts'   → TShirts — millions of sellers
+  // 'mens hoodies'   → HoodiesSweatshirts — saturated
+  // 'mens pants'     → CasualPants — too broad, saturated
+  // 'streetwear'     → HoodiesSweatshirts — same saturated sheet
+  // 'mens graphic'   → TShirts — same saturated sheet
+  // 'unisex graphic' → TShirts — same saturated sheet
 
   // ── Legacy CLI names (kept for backward compatibility with old DB records) ─
-  'womens tshirts':   '女士印花T恤',        // alias
-  'mens tshirts':     '男士印花T恤',        // alias
+  'womens tshirts':   '女士印花T恤',        // old alias — maps to WomensTops (legacy only)
+  'mens tshirts':     '男士印花T恤',        // old alias — maps to TShirts (legacy only)
   'kids clothing':    '儿童T恤',            // kids — PAUSED (no AE Mother & Kids template yet)
+  'mens graphic':     '男士印花T恤',        // old category — REMOVED from active list
+  'mens hoodies':     '男士连帽卫衣印花',   // old category — REMOVED from active list
+  'womens hoodies':   '女士oversize卫衣',   // old category — REMOVED from active list
+  'streetwear':       'Y2K潮流服装',        // old category — REMOVED from active list
+  'unisex graphic':   '情侣潮牌T恤',        // old category — REMOVED from active list
+  'womens tops':      '女士印花T恤',        // old category — REMOVED from active list
+  'mens pants':       '男士休闲裤',         // old category — REMOVED from active list
 
   // ── 3C / Consumer Electronics (RETIRED 2026-03-05 — keep for legacy DB lookups) ──
   'earphones': '蓝牙耳机',

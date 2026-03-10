@@ -128,6 +128,20 @@ export function isBannedBrand(text: string): boolean {
     // Adidas brand symbols used in titles to evade brand filter
     '三叶草',        // Adidas Originals clover logo (三叶草 = three-leaf clover)
     '三条杠',        // Adidas three stripes signature
+    // Government / space agency trademarks — commonly silk-screened on budget apparel
+    'nasa', 'usaf', 'us army', 'us navy', 'us marine', 'cia', 'fbi',
+    '美国宇航局',    // NASA in Chinese
+    // Sports leagues
+    'nba', 'nfl', 'mlb', 'nhl', 'ncaa',
+    // Automotive brands on clothing
+    'ferrari', 'lamborghini', 'porsche', 'mclaren', 'bugatti',
+    'harley-davidson', 'harley davidson',
+    // Lifestyle / entertainment trademarks
+    'playboy', 'coca-cola', 'pepsi', 'coca cola',
+    // Fake collab / streetwear traps
+    'air jordan', 'jordan brand', 'yeezy', 'travis scott',
+    // English brand names that appear in Chinese titles
+    'gap', "levi's", 'levis',
   ];
 
   const lowerText = text.toLowerCase();

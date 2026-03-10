@@ -121,7 +121,9 @@ export function loadConfig(): Config {
         // Men's
         'mens tshirts', 'mens hoodies', 'mens shirts', 'mens pants',
         // Unisex / Trending
-        'streetwear', 'kids clothing',
+        'streetwear',
+        // 'kids clothing' REMOVED — AliExpress requires Mother & Kids templates.
+        // Do NOT add back until those templates are downloaded.
       ]),
       excludeBrands: getEnvArray('EXCLUDE_BRANDS', [
         // 3C / electronics (keep — still filter if they appear in search)

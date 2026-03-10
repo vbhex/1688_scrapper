@@ -1,0 +1,63 @@
+{
+  "_comment": "Banned brand keywords — edit this file to add/remove brands without touching source code or rebuilding.",
+  "_note": "All matching is case-insensitive substring. Keep all values lowercase. Chinese keywords are also supported.",
+  "categories": {
+    "electronics_3c": [
+      "apple", "iphone", "ipad", "ipod", "airpods", "airpod", "inpods", "macbook",
+      "imac", "mac mini", "mac pro", "apple watch", "homepod", "airtag",
+      "huaqiangbei", "samsung", "galaxy buds", "galaxy watch", "galaxy tab",
+      "sony", "playstation", "walkman", "xperia", "wf-1000", "wh-1000",
+      "google pixel", "pixel buds", "chromecast", "nest hub",
+      "bose", "jbl", "beats by dre", "beats studio", "beats solo", "beats fit",
+      "microsoft", "xbox", "surface pro", "surface laptop",
+      "nintendo", "switch oled",
+      "huawei", "freebuds", "xiaomi", "oppo", "vivo", "oneplus", "lenovo",
+      "logitech", "razer", "corsair", "steelseries", "hyperx",
+      "cherry", "asus rog", "zowie", "bloody",
+      "remax", "ldnio", "anker", "baseus",
+      "dyson", "lg electronics",
+      "sennheiser", "bang & olufsen", "b&o", "marshall",
+      "gopro", "dji", "canon", "nikon", "fujifilm"
+    ],
+    "fashion_luxury": [
+      "nike", "adidas", "puma", "new balance", "under armour", "reebok",
+      "rolex", "cartier", "gucci", "louis vuitton", "prada", "hermes", "chanel",
+      "burberry", "versace", "balenciaga", "dior", "fendi", "givenchy",
+      "zara", "h&m", "shein", "uniqlo", "mango", "topshop",
+      "lululemon", "gymshark",
+      "supreme", "off-white", "stone island", "palace", "stüssy", "stussy",
+      "bape", "a bathing ape",
+      "north face", "patagonia", "columbia",
+      "ralph lauren", "polo ralph", "tommy hilfiger", "calvin klein", "lacoste",
+      "hugo boss", "michael kors", "coach", "kate spade", "fila",
+      "gap", "levi's", "levis"
+    ],
+    "fashion_luxury_chinese": [
+      "耐克", "阿迪达斯", "彪马", "新百伦", "安德玛", "锐步",
+      "优衣库", "北面", "哥伦比亚",
+      "古驰", "路易威登", "普拉达", "香奈儿", "巴宝莉", "博柏利",
+      "范思哲", "巴黎世家", "迪奥", "爱马仕", "卡地亚", "劳力士",
+      "李宁", "安踏", "特步", "匹克", "鸿星尔克",
+      "361°", "361度", "斐乐",
+      "拉夫劳伦", "汤米", "卡尔文克莱恩", "拉科斯特", "雨果博斯", "迈克科尔斯",
+      "三叶草", "三条杠"
+    ],
+    "government_agencies": [
+      "nasa", "usaf", "us army", "us navy", "us marine", "cia", "fbi",
+      "美国宇航局"
+    ],
+    "sports_leagues": [
+      "nba", "nfl", "mlb", "nhl", "ncaa"
+    ],
+    "automotive": [
+      "ferrari", "lamborghini", "porsche", "mclaren", "bugatti",
+      "harley-davidson", "harley davidson", "harley"
+    ],
+    "lifestyle_entertainment": [
+      "playboy", "coca-cola", "pepsi", "coca cola"
+    ],
+    "streetwear_collabs": [
+      "air jordan", "jordan brand", "yeezy", "travis scott"
+    ]
+  }
+}

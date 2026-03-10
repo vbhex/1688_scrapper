@@ -3,6 +3,29 @@ import path from 'path';
 import axios from 'axios';
 import { logger } from './logger';
 
+// ---------------------------------------------------------------------------
+// Banned-brands list — loaded from banned-brands.json at project root.
+// To add/remove brands: edit banned-brands.json (no rebuild needed).
+// ---------------------------------------------------------------------------
+let _bannedBrandsCache: string[] | null = null;
+
+function loadBannedBrands(): string[] {
+  if (_bannedBrandsCache !== null) return _bannedBrandsCache;
+  const jsonPath = path.resolve(__dirname, '../../banned-brands.json');
+  try {
+    const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+    const keywords: string[] = [];
+    for (const list of Object.values(raw.categories ?? {})) {
+      if (Array.isArray(list)) keywords.push(...(list as string[]));
+    }
+    _bannedBrandsCache = keywords;
+  } catch {
+    logger.warn('banned-brands.json not found or invalid — using empty list', { path: jsonPath });
+    _bannedBrandsCache = [];
+  }
+  return _bannedBrandsCache;
+}
+
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -58,94 +81,11 @@ export function isAppleBrand(text: string): boolean {
   return isBannedBrand(text);
 }
 
-// CRITICAL: Never scrape/list products from major brands — AliExpress will punish the store
-// Updated for Clothing & Apparel pivot — keep 3C brands + add clothing-specific
+// CRITICAL: Never scrape/list products from major brands — AliExpress will punish the store.
+// To add/remove brands: edit banned-brands.json at the project root (no rebuild needed).
 export function isBannedBrand(text: string): boolean {
-  const bannedBrands = [
-    // 3C / electronics
-    'apple', 'iphone', 'ipad', 'ipod', 'airpods', 'airpod', 'inpods', 'macbook',
-    'imac', 'mac mini', 'mac pro', 'apple watch', 'homepod', 'airtag',
-    'huaqiangbei', 'samsung', 'galaxy buds', 'galaxy watch', 'galaxy tab',
-    'sony', 'playstation', 'walkman', 'xperia', 'wf-1000', 'wh-1000',
-    'google pixel', 'pixel buds', 'chromecast', 'nest hub',
-    'bose', 'jbl', 'beats by dre', 'beats studio', 'beats solo', 'beats fit',
-    'microsoft', 'xbox', 'surface pro', 'surface laptop',
-    'nintendo', 'switch oled',
-    'huawei', 'freebuds', 'xiaomi', 'oppo', 'vivo', 'oneplus', 'lenovo',
-    'logitech', 'razer', 'corsair', 'steelseries', 'hyperx',
-    'cherry', 'asus rog', 'zowie', 'bloody',
-    'remax', 'ldnio', 'anker', 'baseus',
-    'dyson', 'lg electronics',
-    'sennheiser', 'bang & olufsen', 'b&o', 'marshall',
-    'gopro', 'dji', 'canon', 'nikon', 'fujifilm',
-    // Fashion / clothing (Clothing & Apparel pivot) — English
-    'nike', 'adidas', 'puma', 'new balance', 'under armour', 'reebok',
-    'rolex', 'cartier', 'gucci', 'louis vuitton', 'prada', 'hermes', 'chanel',
-    'burberry', 'versace', 'balenciaga', 'dior', 'fendi', 'givenchy',
-    'zara', 'h&m', 'shein', 'uniqlo', 'mango', 'topshop',
-    'lululemon', 'gymshark',
-    'supreme', 'off-white', 'stone island', 'palace', 'stüssy', 'stussy',
-    'bape', 'a bathing ape',
-    'north face', 'patagonia', 'columbia',
-    'ralph lauren', 'polo ralph', 'tommy hilfiger', 'calvin klein', 'lacoste',
-    'hugo boss', 'michael kors', 'coach', 'kate spade', 'fila',
-    'gap', "levi's", 'levis',
-    // Chinese brand names — CRITICAL: 1688 titles are in Chinese
-    '耐克',          // Nike
-    '阿迪达斯',      // Adidas
-    '彪马',          // Puma
-    '新百伦',        // New Balance
-    '安德玛',        // Under Armour
-    '锐步',          // Reebok
-    '优衣库',        // Uniqlo
-    '北面',          // The North Face
-    '哥伦比亚',      // Columbia
-    '古驰',          // Gucci
-    '路易威登',      // Louis Vuitton
-    '普拉达',        // Prada
-    '香奈儿',        // Chanel
-    '巴宝莉',        // Burberry
-    '博柏利',        // Burberry (alternate)
-    '范思哲',        // Versace
-    '巴黎世家',      // Balenciaga
-    '迪奥',          // Dior
-    '爱马仕',        // Hermès
-    '卡地亚',        // Cartier
-    '劳力士',        // Rolex
-    '李宁',          // Li-Ning (major Chinese brand)
-    '安踏',          // Anta (major Chinese brand)
-    '特步',          // Xtep
-    '匹克',          // Peak
-    '鸿星尔克',      // Erke
-    '361°', '361度', // 361°
-    '斐乐',          // Fila (in China)
-    '拉夫劳伦',      // Ralph Lauren
-    '汤米',          // Tommy Hilfiger
-    '卡尔文克莱恩',  // Calvin Klein
-    '拉科斯特',      // Lacoste
-    '雨果博斯',      // Hugo Boss
-    '迈克科尔斯',    // Michael Kors
-    // Adidas brand symbols used in titles to evade brand filter
-    '三叶草',        // Adidas Originals clover logo (三叶草 = three-leaf clover)
-    '三条杠',        // Adidas three stripes signature
-    // Government / space agency trademarks — commonly silk-screened on budget apparel
-    'nasa', 'usaf', 'us army', 'us navy', 'us marine', 'cia', 'fbi',
-    '美国宇航局',    // NASA in Chinese
-    // Sports leagues
-    'nba', 'nfl', 'mlb', 'nhl', 'ncaa',
-    // Automotive brands on clothing
-    'ferrari', 'lamborghini', 'porsche', 'mclaren', 'bugatti',
-    'harley-davidson', 'harley davidson',
-    // Lifestyle / entertainment trademarks
-    'playboy', 'coca-cola', 'pepsi', 'coca cola',
-    // Fake collab / streetwear traps
-    'air jordan', 'jordan brand', 'yeezy', 'travis scott',
-    // English brand names that appear in Chinese titles
-    'gap', "levi's", 'levis',
-  ];
-
   const lowerText = text.toLowerCase();
-  return bannedBrands.some(brand => lowerText.includes(brand));
+  return loadBannedBrands().some(brand => lowerText.includes(brand));
 }
 
 // Convert 1688 image URL to full-size version by stripping thumbnail suffixes

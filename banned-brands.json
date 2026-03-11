@@ -1,6 +1,7 @@
 {
   "_comment": "Banned brand keywords — edit this file to add/remove brands without touching source code or rebuilding.",
   "_note": "All matching is case-insensitive substring. Keep all values lowercase. Chinese keywords are also supported.",
+  "_updated": "2026-03-11 — Added Chinese brand name variants, workwear/streetwear brands, design-pattern indicators, and broader sports leagues to reduce IP violation risk.",
   "categories": {
     "electronics_3c": [
       "apple", "iphone", "ipad", "ipod", "airpods", "airpod", "inpods", "macbook",
@@ -30,7 +31,29 @@
       "north face", "patagonia", "columbia",
       "ralph lauren", "polo ralph", "tommy hilfiger", "calvin klein", "lacoste",
       "hugo boss", "michael kors", "coach", "kate spade", "fila",
-      "gap", "levi's", "levis"
+      "gap", "levi's", "levis",
+      "maison kitsune", "maison kitsuné", "kitsune fox",
+      "mardi mercredi",
+      "miu miu",
+      "thom browne",
+      "aloyoga", "alo yoga",
+      "acne studios", "acne 1996",
+      "ami paris", "isabel marant", "jacquemus",
+      "comme des garcons", "comme des garçons", "y-3", "yohji yamamoto",
+      "rick owens", "vivienne westwood", "alexander mcqueen", "mcqueen",
+      "bottega veneta", "valentino", "celine", "saint laurent", "ysl",
+      "marni", "jil sander", "toteme", "apc", "a.p.c",
+      "fear of god", "fog essentials",
+      "essentials hoodie", "essentials sweatshirt",
+      "champion", "fred perry", "kappa", "moschino", "dsquared2", "dsquared",
+      "carhartt", "dickies", "wrangler", "woolrich",
+      "moncler", "canada goose", "arcteryx", "arc'teryx",
+      "cp company", "c.p. company",
+      "palm angels", "rhude", "amiri", "chrome hearts",
+      "represent", "casablanca", "kenzo",
+      "polo pony", "polo horse",
+      "four bar stripe", "4 bar stripe",
+      "fox logo", "fox embroidery"
     ],
     "fashion_luxury_chinese": [
       "耐克", "阿迪达斯", "彪马", "新百伦", "安德玛", "锐步",
@@ -40,24 +63,49 @@
       "李宁", "安踏", "特步", "匹克", "鸿星尔克",
       "361°", "361度", "斐乐",
       "拉夫劳伦", "汤米", "卡尔文克莱恩", "拉科斯特", "雨果博斯", "迈克科尔斯",
-      "三叶草", "三条杠"
+      "三叶草", "三条杠",
+      "缪缪",
+      "汤姆布朗", "四条杠", "四道杠",
+      "冠军", "챔피온",
+      "蒙克莱", "加拿大鹅",
+      "克罗心", "棕榈天使",
+      "小马刺绣", "polo小马",
+      "狐狸刺绣", "狐狸logo",
+      "马蒂梅克里迪", "mardi"
     ],
     "government_agencies": [
       "nasa", "usaf", "us army", "us navy", "us marine", "cia", "fbi",
-      "美国宇航局"
+      "美国宇航局", "美国空军", "美国海军",
+      "太空总署", "宇航局"
     ],
     "sports_leagues": [
-      "nba", "nfl", "mlb", "nhl", "ncaa"
+      "nba", "nfl", "mlb", "nhl", "ncaa",
+      "nba队", "nfl队",
+      "lakers", "bulls", "celtics", "warriors", "heat", "knicks", "nets",
+      "yankees", "dodgers", "red sox", "cubs",
+      "patriots", "cowboys", "packers", "steelers",
+      "manchester united", "man utd", "real madrid", "barcelona", "chelsea", "arsenal",
+      "liverpool", "psg", "juventus", "milan"
     ],
     "automotive": [
       "ferrari", "lamborghini", "porsche", "mclaren", "bugatti",
       "harley-davidson", "harley davidson", "harley"
     ],
     "lifestyle_entertainment": [
-      "playboy", "coca-cola", "pepsi", "coca cola"
+      "playboy", "coca-cola", "pepsi", "coca cola",
+      "sanrio", "hello kitty", "cinnamoroll", "kuromi", "my melody", "pompompurin", "pochacco",
+      "disney", "mickey mouse", "minnie mouse", "winnie the pooh",
+      "star wars", "marvel", "avengers", "batman", "superman",
+      "peanuts", "snoopy", "garfield",
+      "emoji brand"
+    ],
+    "textiles_fibers": [
+      "tencel", "lyocell tencel", "天丝"
     ],
     "streetwear_collabs": [
-      "air jordan", "jordan brand", "yeezy", "travis scott"
+      "air jordan", "jordan brand", "yeezy", "travis scott",
+      "virgil abloh", "kanye west",
+      "dunk sb", "air force 1 logo"
     ]
   }
 }

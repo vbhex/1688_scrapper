@@ -96,10 +96,63 @@ async function main(): Promise<void> {
 
         // Brand check on full title + description
         if (isBannedBrand(detailed.title) || isBannedBrand(detailed.description)) {
-          logger.info('Banned brand detected in details, skipping', { id: prod.id1688 });
-          await updateStatus(prod.id, 'skipped', 'Banned brand in details');
+          logger.info('Banned brand detected in title/description, skipping', { id: prod.id1688 });
+          await updateStatus(prod.id, 'skipped', 'Banned brand in title/description');
           failed++;
           continue;
+        }
+
+        // Brand check on seller name (some sellers specialise in knockoff brands)
+        if (detailed.seller.name && isBannedBrand(detailed.seller.name)) {
+          logger.info('Banned brand detected in seller name, skipping', {
+            id: prod.id1688, sellerName: detailed.seller.name.substring(0, 60),
+          });
+          await updateStatus(prod.id, 'skipped', 'Banned brand in seller name');
+          failed++;
+          continue;
+        }
+
+        // Brand check on product specifications (e.g., 品牌: Ralph Lauren inspired)
+        const specBannedEntry = detailed.specifications.find(
+          spec => isBannedBrand(spec.name) || isBannedBrand(spec.value)
+        );
+        if (specBannedEntry) {
+          logger.info('Banned brand detected in specifications, skipping', {
+            id: prod.id1688, spec: `${specBannedEntry.name}: ${specBannedEntry.value}`.substring(0, 80),
+          });
+          await updateStatus(prod.id, 'skipped', 'Banned brand in specifications');
+          failed++;
+          continue;
+        }
+
+        // Brand check on variant option names and values
+        // 1688 knockoff sellers sometimes hide brand names in variant labels
+        // e.g., optionValues: { "颜色": "Ralph Lauren white" }
+        if (detailed.variants) {
+          let variantBrandFound = '';
+          outer: for (const sku of detailed.variants.skus) {
+            for (const [key, val] of Object.entries(sku.optionValues)) {
+              if (isBannedBrand(key) || isBannedBrand(val)) {
+                variantBrandFound = `${key}: ${val}`;
+                break outer;
+              }
+            }
+          }
+          if (!variantBrandFound) {
+            for (const opt of detailed.variants.options) {
+              if (isBannedBrand(opt.name)) { variantBrandFound = opt.name; break; }
+              const bannedVal = opt.values.find(v => isBannedBrand(v));
+              if (bannedVal) { variantBrandFound = `${opt.name}: ${bannedVal}`; break; }
+            }
+          }
+          if (variantBrandFound) {
+            logger.info('Banned brand detected in variant values, skipping', {
+              id: prod.id1688, variant: variantBrandFound.substring(0, 80),
+            });
+            await updateStatus(prod.id, 'skipped', `Banned brand in variant: ${variantBrandFound.substring(0, 100)}`);
+            failed++;
+            continue;
+          }
         }
 
         // Clean up old data if re-running

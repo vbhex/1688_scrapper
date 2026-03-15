@@ -472,7 +472,8 @@ export async function updateContactStatus(
 
 /**
  * Fetch products eligible for compliance scanning:
- * status = 'ae_enriched' AND no seller_id on products_raw yet.
+ * status IN ('ae_enriched', 'ae_exported', 'amazon_exported') AND no seller_id on products_raw yet.
+ * Covers both newly enriched products AND already-exported/live products.
  */
 export async function getProductsForComplianceScan(limit?: number): Promise<Array<{
   id: number;
@@ -485,9 +486,10 @@ export async function getProductsForComplianceScan(limit?: number): Promise<Arra
     `SELECT p.id, p.id_1688 AS id1688, p.url
      FROM products p
      LEFT JOIN products_raw pr ON pr.product_id = p.id
-     WHERE p.status = 'ae_enriched'
+     WHERE p.status IN ('ae_enriched', 'ae_exported', 'amazon_exported')
        AND (pr.seller_id IS NULL OR pr.seller_id = '')
-     ORDER BY p.created_at ASC
+       AND p.url IS NOT NULL
+     ORDER BY p.status ASC, p.created_at ASC
      ${limitClause}`
   );
   return rows as Array<{ id: number; id1688: string; url: string }>;

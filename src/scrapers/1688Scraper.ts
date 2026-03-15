@@ -1876,37 +1876,47 @@ export class Scraper1688 {
     if (!this.page) throw new Error('Browser not initialized');
 
     return this.page.evaluate(() => {
-      // Seller name
+      // Seller name — actual 1688 class is "shop-company-name"
       const name = (
-        document.querySelector('.company-name')?.textContent ||
+        document.querySelector('[class*="shop-company-name"]')?.textContent ||
         document.querySelector('[class*="companyName"]')?.textContent ||
+        document.querySelector('.company-name')?.textContent ||
         ''
       ).trim();
 
-      // Shop link — various 1688 layouts
-      const shopLinkEl = (
-        document.querySelector('a[href*="shop.1688.com"]') ||
-        document.querySelector('a[href*="/merchant/"]') ||
-        document.querySelector('.company-name-wrap a') ||
-        document.querySelector('[class*="shopLink"]')
-      ) as HTMLAnchorElement | null;
-      const shopUrl = shopLinkEl?.href || shopLinkEl?.getAttribute('href') || '';
+      // Shop link — 1688 uses subdomain format: shop{id}.1688.com
+      // Find any link pointing to a shop subdomain on 1688.com
+      const allLinks = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+      const shopLinkEl = allLinks.find(a => {
+        const h = a.href || '';
+        return /\/\/shop[\w]+\.1688\.com/.test(h);
+      }) || null;
 
-      // Seller ID from shop URL  — shop.1688.com/shop/123456789.html  or  /merchant/123456789/
-      const sellerIdMatch = shopUrl.match(/\/shop\/(\d+)\.html/) ||
-                            shopUrl.match(/\/merchant\/(\d+)/) ||
-                            shopUrl.match(/shopId=(\d+)/);
+      // Normalise to base shop URL (strip query params)
+      let shopUrl = '';
+      if (shopLinkEl) {
+        try {
+          const u = new URL(shopLinkEl.href);
+          shopUrl = u.origin + '/';           // e.g. https://shop99dx039474552.1688.com/
+        } catch { shopUrl = shopLinkEl.href; }
+      }
+
+      // Seller ID — extract subdomain part after "shop": shop{id}.1688.com
+      const sellerIdMatch = shopUrl.match(/\/\/shop([\w]+)\.1688\.com/) ||
+                            shopUrl.match(/\/shop\/([\d]+)\.html/) ||
+                            shopUrl.match(/\/merchant\/([\d]+)/);
       const sellerId = sellerIdMatch?.[1] || '';
 
-      // Wangwang ID from the IM/chat widget — look for data-nick or nick attributes
-      // or extract from the href of the wangwang chat button
+      // Wangwang ID — look for data-nick / nick attributes, or extract from IM link href
+      // Also check for amos.alicdn links which carry the seller nick
       const wwEl = (
         document.querySelector('[data-nick]') ||
         document.querySelector('[nick]') ||
+        document.querySelector('a[href*="amos.alicdn.com"]') ||
         document.querySelector('a[href*="wangwang"]') ||
         document.querySelector('a[href*="ww.alicdn.com"]') ||
         document.querySelector('[class*="wangwang"]') ||
-        document.querySelector('[class*="contact-btn"]')
+        document.querySelector('[class*="contact"]')
       ) as HTMLElement | null;
 
       let wangwangId = '';
@@ -1915,7 +1925,9 @@ export class Scraper1688 {
                      wwEl.getAttribute('nick') || '';
         if (!wangwangId) {
           const href = (wwEl as HTMLAnchorElement).href || wwEl.getAttribute('href') || '';
-          const nickMatch = href.match(/[?&]nick=([^&]+)/);
+          const nickMatch = href.match(/[?&]nick=([^&]+)/) ||
+                            href.match(/[?&]toNick=([^&]+)/) ||
+                            href.match(/[?&]sellerId=([^&]+)/);
           if (nickMatch) wangwangId = decodeURIComponent(nickMatch[1]);
         }
       }

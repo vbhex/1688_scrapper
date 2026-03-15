@@ -1,5 +1,5 @@
 import mysql, { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
-import { ProductRecord, ProductStatus } from '../models/product';
+import { ProductRecord, ProductStatus, ComplianceCert, SellerContact } from '../models/product';
 import { createChildLogger } from '../utils/logger';
 import { config } from '../config';
 
@@ -70,10 +70,26 @@ async function initializeSchema(): Promise<void> {
         min_order_qty INT DEFAULT 1,
         seller_name VARCHAR(200),
         seller_rating DECIMAL(3,1),
+        seller_id VARCHAR(200),
+        seller_shop_url VARCHAR(500),
+        seller_wangwang_id VARCHAR(200),
         scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
+
+    // Add new seller columns to existing products_raw tables (migration)
+    for (const col of [
+      { name: 'seller_id', def: 'VARCHAR(200)' },
+      { name: 'seller_shop_url', def: 'VARCHAR(500)' },
+      { name: 'seller_wangwang_id', def: 'VARCHAR(200)' },
+    ]) {
+      try {
+        await connection.execute(`ALTER TABLE products_raw ADD COLUMN ${col.name} ${col.def}`);
+      } catch (e: any) {
+        if (!e.message?.includes('Duplicate column')) throw e;
+      }
+    }
 
     await connection.execute(`
       CREATE TABLE IF NOT EXISTS products_images_raw (
@@ -235,6 +251,43 @@ async function initializeSchema(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // ──────────────────────────────────────────────────────────────────
+    // Compliance certs — cert images/docs found on 1688 product pages
+    // ──────────────────────────────────────────────────────────────────
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS compliance_certs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        cert_type VARCHAR(100) NOT NULL COMMENT 'oeko-tex | reach | sgs | gots | iso | ce | unknown',
+        cert_number VARCHAR(200),
+        image_url TEXT,
+        source_url VARCHAR(500),
+        found_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_product_cert (product_id, cert_type),
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // ──────────────────────────────────────────────────────────────────
+    // Compliance contacts — Wangwang outreach tracking per seller
+    // ──────────────────────────────────────────────────────────────────
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS compliance_contacts (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        seller_id VARCHAR(200) NOT NULL UNIQUE,
+        seller_name VARCHAR(500),
+        wangwang_id VARCHAR(200),
+        seller_url VARCHAR(500),
+        product_ids JSON COMMENT 'Array of our internal products.id values from this seller',
+        contact_status ENUM('pending','contacted','responded','certs_received','no_certs') DEFAULT 'pending',
+        message_sent_at TIMESTAMP NULL,
+        response_at TIMESTAMP NULL,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     logger.info('Database schema initialized');
   } finally {
     connection.release();
@@ -290,4 +343,152 @@ export async function getProductStats(): Promise<{
   }
 
   return { total, byStatus };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Compliance functions
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Save seller info (Wangwang ID, shop URL) back onto products_raw.
+ */
+export async function saveSellerInfoOnRaw(
+  productId: number,
+  sellerId: string,
+  shopUrl: string,
+  wangwangId: string
+): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    `UPDATE products_raw
+     SET seller_id = ?, seller_shop_url = ?, seller_wangwang_id = ?
+     WHERE product_id = ?`,
+    [sellerId || null, shopUrl || null, wangwangId || null, productId]
+  );
+}
+
+/**
+ * Upsert a compliance cert found on a 1688 product page.
+ */
+export async function saveComplianceCert(
+  productId: number,
+  certType: string,
+  certNumber?: string,
+  imageUrl?: string,
+  sourceUrl?: string
+): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    `INSERT INTO compliance_certs (product_id, cert_type, cert_number, image_url, source_url)
+     VALUES (?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       cert_number = COALESCE(VALUES(cert_number), cert_number),
+       image_url   = COALESCE(VALUES(image_url), image_url),
+       source_url  = COALESCE(VALUES(source_url), source_url),
+       found_at    = NOW()`,
+    [productId, certType, certNumber || null, imageUrl || null, sourceUrl || null]
+  );
+}
+
+/**
+ * Upsert a compliance contact (one row per 1688 seller).
+ * productIds is merged with any existing product_ids JSON array.
+ */
+export async function saveSellerContact(
+  sellerId: string,
+  sellerName: string,
+  wangwangId: string,
+  sellerUrl: string,
+  newProductIds: number[]
+): Promise<void> {
+  const p = await getPool();
+
+  // Fetch existing product_ids to merge
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT product_ids FROM compliance_contacts WHERE seller_id = ?`,
+    [sellerId]
+  );
+  let merged: number[] = newProductIds;
+  if (rows.length > 0 && rows[0].product_ids) {
+    const existing: number[] = typeof rows[0].product_ids === 'string'
+      ? JSON.parse(rows[0].product_ids)
+      : rows[0].product_ids;
+    merged = Array.from(new Set([...existing, ...newProductIds]));
+  }
+
+  await p.execute(
+    `INSERT INTO compliance_contacts (seller_id, seller_name, wangwang_id, seller_url, product_ids)
+     VALUES (?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       seller_name  = VALUES(seller_name),
+       wangwang_id  = COALESCE(VALUES(wangwang_id), wangwang_id),
+       seller_url   = COALESCE(VALUES(seller_url), seller_url),
+       product_ids  = VALUES(product_ids),
+       updated_at   = NOW()`,
+    [sellerId, sellerName || null, wangwangId || null, sellerUrl || null, JSON.stringify(merged)]
+  );
+}
+
+/**
+ * Get all sellers that still need to be contacted.
+ */
+export async function getPendingContacts(): Promise<SellerContact[]> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT seller_id, seller_name, wangwang_id, seller_url, product_ids
+     FROM compliance_contacts
+     WHERE contact_status = 'pending'
+     ORDER BY created_at ASC`
+  );
+  return rows.map(r => ({
+    sellerId: r.seller_id,
+    sellerName: r.seller_name || '',
+    wangwangId: r.wangwang_id || undefined,
+    sellerUrl: r.seller_url || undefined,
+    productIds: typeof r.product_ids === 'string' ? JSON.parse(r.product_ids) : (r.product_ids || []),
+  }));
+}
+
+/**
+ * Update the status of a compliance contact after messaging.
+ */
+export async function updateContactStatus(
+  sellerId: string,
+  status: 'contacted' | 'responded' | 'certs_received' | 'no_certs',
+  notes?: string
+): Promise<void> {
+  const p = await getPool();
+  const messageSentAt = status === 'contacted' ? new Date() : null;
+  await p.execute(
+    `UPDATE compliance_contacts
+     SET contact_status = ?,
+         message_sent_at = COALESCE(?, message_sent_at),
+         notes = COALESCE(?, notes),
+         updated_at = NOW()
+     WHERE seller_id = ?`,
+    [status, messageSentAt, notes || null, sellerId]
+  );
+}
+
+/**
+ * Fetch products eligible for compliance scanning:
+ * status = 'ae_enriched' AND no seller_id on products_raw yet.
+ */
+export async function getProductsForComplianceScan(limit?: number): Promise<Array<{
+  id: number;
+  id1688: string;
+  url: string;
+}>> {
+  const p = await getPool();
+  const limitClause = limit ? `LIMIT ${limit}` : '';
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT p.id, p.id_1688 AS id1688, p.url
+     FROM products p
+     LEFT JOIN products_raw pr ON pr.product_id = p.id
+     WHERE p.status = 'ae_enriched'
+       AND (pr.seller_id IS NULL OR pr.seller_id = '')
+     ORDER BY p.created_at ASC
+     ${limitClause}`
+  );
+  return rows as Array<{ id: number; id1688: string; url: string }>;
 }

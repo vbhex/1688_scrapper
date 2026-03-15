@@ -1864,6 +1864,227 @@ export class Scraper1688 {
     return detailedProducts;
   }
 
+  // ──────────────────────────────────────────────────────────────────────────
+  // Compliance helpers — call AFTER navigating to a product page
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /**
+   * Extract extended seller info (Wangwang ID, shop URL, seller ID)
+   * from the currently-loaded 1688 product page.
+   */
+  async getSellerInfo(): Promise<{ name: string; sellerId: string; shopUrl: string; wangwangId: string }> {
+    if (!this.page) throw new Error('Browser not initialized');
+
+    return this.page.evaluate(() => {
+      // Seller name
+      const name = (
+        document.querySelector('.company-name')?.textContent ||
+        document.querySelector('[class*="companyName"]')?.textContent ||
+        ''
+      ).trim();
+
+      // Shop link — various 1688 layouts
+      const shopLinkEl = (
+        document.querySelector('a[href*="shop.1688.com"]') ||
+        document.querySelector('a[href*="/merchant/"]') ||
+        document.querySelector('.company-name-wrap a') ||
+        document.querySelector('[class*="shopLink"]')
+      ) as HTMLAnchorElement | null;
+      const shopUrl = shopLinkEl?.href || shopLinkEl?.getAttribute('href') || '';
+
+      // Seller ID from shop URL  — shop.1688.com/shop/123456789.html  or  /merchant/123456789/
+      const sellerIdMatch = shopUrl.match(/\/shop\/(\d+)\.html/) ||
+                            shopUrl.match(/\/merchant\/(\d+)/) ||
+                            shopUrl.match(/shopId=(\d+)/);
+      const sellerId = sellerIdMatch?.[1] || '';
+
+      // Wangwang ID from the IM/chat widget — look for data-nick or nick attributes
+      // or extract from the href of the wangwang chat button
+      const wwEl = (
+        document.querySelector('[data-nick]') ||
+        document.querySelector('[nick]') ||
+        document.querySelector('a[href*="wangwang"]') ||
+        document.querySelector('a[href*="ww.alicdn.com"]') ||
+        document.querySelector('[class*="wangwang"]') ||
+        document.querySelector('[class*="contact-btn"]')
+      ) as HTMLElement | null;
+
+      let wangwangId = '';
+      if (wwEl) {
+        wangwangId = wwEl.getAttribute('data-nick') ||
+                     wwEl.getAttribute('nick') || '';
+        if (!wangwangId) {
+          const href = (wwEl as HTMLAnchorElement).href || wwEl.getAttribute('href') || '';
+          const nickMatch = href.match(/[?&]nick=([^&]+)/);
+          if (nickMatch) wangwangId = decodeURIComponent(nickMatch[1]);
+        }
+      }
+
+      return { name, sellerId, shopUrl, wangwangId };
+    });
+  }
+
+  /**
+   * Scan the currently-loaded product page for compliance certifications.
+   * Returns an array of certs found (may be empty).
+   */
+  async scanProductCerts(productUrl: string): Promise<Array<{
+    certType: string;
+    certNumber?: string;
+    imageUrl?: string;
+    sourceUrl: string;
+  }>> {
+    if (!this.page) throw new Error('Browser not initialized');
+
+    const certKeywords: Record<string, string[]> = {
+      'oeko-tex':  ['oeko-tex', 'oekotex', 'oeko tex', 'standard 100', 'bluesign', 'gots'],
+      'reach':     ['reach', 'svhc', 'rohs'],
+      'sgs':       ['sgs认证', 'sgs test', 'sgs report'],
+      'gots':      ['gots', 'global organic textile'],
+      'iso':       ['iso 9001', 'iso 14001', 'iso9001'],
+      'ce':        ['ce认证', 'ce certification', 'ce marked', 'ce mark'],
+    };
+
+    return this.page.evaluate((keywords: Record<string, string[]>, url: string) => {
+      const certs: Array<{ certType: string; certNumber?: string; imageUrl?: string; sourceUrl: string }> = [];
+      const pageText = (document.body?.innerText || '').toLowerCase();
+
+      // Description section images (most likely to contain cert logos)
+      const descImgs = Array.from(document.querySelectorAll(
+        '.module-od-product-description img, [class*="description"] img, ' +
+        '.detail-desc img, [class*="detailImg"] img, [class*="desc-img"] img'
+      )) as HTMLImageElement[];
+
+      for (const [certType, terms] of Object.entries(keywords)) {
+        const textHit = terms.some(t => pageText.includes(t.toLowerCase()));
+        if (!textHit) continue;
+
+        const cert: { certType: string; certNumber?: string; imageUrl?: string; sourceUrl: string } = {
+          certType,
+          sourceUrl: url,
+        };
+
+        // Try to find a cert-specific image
+        const certImg = descImgs.find(img => {
+          const src = (img.src || img.getAttribute('data-src') || '').toLowerCase();
+          const alt = (img.alt || '').toLowerCase();
+          return terms.some(t => src.includes(t.toLowerCase()) || alt.includes(t.toLowerCase()));
+        });
+        if (certImg) {
+          cert.imageUrl = certImg.src || certImg.getAttribute('data-src') || undefined;
+        }
+
+        // Try to extract cert number (OEKO-TEX format: XX.XXX.XXXX)
+        const certNumMatch = pageText.match(/\b(\d{2,3}\.\d{3,4}\.\d{4,6})\b/);
+        if (certNumMatch && certType === 'oeko-tex') {
+          cert.certNumber = certNumMatch[1];
+        }
+
+        certs.push(cert);
+      }
+      return certs;
+    }, certKeywords, productUrl);
+  }
+
+  /**
+   * Navigate to a seller's 1688 shop and send a Wangwang IM message requesting cert docs.
+   * Returns true if message was sent, false if the chat window couldn't be opened.
+   */
+  async sendWangwangMessage(sellerUrl: string, message: string): Promise<boolean> {
+    if (!this.page) throw new Error('Browser not initialized');
+
+    logger.info('Navigating to seller shop for Wangwang message', { sellerUrl });
+
+    try {
+      await this.page.goto(sellerUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+      await randomDelay(2000, 4000);
+      await this.humanMouseMove(this.page);
+
+      // Locate the Wangwang / contact chat button on the seller's shop page
+      const chatBtnSelectors = [
+        'a[href*="wangwang"]',
+        'a[href*="ww.alicdn.com"]',
+        '[class*="wangwang"]',
+        '[class*="contact-btn"]',
+        '[class*="ContactBtn"]',
+        '.contact-supplier',
+        '[data-nick]',
+      ];
+
+      let chatBtn: any = null;
+      for (const sel of chatBtnSelectors) {
+        chatBtn = await this.page.$(sel);
+        if (chatBtn) {
+          logger.debug('Found chat button', { selector: sel });
+          break;
+        }
+      }
+
+      if (!chatBtn) {
+        logger.warn('Could not find Wangwang chat button on seller page', { sellerUrl });
+        return false;
+      }
+
+      // Click the chat button — this usually opens a new tab or overlay
+      await chatBtn.click();
+      await sleep(3000);
+
+      // Check if a new tab opened (Wangwang web client)
+      const pages = await this.browser!.pages();
+      const chatPage = pages.length > 1 ? pages[pages.length - 1] : this.page;
+
+      // Wait for the chat input to appear
+      const inputSelectors = [
+        'textarea[class*="input"]',
+        '[contenteditable="true"]',
+        '.im-input',
+        '[class*="chatInput"]',
+        '[class*="message-input"]',
+      ];
+
+      let inputEl: any = null;
+      for (const sel of inputSelectors) {
+        try {
+          await chatPage.waitForSelector(sel, { timeout: 8000 });
+          inputEl = await chatPage.$(sel);
+          if (inputEl) break;
+        } catch {
+          continue;
+        }
+      }
+
+      if (!inputEl) {
+        logger.warn('Could not find chat input field', { sellerUrl });
+        return false;
+      }
+
+      // Type the message with human-like pacing
+      await inputEl.click();
+      await randomDelay(500, 1000);
+      await this.humanType(chatPage, message);
+      await randomDelay(800, 1500);
+
+      // Send with Enter key
+      await chatPage.keyboard.press('Enter');
+      await randomDelay(1000, 2000);
+
+      logger.info('Wangwang message sent', { sellerUrl });
+
+      // If a separate chat tab was opened, close it and return to main page
+      if (chatPage !== this.page) {
+        await chatPage.close();
+      }
+
+      return true;
+    } catch (error) {
+      logger.error('Failed to send Wangwang message', {
+        sellerUrl,
+        error: (error as Error).message,
+      });
+      return false;
+    }
+  }
+
   async close(): Promise<void> {
     if (this.browser) {
       await this.browser.close();

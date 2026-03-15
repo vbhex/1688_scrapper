@@ -7,6 +7,26 @@ export interface SellerInfo {
   name: string;
   rating?: number;
   transactionCount?: number;
+  sellerId?: string;      // numeric shop ID extracted from shop URL
+  shopUrl?: string;       // full URL to seller's 1688 storefront
+  wangwangId?: string;    // Wangwang IM handle (旺旺 ID)
+}
+
+export type CertType = 'oeko-tex' | 'reach' | 'sgs' | 'gots' | 'iso' | 'ce' | 'unknown';
+
+export interface ComplianceCert {
+  certType: CertType;
+  certNumber?: string;
+  imageUrl?: string;
+  sourceUrl: string;
+}
+
+export interface SellerContact {
+  sellerId: string;
+  sellerName: string;
+  wangwangId?: string;
+  sellerUrl?: string;
+  productIds: number[];
 }
 
 export interface VariantOption {

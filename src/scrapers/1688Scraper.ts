@@ -25,12 +25,13 @@ const COOKIES_FILE = path.join(COOKIES_DIR, '1688-cookies.json');
 const categoryKeywords: Record<string, string> = {
   // ── Clothing & Apparel — Women's ─────────────────────────────────────────
   // OPPORTUNITY CATEGORIES (low AliExpress competition — platform has few sellers):
-  'womens skirts':    '女士半身裙',          // skirts → AE Skirts sheet — moderate competition
-  'womens jumpsuits': '女士连体裤',          // jumpsuits/rompers → AE Jumpsuits — low competition
-  'womens blazers':   '女士西装外套',        // blazer/suit jackets → AE Blazers — professional niche
-  'womens leggings':  '女士瑜伽裤',          // yoga/fitness leggings → AE Leggings — active niche
-  'womens sleepwear': '女士睡衣套装',        // pajamas/loungewear → AE NightgownsSleepshirts — low comp.
-  'womens cardigan':  '女士针织开衫',        // knitwear cardigans → AE Cardigan — seasonal, niche
+  // 外贸/速卖通 suffix targets export-oriented sellers with clean white-background photos (no Chinese text).
+  'womens skirts':    '女士半身裙 外贸款',       // export-style skirts → AE Skirts
+  'womens jumpsuits': '女士连体裤 速卖通外贸',   // export jumpsuits/rompers → AE Jumpsuits
+  'womens blazers':   '速卖通女士西装外套',      // export blazers → AE Blazers
+  'womens leggings':  '外贸瑜伽裤女',           // export yoga/fitness leggings → AE Leggings
+  'womens sleepwear': '睡衣套装 外贸款',        // export pajamas/loungewear → AE NightgownsSleepshirts
+  'womens cardigan':  '针织开衫 速卖通外贸',     // export knitwear cardigans → AE Cardigan
   // Broad categories (still OK — enough natural variety to pass duplicate check):
   'womens dresses':   '连衣裙',             // → AE Dresses — sub-types vary enough
   'womens jackets':   '女士外套',           // → AE Jackets — outerwear is unique by design
@@ -42,15 +43,16 @@ const categoryKeywords: Record<string, string> = {
 
   // ── Clothing & Apparel — Men's ───────────────────────────────────────────
   // OPPORTUNITY CATEGORIES:
-  'mens polo':        '男士Polo衫',          // polo shirts → AE PoloShirts — less generic than tees
-  'mens shorts':      '男士休闲短裤',        // casual shorts → AE Shorts — seasonal, spring/summer
-  'mens suits':       '男士西装套装',        // suit sets → AE Suits — professional, low reseller count
-  'mens cargo':       '男士工装裤',          // cargo pants → AE CargoPants — trending utility niche
+  // 外贸/速卖通 suffix targets export-oriented sellers with clean white-background photos (no Chinese text).
+  'mens polo':        '外贸Polo衫男',           // export polo shirts → AE PoloShirts
+  'mens shorts':      '男士短裤 速卖通外贸款',   // export casual shorts → AE Shorts
+  'mens suits':       '西装套装 速卖通外贸',     // export suit sets → AE Suits
+  'mens cargo':       '男士工装裤 速卖通外贸款', // export cargo pants → AE CargoPants
   // Broad (still OK — natural variety):
   'mens shirts':      '男士花衬衫',         // patterned/Hawaiian shirts → AE Shirts — distinctive
 
   // ── Unisex ───────────────────────────────────────────────────────────────
-  'denim jackets':    '男女牛仔外套',        // denim jackets (unisex) → AE DenimJacket — specific item
+  'denim jackets':    '牛仔外套 速卖通外贸款',   // export denim jackets (unisex) → AE DenimJacket
 
   // ── REMOVED (AliExpress "too many similar products" rejection) ────────────
   // 'womens tops'    → WomensTops/TShirts — millions of sellers

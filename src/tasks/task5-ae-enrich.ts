@@ -26,12 +26,13 @@ function log(msg: string) {
 
 /**
  * Check if a product has ANY gallery images with Chinese text.
- * Returns { hasChinese: boolean, totalGallery: number, chineseCount: number }
+ * Returns { hasChinese, totalGallery, chineseCount, cleanCount }
  */
 async function checkProductImagesChinese(productId: number): Promise<{
   hasChinese: boolean;
   totalGallery: number;
   chineseCount: number;
+  cleanCount: number;
 }> {
   const pool = await getPool();
   const [rows] = await pool.execute<RowDataPacket[]>(
@@ -44,11 +45,13 @@ async function checkProductImagesChinese(productId: number): Promise<{
 
   const totalGallery = rows.length;
   const chineseCount = rows.filter(r => r.has_chinese_text).length;
+  const cleanCount = totalGallery - chineseCount;
 
   return {
     hasChinese: chineseCount > 0,
     totalGallery,
     chineseCount,
+    cleanCount,
   };
 }
 
@@ -177,9 +180,15 @@ async function main() {
         );
         await updateStatus(prod.id, 'ae_enriched' as ProductStatus);
         enriched++;
+      } else if (imgCheck.cleanCount >= 3) {
+        // ─── NO AE MATCH BUT ENOUGH CLEAN IMAGES: advance using clean 1688 images ───
+        log(`  No AE match, but ${imgCheck.cleanCount} clean gallery images available — advancing with clean images`);
+        await saveAeMatch(prod.id, false); // hasChinese=false → import uses clean images
+        await updateStatus(prod.id, 'ae_enriched' as ProductStatus);
+        directPass++;
       } else {
-        // ─── NOT FOUND ON AE: skip product ───
-        log(`  No AE match found (best score: ${match.matchScore}) — skipping product`);
+        // ─── NOT FOUND ON AE AND TOO FEW CLEAN IMAGES: skip ───
+        log(`  No AE match, only ${imgCheck.cleanCount} clean images (need 3) — skipping`);
         await saveAeMatch(prod.id, true);
         await updateStatus(
           prod.id,

@@ -342,7 +342,7 @@ export class Scraper1688 {
     try {
       // Navigate to 1688 work page - it will redirect to login
       await this.page.goto('https://work.1688.com/', {
-        waitUntil: 'networkidle2',
+        waitUntil: 'domcontentloaded',
         timeout: 60000,
       });
 
@@ -482,9 +482,10 @@ export class Scraper1688 {
     try {
       // Navigate to 1688 My Alibaba page - it will redirect to login if not authenticated
       await this.page.goto('https://work.1688.com/', {
-        waitUntil: 'networkidle2',
+        waitUntil: 'domcontentloaded',
         timeout: 60000,
       });
+      await sleep(3000); // Let any JS-driven redirects settle before evaluating
 
       await randomDelay(3000, 5000);
 
@@ -618,7 +619,7 @@ export class Scraper1688 {
 
       // Verify login by navigating to 1688 and checking for logged-in state
       await this.page.goto('https://www.1688.com', {
-        waitUntil: 'networkidle2',
+        waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
 
@@ -938,7 +939,7 @@ export class Scraper1688 {
     try {
       // Navigate to 1688 homepage and type Chinese keywords into search bar
       await this.page.goto('https://www.1688.com', {
-        waitUntil: 'networkidle2',
+        waitUntil: 'domcontentloaded',
         timeout: 60000,
       });
 
@@ -1065,7 +1066,7 @@ export class Scraper1688 {
         logger.info('Switched to new search results tab', { tabs: allPages.length });
       }
 
-      await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {
+      await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {
         logger.warn('Navigation wait timed out, continuing');
       });
 
@@ -1195,7 +1196,7 @@ export class Scraper1688 {
         }
 
         // Wait for page to load after clicking next
-        await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {
+        await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {
           logger.warn('Next page navigation timed out');
         });
 
@@ -1693,7 +1694,7 @@ export class Scraper1688 {
         if (state.isCaptcha) {
           logger.warn('CAPTCHA detected, waiting 15s and reloading...', { id: product.id1688, attempt });
           await sleep(15000);
-          await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
+          await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
           continue;
         }
 
@@ -2068,7 +2069,7 @@ export class Scraper1688 {
     logger.info('Navigating to seller shop for Wangwang message', { sellerUrl });
 
     try {
-      await this.page.goto(sellerUrl, { waitUntil: 'networkidle2', timeout: 60000 });
+      await this.page.goto(sellerUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
       await randomDelay(2000, 4000);
       await this.humanMouseMove(this.page);
 

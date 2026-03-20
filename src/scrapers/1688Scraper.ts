@@ -35,13 +35,13 @@ const categoryKeywords: Record<string, string> = {
   // ── Hats & Caps (AE L1: Apparel Accessories) ──────────────────────────────
   'bucket hats':          '渔夫帽 男女 一件代发',         // → BucketHats
   'baseball caps':        '棒球帽 时尚 一件代发',         // → BaseballCaps
-  'beanies':              '针织帽 男女 一件代发',         // → Hats
-  'cowboy hats':          '牛仔帽 男女 外贸',             // → CowboyHats
+  'beanies':              '针织帽 男女款 外贸',           // → Hats (一件代发 returns 0)
+  'cowboy hats':          '西部牛仔帽 外贸出口',         // → CowboyHats (牛仔帽 一件代发 returns 0)
 
   // ── Scarves & Wraps (AE L1: Apparel Accessories) ──────────────────────────
-  'silk scarves':         '真丝丝巾 女士 一件代发',       // → SilkScarves
-  'winter scarves':       '针织围巾 男女 一件代发',       // → Scarves
-  'sun scarves':          '防晒丝巾 夏季 一件代发',       // → SunProtectiveScarf
+  'silk scarves':         '女士真丝围巾 外贸出口',        // → SilkScarves (一件代发 only 2 results)
+  'winter scarves':       '冬季针织围巾 男女 外贸',       // → Scarves
+  'sun scarves':          '防晒围巾 夏季 外贸出口',       // → SunProtectiveScarf
 
   // ── Hair Accessories (AE L1: Apparel Accessories) ─────────────────────────
   'hair claws':           '鲨鱼夹 发夹 一件代发',        // → HairClaw

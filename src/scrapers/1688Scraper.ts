@@ -33,65 +33,65 @@ const categoryKeywords: Record<string, string> = {
   'digital watches':      '数字运动手表 速卖通外贸款',   // → DigitalWristwatches
 
   // ── Hats & Caps (AE L1: Apparel Accessories) ──────────────────────────────
-  'bucket hats':          '渔夫帽 男女 速卖通外贸款',    // → BucketHats
-  'baseball caps':        '棒球帽 时尚 速卖通外贸款',    // → BaseballCaps
-  'beanies':              '针织帽 男女 速卖通外贸款',    // → Hats
-  'cowboy hats':          '牛仔帽 速卖通外贸款',         // → CowboyHats
+  'bucket hats':          '渔夫帽 男女 一件代发',         // → BucketHats
+  'baseball caps':        '棒球帽 时尚 一件代发',         // → BaseballCaps
+  'beanies':              '针织帽 男女 一件代发',         // → Hats
+  'cowboy hats':          '牛仔帽 男女 外贸',             // → CowboyHats
 
   // ── Scarves & Wraps (AE L1: Apparel Accessories) ──────────────────────────
-  'silk scarves':         '真丝丝巾 女士 速卖通外贸款',  // → SilkScarves
-  'winter scarves':       '针织围巾 男女 速卖通外贸款',  // → Scarves
-  'sun scarves':          '防晒丝巾 夏季 速卖通外贸款',  // → SunProtectiveScarf
+  'silk scarves':         '真丝丝巾 女士 一件代发',       // → SilkScarves
+  'winter scarves':       '针织围巾 男女 一件代发',       // → Scarves
+  'sun scarves':          '防晒丝巾 夏季 一件代发',       // → SunProtectiveScarf
 
   // ── Hair Accessories (AE L1: Apparel Accessories) ─────────────────────────
-  'hair claws':           '鲨鱼夹 发夹 速卖通外贸款',   // → HairClaw
-  'hair pins':            '发夹 发卡 时尚 速卖通外贸',   // → HairPin
-  'hair accessories set': '发饰套装 速卖通外贸款',       // → HairAccessoriesSet
+  'hair claws':           '鲨鱼夹 发夹 一件代发',        // → HairClaw
+  'hair pins':            '发夹 发卡 时尚 一件代发',      // → HairPin
+  'hair accessories set': '发饰套装 一件代发',            // → HairAccessoriesSet
 
   // ── Eyewear (AE L1: Apparel Accessories) ──────────────────────────────────
-  'blue light glasses':   '防蓝光眼镜 平光镜 速卖通外贸',  // → BlueLightBlockingGlasses
-  'reading glasses':      '老花眼镜 时尚 速卖通外贸款',    // → ReadingGlasses
-  'optical frames':       '光学眼镜框 超轻 速卖通外贸',    // → EyeglassesFrames
-  'polarized sunglasses': '偏光太阳镜 男女 速卖通外贸款',  // → Sunglasses
-  'sports sunglasses':    '运动太阳镜 骑行 速卖通外贸款',  // → SportsSunglasses
+  'blue light glasses':   '防蓝光眼镜 平光镜 一件代发',  // → BlueLightBlockingGlasses
+  'reading glasses':      '老花眼镜 时尚 一件代发',       // → ReadingGlasses
+  'optical frames':       '光学眼镜框 超轻 一件代发',     // → EyeglassesFrames
+  'polarized sunglasses': '偏光太阳镜 男女 一件代发',     // → Sunglasses
+  'sports sunglasses':    '运动太阳镜 骑行 一件代发',     // → SportsSunglasses
 
   // ── Belts & Gloves (AE L1: Apparel Accessories) ───────────────────────────
-  'fashion belts':        '时尚皮带 男女 速卖通外贸款',   // → Belts
-  'fashion gloves':       '时尚手套 冬季 速卖通外贸款',   // → GlovesMittens
+  'fashion belts':        '时尚皮带 男女 一件代发',       // → Belts
+  'fashion gloves':       '时尚手套 冬季 一件代发',       // → GlovesMittens
 
   // ── Jewelry & Accessories (AE L1: Jewelry & Accessories) ──────────────────
-  'fashion earrings':     '时尚耳环 女士 速卖通外贸款',   // → Earrings
-  'fashion bracelets':    '时尚手链 速卖通外贸款',        // → Bracelets
-  'fashion necklaces':    '时尚项链 女士 速卖通外贸款',   // → Necklaces
-  'fashion rings':        '时尚戒指 速卖通外贸款',        // → Rings
-  'fashion anklets':      '时尚脚链 速卖通外贸款',        // → Anklets
+  'fashion earrings':     '时尚耳环 女士 一件代发',       // → Earrings
+  'fashion bracelets':    '时尚手链 一件代发',            // → Bracelets
+  'fashion necklaces':    '时尚项链 女士 一件代发',       // → Necklaces
+  'fashion rings':        '时尚戒指 一件代发',            // → Rings
+  'fashion anklets':      '时尚脚链 一件代发',            // → Anklets
 
   // ── Luggage & Bags (AE L1: Luggage & Bags) ───────────────────────────────
-  'fashion backpacks':    '时尚双肩包 速卖通外贸款',      // → Backpacks
-  'fashion wallets':      '时尚钱包 男女 速卖通外贸款',   // → Wallets
-  'waist packs':          '腰包 男女 速卖通外贸款',       // → WaistPacks
-  'coin purses':          '零钱包 可爱 速卖通外贸款',     // → CoinPurses
+  'fashion backpacks':    '时尚双肩包 一件代发',          // → Backpacks
+  'fashion wallets':      '时尚钱包 男女 一件代发',       // → Wallets
+  'waist packs':          '腰包 男女 一件代发',           // → WaistPacks
+  'coin purses':          '零钱包 可爱 一件代发',         // → CoinPurses
 
   // ── Shoes (AE L1: Shoes) ─────────────────────────────────────────────────
-  'womens fashion shoes': '女士时尚单鞋 速卖通外贸款',    // → WomensShoes
-  'mens casual shoes':    '男士休闲鞋 速卖通外贸款',      // → MensShoes
-  'sneakers':             '运动鞋 男女 速卖通外贸款',      // → Sneakers
+  'womens fashion shoes': '女士时尚单鞋 一件代发',        // → WomensShoes
+  'mens casual shoes':    '男士休闲鞋 一件代发',          // → MensShoes
+  'sneakers':             '运动鞋 男女 一件代发',          // → Sneakers
 
   // ── Underwear (AE L1: Underwear) ─────────────────────────────────────────
-  'fashion socks':        '时尚袜子 男女 速卖通外贸款',   // → Socks
-  'mens underwear':       '男士内裤 莫代尔 速卖通外贸款', // → MensUnderwear
-  'womens bras':          '女士文胸 无钢圈 速卖通外贸款', // → WomensBras
+  'fashion socks':        '时尚袜子 男女 一件代发',       // → Socks
+  'mens underwear':       '男士内裤 莫代尔 一件代发',     // → MensUnderwear
+  'womens bras':          '女士文胸 无钢圈 一件代发',     // → WomensBras
 
   // ── Sports & Entertainment (AE L1: Sports & Entertainment) ───────────────
-  'ab rollers':           '腹肌滚轮 健身 速卖通外贸款',   // → AbRollers
-  'resistance bands':     '弹力带 健身 速卖通外贸款',     // → ResistanceBands
-  'jump ropes':           '跳绳 速卖通外贸款',            // → JumpRopes
-  'yoga mats':            '瑜伽垫 防滑 速卖通外贸款',     // → YogaMats
-  'fitness gloves':       '健身手套 速卖通外贸款',        // → FitnessGloves
-  'water bottles':        '运动水杯 健身 速卖通外贸款',   // → WaterBottles
+  'ab rollers':           '腹肌滚轮 健身 一件代发',       // → AbRollers
+  'resistance bands':     '弹力带 健身 一件代发',         // → ResistanceBands
+  'jump ropes':           '跳绳 一件代发',                // → JumpRopes
+  'yoga mats':            '瑜伽垫 防滑 一件代发',         // → YogaMats
+  'fitness gloves':       '健身手套 一件代发',            // → FitnessGloves
+  'water bottles':        '运动水杯 健身 一件代发',       // → WaterBottles
 
   // ── Mother & Kids (AE L1: Mother & Kids) ─────────────────────────────────
-  'family matching outfits': '亲子装 速卖通外贸款',       // → FamilyMatchingOutfits
+  'family matching outfits': '亲子装 一件代发',           // → FamilyMatchingOutfits
 
   // ── RED OCEAN — DO NOT USE (Women's Clothing + Men's Clothing L1) ──────────
   // All categories below are permanently retired. Kept as legacy keywords ONLY

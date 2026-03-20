@@ -480,6 +480,10 @@ export class Scraper1688 {
     }
 
     try {
+      // Clear any in-progress navigation from session validation to avoid frame detachment
+      await this.page.goto('about:blank', { waitUntil: 'load', timeout: 10000 }).catch(() => {});
+      await sleep(500);
+
       // Navigate to 1688 My Alibaba page - it will redirect to login if not authenticated
       await this.page.goto('https://work.1688.com/', {
         waitUntil: 'domcontentloaded',

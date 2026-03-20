@@ -28,10 +28,10 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 
 | Machine | IP | Role | Tasks |
 |---------|-----|------|-------|
-| **China MacBook** | `192.168.31.5` (static) | Inside China firewall, primary scraping | Tasks 1-4 (using Baidu/Tesseract) |
+| **China MacBook** | `config/china-macbook.env` | Inside China firewall, primary scraping | Tasks 1-4 (using Baidu/Tesseract) |
 | **Main Computer** | localhost | Outside China firewall | Tasks 3-4 (using Google APIs) |
 
-- SSH: `blueidea@192.168.31.5`, password `112233`
+- SSH: see root `config/china-macbook.env`
 - SSH flags needed: `-o PreferredAuthentications=password -o PubkeyAuthentication=no`
 - Remote commands need: `export PATH=/opt/homebrew/bin:$PATH && source ~/.nvm/nvm.sh`
 - MySQL runs on China MacBook: root / `***REMOVED***`, database `1688_source`
@@ -140,8 +140,67 @@ This rule is enforced by Task 5 (AE Enrichment). The old image translation appro
 
 ## Database Schema (`1688_source`)
 
+### Multi-Store Architecture — `product_store_targets`
+
+Every product is scraped for a specific platform store. The `product_store_targets` table maps products to their target stores and tracks per-store export status.
+
+```sql
+CREATE TABLE IF NOT EXISTS product_store_targets (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  product_id       INT NOT NULL,
+  platform         VARCHAR(50) NOT NULL,     -- 'aliexpress' | 'amazon' | 'etsy' | 'ebay'
+  store_id         VARCHAR(100) NOT NULL,    -- platform store ID (e.g., '2087779' for AliExpress)
+  blue_ocean_category VARCHAR(200),          -- CLI category from the store's blue-ocean file
+  status           VARCHAR(50) DEFAULT 'pending',  -- 'pending' | 'exported' | 'listed'
+  created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_product_store (product_id, platform, store_id),
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+```
+
+**When to populate**: Task 1 (discover) should insert a row here for every discovered product, tagging it with `platform='aliexpress'`, `store_id='2087779'` (or the relevant store). Downstream listing tasks update `status` to `exported` / `listed`.
+
+**Convenience columns on `products`**: For the common single-store case, `products` also has:
+- `target_platform VARCHAR(50)` — primary target platform (default: `aliexpress`)
+- `target_store_id VARCHAR(100)` — primary target store ID (default: `2087779`)
+
+These are redundant with `product_store_targets` but simplify queries in single-store contexts.
+
+**Migration** (run on China MacBook MySQL):
+```sql
+-- Add convenience columns to products table
+ALTER TABLE products
+  ADD COLUMN IF NOT EXISTS target_platform VARCHAR(50) DEFAULT 'aliexpress',
+  ADD COLUMN IF NOT EXISTS target_store_id  VARCHAR(100) DEFAULT '2087779';
+
+-- Create store targets table
+CREATE TABLE IF NOT EXISTS product_store_targets (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  product_id       INT NOT NULL,
+  platform         VARCHAR(50) NOT NULL,
+  store_id         VARCHAR(100) NOT NULL,
+  blue_ocean_category VARCHAR(200),
+  status           VARCHAR(50) DEFAULT 'pending',
+  created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_product_store (product_id, platform, store_id),
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+```
+
+### Active Store IDs
+
+| Platform | Store ID | Main Category |
+|----------|----------|---------------|
+| AliExpress | `2087779` | Clothing & Apparel + Accessories |
+| Amazon | PENDING | 3C / Consumer Electronics |
+
+Blue-ocean category files: `documents/{platform}-store/{platform}-{store-id}-blue-ocean-categories.md`
+
+---
+
 ### `products` (main table, tracks status)
 - `id`, `id_1688` (unique), `status`, `url`, `title_zh`, `category`, `thumbnail_url`
+- `target_platform` (default: `aliexpress`), `target_store_id` (default: `2087779`) — primary target store
 - `raw_data` (JSON, legacy — normalized tables are the source of truth)
 - Status flow: `discovered` → `detail_scraped` → `images_checked` → `translated` → `ae_enriched`
 

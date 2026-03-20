@@ -61,7 +61,7 @@ async function main(): Promise<void> {
 
   logger.info(`Found ${products.length} products to scrape details for`);
 
-  const scraper = await create1688Scraper(headless);
+  let scraper = await create1688Scraper(headless);
   let scraped = 0;
   let failed = 0;
 
@@ -311,11 +311,48 @@ async function main(): Promise<void> {
         });
 
       } catch (error) {
-        logger.error('Failed to scrape product', {
-          id: prod.id1688,
-          error: (error as Error).message,
-        });
-        await updateStatus(prod.id, 'failed', (error as Error).message);
+        const msg = (error as Error).message || '';
+        logger.error('Failed to scrape product', { id: prod.id1688, error: msg });
+
+        // Detached frame = browser page crashed. Recreate scraper and retry once.
+        if (msg.includes('detached Frame') || msg.includes('detached frame') || msg.includes('Target closed') || msg.includes('Session closed')) {
+          logger.warn('Browser frame detached, recreating scraper and retrying...', { id: prod.id1688 });
+          try {
+            await scraper.close().catch(() => {});
+            scraper = await create1688Scraper(headless);
+            const reloggedIn = await scraper.login();
+            if (reloggedIn) {
+              const basicProduct2: ScrapedProduct = {
+                id1688: prod.id1688, title: prod.titleZh, description: '',
+                priceCNY: 0, images: [], specifications: [], seller: { name: '' },
+                category: prod.category, minOrderQty: 1, url: prod.url, scrapedAt: new Date(),
+              };
+              const detailed2 = await scraper.getProductDetails(basicProduct2);
+              await deleteImagesRaw(prod.id);
+              await deleteVariantsRaw(prod.id);
+              await deleteProductVariants(prod.id);
+              await insertProductRaw({
+                productId: prod.id, titleZh: detailed2.title, descriptionZh: detailed2.description,
+                specificationsZh: detailed2.specifications, priceCny: detailed2.priceCNY,
+                minOrderQty: detailed2.minOrderQty, sellerName: detailed2.seller.name, sellerRating: detailed2.seller.rating || 0,
+              });
+              const images2: RawImage[] = detailed2.images.map((url, i) => ({
+                productId: prod.id, imageUrl: get1688FullImageUrl(url), imageType: 'gallery' as const, sortOrder: i,
+              }));
+              if (images2.length > 0) await insertImagesRaw(images2);
+              const p2 = await getPool();
+              await p2.execute('UPDATE products SET title_zh = ? WHERE id = ?', [detailed2.title, prod.id]);
+              await updateStatus(prod.id, 'detail_scraped');
+              scraped++;
+              logger.info('Retry succeeded after browser recreate', { id: prod.id1688, images: images2.length });
+              continue;
+            }
+          } catch (retryErr) {
+            logger.error('Retry after browser recreate also failed', { id: prod.id1688, error: (retryErr as Error).message });
+          }
+        }
+
+        await updateStatus(prod.id, 'failed', msg);
         failed++;
       }
     }

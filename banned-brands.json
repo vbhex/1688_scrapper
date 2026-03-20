@@ -1,11 +1,11 @@
 {
   "_comment": "Banned brand keywords — edit this file to add/remove brands without touching source code or rebuilding.",
   "_note": "All matching is case-insensitive substring. Keep all values lowercase. Chinese keywords are also supported.",
-  "_updated": "2026-03-11 — Added Chinese brand name variants, workwear/streetwear brands, design-pattern indicators, and broader sports leagues to reduce IP violation risk.",
+  "_updated": "2026-03-15 — Added magsafe (Apple accessory), hyundai/kia/bmw/mercedes/toyota/honda (automotive). TENCEL/NASA/Ralph Lauren were already present.",
   "categories": {
     "electronics_3c": [
       "apple", "iphone", "ipad", "ipod", "airpods", "airpod", "inpods", "macbook",
-      "imac", "mac mini", "mac pro", "apple watch", "homepod", "airtag",
+      "imac", "mac mini", "mac pro", "apple watch", "homepod", "airtag", "magsafe",
       "huaqiangbei", "samsung", "galaxy buds", "galaxy watch", "galaxy tab",
       "sony", "playstation", "walkman", "xperia", "wf-1000", "wh-1000",
       "google pixel", "pixel buds", "chromecast", "nest hub",
@@ -89,7 +89,8 @@
     ],
     "automotive": [
       "ferrari", "lamborghini", "porsche", "mclaren", "bugatti",
-      "harley-davidson", "harley davidson", "harley"
+      "harley-davidson", "harley davidson", "harley",
+      "hyundai", "kia", "bmw", "mercedes", "toyota", "honda"
     ],
     "lifestyle_entertainment": [
       "playboy", "coca-cola", "pepsi", "coca cola",

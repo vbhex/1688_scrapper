@@ -44,7 +44,7 @@ const categoryKeywords: Record<string, string> = {
   'sun scarves':          '防晒围巾 夏季 外贸出口',       // → SunProtectiveScarf
 
   // ── Hair Accessories (AE L1: Apparel Accessories) ─────────────────────────
-  'hair claws':           '鲨鱼夹 发夹 一件代发',        // → HairClaw
+  'hair claws':           '鲨鱼夹 外贸出口',              // → HairClaw (鲨鱼夹 发夹 一件代发 returns 0)
   'hair pins':            '发夹 发卡 时尚 一件代发',      // → HairPin
   'hair accessories set': '发饰套装 一件代发',            // → HairAccessoriesSet
 
@@ -53,11 +53,11 @@ const categoryKeywords: Record<string, string> = {
   'reading glasses':      '老花眼镜 时尚 一件代发',       // → ReadingGlasses
   'optical frames':       '光学眼镜框 超轻 一件代发',     // → EyeglassesFrames
   'polarized sunglasses': '偏光太阳镜 男女 一件代发',     // → Sunglasses
-  'sports sunglasses':    '运动太阳镜 骑行 一件代发',     // → SportsSunglasses
+  'sports sunglasses':    '骑行墨镜 运动 外贸出口',       // → SportsSunglasses (运动太阳镜 骑行 一件代发 returns 0)
 
   // ── Belts & Gloves (AE L1: Apparel Accessories) ───────────────────────────
-  'fashion belts':        '时尚皮带 男女 一件代发',       // → Belts
-  'fashion gloves':       '时尚手套 冬季 一件代发',       // → GlovesMittens
+  'fashion belts':        '时尚腰带 外贸出口',            // → Belts (时尚皮带 男女 一件代发 returns 0)
+  'fashion gloves':       '针织手套 外贸出口',            // → GlovesMittens (时尚手套 冬季 一件代发 returns 0)
 
   // ── Jewelry & Accessories (AE L1: Jewelry & Accessories) ──────────────────
   'fashion earrings':     '时尚耳环 女士 一件代发',       // → Earrings

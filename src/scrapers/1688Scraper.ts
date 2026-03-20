@@ -489,12 +489,16 @@ export class Scraper1688 {
         waitUntil: 'domcontentloaded',
         timeout: 60000,
       });
-      await sleep(3000); // Let any JS-driven redirects settle before evaluating
+      await sleep(5000); // Let redirect chain settle; page may navigate several times
 
-      await randomDelay(3000, 5000);
+      // Check if page is still open after redirects
+      if (!this.page || this.page.isClosed()) {
+        logger.warn('Page closed during redirect, switching to manual login');
+        return await this.manualLogin();
+      }
 
-      // Simulate human mouse movement before interacting
-      await this.humanMouseMove(this.page);
+      // Simulate human mouse movement (best-effort, skip on error)
+      await this.humanMouseMove(this.page).catch(() => {});
 
       // Check for anti-bot page first
       const antiBotResolved = await this.handleAntiBotPage();

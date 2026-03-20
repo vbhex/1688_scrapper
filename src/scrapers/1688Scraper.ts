@@ -1871,7 +1871,7 @@ export class Scraper1688 {
         id: product.id1688,
         error: (error as Error).message,
       });
-      return product;
+      throw error;
     }
   }
 

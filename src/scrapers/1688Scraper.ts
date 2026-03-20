@@ -59,6 +59,40 @@ const categoryKeywords: Record<string, string> = {
   'fashion belts':        '时尚皮带 男女 速卖通外贸款',   // → Belts
   'fashion gloves':       '时尚手套 冬季 速卖通外贸款',   // → GlovesMittens
 
+  // ── Jewelry & Accessories (AE L1: Jewelry & Accessories) ──────────────────
+  'fashion earrings':     '时尚耳环 女士 速卖通外贸款',   // → Earrings
+  'fashion bracelets':    '时尚手链 速卖通外贸款',        // → Bracelets
+  'fashion necklaces':    '时尚项链 女士 速卖通外贸款',   // → Necklaces
+  'fashion rings':        '时尚戒指 速卖通外贸款',        // → Rings
+  'fashion anklets':      '时尚脚链 速卖通外贸款',        // → Anklets
+
+  // ── Luggage & Bags (AE L1: Luggage & Bags) ───────────────────────────────
+  'fashion backpacks':    '时尚双肩包 速卖通外贸款',      // → Backpacks
+  'fashion wallets':      '时尚钱包 男女 速卖通外贸款',   // → Wallets
+  'waist packs':          '腰包 男女 速卖通外贸款',       // → WaistPacks
+  'coin purses':          '零钱包 可爱 速卖通外贸款',     // → CoinPurses
+
+  // ── Shoes (AE L1: Shoes) ─────────────────────────────────────────────────
+  'womens fashion shoes': '女士时尚单鞋 速卖通外贸款',    // → WomensShoes
+  'mens casual shoes':    '男士休闲鞋 速卖通外贸款',      // → MensShoes
+  'sneakers':             '运动鞋 男女 速卖通外贸款',      // → Sneakers
+
+  // ── Underwear (AE L1: Underwear) ─────────────────────────────────────────
+  'fashion socks':        '时尚袜子 男女 速卖通外贸款',   // → Socks
+  'mens underwear':       '男士内裤 莫代尔 速卖通外贸款', // → MensUnderwear
+  'womens bras':          '女士文胸 无钢圈 速卖通外贸款', // → WomensBras
+
+  // ── Sports & Entertainment (AE L1: Sports & Entertainment) ───────────────
+  'ab rollers':           '腹肌滚轮 健身 速卖通外贸款',   // → AbRollers
+  'resistance bands':     '弹力带 健身 速卖通外贸款',     // → ResistanceBands
+  'jump ropes':           '跳绳 速卖通外贸款',            // → JumpRopes
+  'yoga mats':            '瑜伽垫 防滑 速卖通外贸款',     // → YogaMats
+  'fitness gloves':       '健身手套 速卖通外贸款',        // → FitnessGloves
+  'water bottles':        '运动水杯 健身 速卖通外贸款',   // → WaterBottles
+
+  // ── Mother & Kids (AE L1: Mother & Kids) ─────────────────────────────────
+  'family matching outfits': '亲子装 速卖通外贸款',       // → FamilyMatchingOutfits
+
   // ── RED OCEAN — DO NOT USE (Women's Clothing + Men's Clothing L1) ──────────
   // All categories below are permanently retired. Kept as legacy keywords ONLY
   // so existing DB records with these category values still resolve correctly.

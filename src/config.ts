@@ -212,16 +212,12 @@ export const config = loadConfig();
  * Full rule: documents/aliexpress-store/aliexpress-2087779-blue-ocean-categories.md
  */
 export const RED_OCEAN_CLI_CATEGORIES = new Set([
-  // Women's Clothing L1
-  'womens skirts', 'womens jumpsuits', 'womens blazers', 'womens leggings',
-  'womens sleepwear', 'womens cardigan', 'womens dresses', 'womens jackets',
-  'womens sets', 'womens tops', 'womens hoodies', 'womens boho', 'womens floral',
-  'womens sweater', 'womens tshirts',
-  // Men's Clothing L1
-  'mens polo', 'mens shorts', 'mens suits', 'mens cargo', 'mens shirts',
-  'mens tshirts', 'mens graphic', 'mens hoodies', 'mens pants', 'denim jackets',
-  'streetwear', 'unisex graphic',
+  // Saturated clothing sub-categories — removed from active list
+  'womens tops', 'womens hoodies', 'mens tshirts', 'mens hoodies', 'mens pants', 'streetwear',
+  'womens boho', 'womens floral', 'womens sweater', 'mens graphic', 'unisex graphic',
   // Novelty & Special Use L1
   'cosplay', 'exotic apparel', 'stage wear', 'dance wear', 'work uniforms',
   'world apparel', 'hanfu', 'abaya', 'cheongsam', 'ethnic clothing',
+  // Kids clothing (needs different templates — not active)
+  'kids clothing',
 ]);

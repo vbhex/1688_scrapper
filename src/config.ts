@@ -203,3 +203,25 @@ export function loadConfig(): Config {
 }
 
 export const config = loadConfig();
+
+/**
+ * RED OCEAN RULE — AliExpress store 2087779
+ * These three L1 categories are permanently banned from scraping.
+ * Any CLI category name that belongs to these L1s must be blocked at task1 entry.
+ *
+ * Full rule: documents/aliexpress-store/aliexpress-2087779-blue-ocean-categories.md
+ */
+export const RED_OCEAN_CLI_CATEGORIES = new Set([
+  // Women's Clothing L1
+  'womens skirts', 'womens jumpsuits', 'womens blazers', 'womens leggings',
+  'womens sleepwear', 'womens cardigan', 'womens dresses', 'womens jackets',
+  'womens sets', 'womens tops', 'womens hoodies', 'womens boho', 'womens floral',
+  'womens sweater', 'womens tshirts',
+  // Men's Clothing L1
+  'mens polo', 'mens shorts', 'mens suits', 'mens cargo', 'mens shirts',
+  'mens tshirts', 'mens graphic', 'mens hoodies', 'mens pants', 'denim jackets',
+  'streetwear', 'unisex graphic',
+  // Novelty & Special Use L1
+  'cosplay', 'exotic apparel', 'stage wear', 'dance wear', 'work uniforms',
+  'world apparel', 'hanfu', 'abaya', 'cheongsam', 'ethnic clothing',
+]);

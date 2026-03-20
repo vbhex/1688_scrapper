@@ -12,7 +12,7 @@ import { closeDatabase } from '../database/db';
 import { createChildLogger } from '../utils/logger';
 import { isBannedBrand } from '../utils/helpers';
 import { isPriceInRange } from '../services/priceConverter';
-import { config } from '../config';
+import { config, RED_OCEAN_CLI_CATEGORIES } from '../config';
 
 const logger = createChildLogger('task1-discover');
 
@@ -45,6 +45,17 @@ function parseArgs(): CLIOptions {
 
 async function main(): Promise<void> {
   const options = parseArgs();
+
+  // RED OCEAN GUARD — block banned L1 categories before opening a browser
+  if (RED_OCEAN_CLI_CATEGORIES.has(options.category.toLowerCase())) {
+    logger.error(
+      `BLOCKED: "${options.category}" is a Red Ocean category (Women's Clothing, Men's Clothing, or Novelty & Special Use). ` +
+      `These L1 categories are permanently banned for AliExpress store 2087779. ` +
+      `See documents/aliexpress-store/aliexpress-2087779-blue-ocean-categories.md for approved targets.`
+    );
+    process.exit(1);
+  }
+
   logger.info('Task 1: Product Discovery', options);
 
   const scraper = await create1688Scraper(options.headless);

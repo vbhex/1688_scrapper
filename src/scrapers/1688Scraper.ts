@@ -196,6 +196,7 @@ export class Scraper1688 {
       headless: this.headless ? 'new' as any : false,
       args,
       userDataDir, // Persistent profile - preserves cookies, history, fingerprint
+      protocolTimeout: 0, // No timeout on CDP protocol messages (prevents detached-frame on slow pages)
       defaultViewport: {
         width: 1920,
         height: 1080,
@@ -284,15 +285,23 @@ export class Scraper1688 {
     if (!this.page) return false;
 
     try {
-      // Navigate to 1688 homepage
+      // Navigate to 1688 work page — use domcontentloaded to avoid redirect-induced frame detachment
       await this.page.goto('https://www.1688.com', {
-        waitUntil: 'networkidle2',
+        waitUntil: 'domcontentloaded',
         timeout: 30000,
       });
 
-      await sleep(3000);
+      // Wait for any JS-driven redirects to settle before evaluating
+      await sleep(4000);
 
-      // Check for login state
+      // Re-check we still have a valid page after potential redirects
+      if (!this.page || this.page.isClosed()) return false;
+
+      // Check for login state using current URL first (fast path)
+      const currentUrl = this.page.url();
+      if (currentUrl.includes('login') || currentUrl.includes('passport')) return false;
+
+      // Check for login state in DOM
       const loggedIn = await this.page.evaluate(() => {
         const userElements = [
           '.sm-widget-myinfo',
@@ -309,7 +318,7 @@ export class Scraper1688 {
           if (document.querySelector(selector)) return true;
         }
         return false;
-      });
+      }).catch(() => false);
 
       return loggedIn;
     } catch (error) {
@@ -1664,7 +1673,7 @@ export class Scraper1688 {
 
     try {
       await this.page.goto(product.url, {
-        waitUntil: 'networkidle2',
+        waitUntil: 'domcontentloaded',
         timeout: 60000,
       });
 

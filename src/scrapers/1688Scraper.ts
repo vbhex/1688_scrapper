@@ -18,63 +18,78 @@ const COOKIES_DIR = path.resolve(__dirname, '../../data');
 const COOKIES_FILE = path.join(COOKIES_DIR, '1688-cookies.json');
 
 // Chinese keyword mapping for 1688.com search (Chinese-language site)
-// STRATEGY (2026-03-10): Use niche/style-specific terms to avoid AliExpress "Duplicate Laying"
-// failures. Generic terms (女士T恤, 男士T恤) yield commodity items already sold by thousands
-// of AliExpress sellers. Style modifiers (印花, oversize, Y2K, 波西米亚, etc.) return
-// differentiated products that pass AliExpress's duplicate check.
+// RED OCEAN RULE (2026-03-20): Women's Clothing + Men's Clothing L1 = permanently banned.
+// Do NOT add any Women's or Men's Clothing sub-categories back — all are Red Ocean.
+// ACTIVE TARGETS: Watches, Apparel Accessories (Hats, Scarves, Hair, Eyewear, Belts, Gloves)
+// Full strategy: documents/aliexpress-store/aliexpress-2087779-blue-ocean-categories.md
+//
+// Keyword strategy: append 速卖通外贸款 ("AliExpress export style") to target
+// export-oriented 1688 suppliers with clean white-background images (no Chinese text).
 const categoryKeywords: Record<string, string> = {
-  // ── Clothing & Apparel — Women's ─────────────────────────────────────────
-  // OPPORTUNITY CATEGORIES (low AliExpress competition — platform has few sellers):
-  // 外贸/速卖通 suffix targets export-oriented sellers with clean white-background photos (no Chinese text).
-  'womens skirts':    '女士半身裙 外贸款',       // export-style skirts → AE Skirts
-  'womens jumpsuits': '女士连体裤 速卖通外贸',   // export jumpsuits/rompers → AE Jumpsuits
-  'womens blazers':   '速卖通女士西装外套',      // export blazers → AE Blazers
-  'womens leggings':  '外贸瑜伽裤女',           // export yoga/fitness leggings → AE Leggings
-  'womens sleepwear': '睡衣套装 外贸款',        // export pajamas/loungewear → AE NightgownsSleepshirts
-  'womens cardigan':  '针织开衫 速卖通外贸',     // export knitwear cardigans → AE Cardigan
-  // Broad categories (still OK — enough natural variety to pass duplicate check):
-  'womens dresses':   '连衣裙',             // → AE Dresses — sub-types vary enough
-  'womens jackets':   '女士外套',           // → AE Jackets — outerwear is unique by design
-  'womens sets':      '女士套装',           // → AE PantSets (broad matching sets)
-  // Legacy / style-niched (kept for backward compat with existing DB records):
-  'womens boho':      '波西米亚连衣裙',      // bohemian dresses → routes to Dresses
-  'womens floral':    '碎花半身裙',          // floral skirts → routes to Skirts
-  'womens sweater':   '女士毛衣',           // sweaters → routes to Cardigan sheet
+  // ── Watches (AE L1: Watches) ──────────────────────────────────────────────
+  'quartz watches':       '石英表 简约 速卖通外贸款',    // → QuartzWristwatches
+  'fashion watches':      '时尚腕表 男女 速卖通外贸款',  // → QuartzWristwatches (fashion/casual)
+  'couple watches':       '情侣表 对表 速卖通外贸',      // → CoupleWatches
+  'digital watches':      '数字运动手表 速卖通外贸款',   // → DigitalWristwatches
 
-  // ── Clothing & Apparel — Men's ───────────────────────────────────────────
-  // OPPORTUNITY CATEGORIES:
-  // 外贸/速卖通 suffix targets export-oriented sellers with clean white-background photos (no Chinese text).
-  'mens polo':        '外贸Polo衫男',           // export polo shirts → AE PoloShirts
-  'mens shorts':      '男士短裤 速卖通外贸款',   // export casual shorts → AE Shorts
-  'mens suits':       '西装套装 速卖通外贸',     // export suit sets → AE Suits
-  'mens cargo':       '男士工装裤 速卖通外贸款', // export cargo pants → AE CargoPants
-  // Broad (still OK — natural variety):
-  'mens shirts':      '男士花衬衫',         // patterned/Hawaiian shirts → AE Shirts — distinctive
+  // ── Hats & Caps (AE L1: Apparel Accessories) ──────────────────────────────
+  'bucket hats':          '渔夫帽 男女 速卖通外贸款',    // → BucketHats
+  'baseball caps':        '棒球帽 时尚 速卖通外贸款',    // → BaseballCaps
+  'beanies':              '针织帽 男女 速卖通外贸款',    // → Hats
+  'cowboy hats':          '牛仔帽 速卖通外贸款',         // → CowboyHats
 
-  // ── Unisex ───────────────────────────────────────────────────────────────
-  'denim jackets':    '牛仔外套 速卖通外贸款',   // export denim jackets (unisex) → AE DenimJacket
+  // ── Scarves & Wraps (AE L1: Apparel Accessories) ──────────────────────────
+  'silk scarves':         '真丝丝巾 女士 速卖通外贸款',  // → SilkScarves
+  'winter scarves':       '针织围巾 男女 速卖通外贸款',  // → Scarves
+  'sun scarves':          '防晒丝巾 夏季 速卖通外贸款',  // → SunProtectiveScarf
 
-  // ── REMOVED (AliExpress "too many similar products" rejection) ────────────
-  // 'womens tops'    → WomensTops/TShirts — millions of sellers
-  // 'womens hoodies' → HoodiesSweatshirts — hundreds of thousands of sellers
-  // 'mens tshirts'   → TShirts — millions of sellers
-  // 'mens hoodies'   → HoodiesSweatshirts — saturated
-  // 'mens pants'     → CasualPants — too broad, saturated
-  // 'streetwear'     → HoodiesSweatshirts — same saturated sheet
-  // 'mens graphic'   → TShirts — same saturated sheet
-  // 'unisex graphic' → TShirts — same saturated sheet
+  // ── Hair Accessories (AE L1: Apparel Accessories) ─────────────────────────
+  'hair claws':           '鲨鱼夹 发夹 速卖通外贸款',   // → HairClaw
+  'hair pins':            '发夹 发卡 时尚 速卖通外贸',   // → HairPin
+  'hair accessories set': '发饰套装 速卖通外贸款',       // → HairAccessoriesSet
 
-  // ── Legacy CLI names (kept for backward compatibility with old DB records) ─
-  'womens tshirts':   '女士印花T恤',        // old alias — maps to WomensTops (legacy only)
-  'mens tshirts':     '男士印花T恤',        // old alias — maps to TShirts (legacy only)
-  'kids clothing':    '儿童T恤',            // kids — PAUSED (no AE Mother & Kids template yet)
-  'mens graphic':     '男士印花T恤',        // old category — REMOVED from active list
-  'mens hoodies':     '男士连帽卫衣印花',   // old category — REMOVED from active list
-  'womens hoodies':   '女士oversize卫衣',   // old category — REMOVED from active list
-  'streetwear':       'Y2K潮流服装',        // old category — REMOVED from active list
-  'unisex graphic':   '情侣潮牌T恤',        // old category — REMOVED from active list
-  'womens tops':      '女士印花T恤',        // old category — REMOVED from active list
-  'mens pants':       '男士休闲裤',         // old category — REMOVED from active list
+  // ── Eyewear (AE L1: Apparel Accessories) ──────────────────────────────────
+  'blue light glasses':   '防蓝光眼镜 平光镜 速卖通外贸',  // → BlueLightBlockingGlasses
+  'reading glasses':      '老花眼镜 时尚 速卖通外贸款',    // → ReadingGlasses
+  'optical frames':       '光学眼镜框 超轻 速卖通外贸',    // → EyeglassesFrames
+  'polarized sunglasses': '偏光太阳镜 男女 速卖通外贸款',  // → Sunglasses
+  'sports sunglasses':    '运动太阳镜 骑行 速卖通外贸款',  // → SportsSunglasses
+
+  // ── Belts & Gloves (AE L1: Apparel Accessories) ───────────────────────────
+  'fashion belts':        '时尚皮带 男女 速卖通外贸款',   // → Belts
+  'fashion gloves':       '时尚手套 冬季 速卖通外贸款',   // → GlovesMittens
+
+  // ── RED OCEAN — DO NOT USE (Women's Clothing + Men's Clothing L1) ──────────
+  // All categories below are permanently retired. Kept as legacy keywords ONLY
+  // so existing DB records with these category values still resolve correctly.
+  'womens skirts':    '女士半身裙 外贸款',
+  'womens jumpsuits': '女士连体裤 速卖通外贸',
+  'womens blazers':   '速卖通女士西装外套',
+  'womens leggings':  '外贸瑜伽裤女',
+  'womens sleepwear': '睡衣套装 外贸款',
+  'womens cardigan':  '针织开衫 速卖通外贸',
+  'womens dresses':   '连衣裙',
+  'womens jackets':   '女士外套',
+  'womens sets':      '女士套装',
+  'womens boho':      '波西米亚连衣裙',
+  'womens floral':    '碎花半身裙',
+  'womens sweater':   '女士毛衣',
+  'womens tshirts':   '女士印花T恤',
+  'womens tops':      '女士印花T恤',
+  'womens hoodies':   '女士oversize卫衣',
+  'mens polo':        '外贸Polo衫男',
+  'mens shorts':      '男士短裤 速卖通外贸款',
+  'mens suits':       '西装套装 速卖通外贸',
+  'mens cargo':       '男士工装裤 速卖通外贸款',
+  'mens shirts':      '男士花衬衫',
+  'mens tshirts':     '男士印花T恤',
+  'mens graphic':     '男士印花T恤',
+  'mens hoodies':     '男士连帽卫衣印花',
+  'mens pants':       '男士休闲裤',
+  'denim jackets':    '牛仔外套 速卖通外贸款',
+  'streetwear':       'Y2K潮流服装',
+  'unisex graphic':   '情侣潮牌T恤',
+  'kids clothing':    '儿童T恤',
 
   // ── 3C / Consumer Electronics (RETIRED 2026-03-05 — keep for legacy DB lookups) ──
   'earphones': '蓝牙耳机',

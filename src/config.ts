@@ -111,48 +111,52 @@ export function loadConfig(): Config {
       maxPriceCNY: getEnvNumber('MAX_PRICE_CNY', 500),
       minOrderQty: getEnvNumber('MIN_ORDER_QTY', 1),
       priceMarkup: getEnvNumber('PRICE_MARKUP', 2),
-      // STRATEGIC PIVOT 2026-03-05: 3C → Clothing & Apparel
-      // Old 3C categories removed. Do NOT add them back.
-      // Full rationale: documents/aliexpress-store/PLATFORM_PIVOT_3C_TO_CLOTHING.md
+      // RED OCEAN RULE (2026-03-20): Women's Clothing and Men's Clothing L1 categories
+      // are permanently BANNED from scraping for AliExpress store 2087779.
+      // ALL sub-categories under both L1s are saturated Red Oceans.
+      // Do NOT add any 'womens *' or 'mens *' clothing categories back to this list.
       //
-      // SEARCH TERM STRATEGY (2026-03-10): Use niche/style-specific terms.
-      // Root cause of "Duplicate Laying" failures: generic search terms return commodity
-      // items (plain tees/hoodies) already sold by thousands of AliExpress sellers.
-      // Fix: add style/design modifiers (印花, oversize, Y2K, 波西米亚) to yield
-      // differentiated products that pass AliExpress's duplicate check.
-      // Full mapping: src/scrapers/1688Scraper.ts → categoryKeywords
-      // STRATEGY (2026-03-10): Target AliExpress OPPORTUNITY categories — sheets with
-      // few sellers. Root cause of "too many similar products" failures: generic
-      // TShirts/HoodiesSweatshirts/CasualPants sheets have millions of sellers.
-      // Fix: route to entirely different sheets (Skirts, Jumpsuits, Blazers, Leggings,
-      //      NightgownsSleepshirts, PoloShirts, Shorts, Suits, DenimJacket, Cardigan).
-      // All target sheets confirmed in templates/fresh-download/column-defs.json (624 sheets).
+      // ACTIVE TARGETS: Watches, Apparel Accessories (Hats, Scarves, Hair, Eyewear, Belts)
+      // Full strategy: documents/aliexpress-store/aliexpress-2087779-blue-ocean-categories.md
+      // Full keyword mapping: src/scrapers/1688Scraper.ts → categoryKeywords
       categories: getEnvArray('CATEGORIES', [
-        // Women's — OPPORTUNITY (low-competition AE sheets)
-        'womens skirts',      // → Skirts
-        'womens jumpsuits',   // → Jumpsuits
-        'womens blazers',     // → Blazers
-        'womens leggings',    // → Leggings
-        'womens sleepwear',   // → NightgownsSleepshirts
-        'womens cardigan',    // → Cardigan
-        // Women's — BROAD (enough natural variety to avoid duplicate check)
-        'womens dresses',     // → Dresses
-        'womens jackets',     // → Jackets
-        'womens sets',        // → PantSets
-        // Men's — OPPORTUNITY
-        'mens polo',          // → PoloShirts
-        'mens shorts',        // → Shorts
-        'mens suits',         // → Suits
-        'mens cargo',         // → CargoPants
-        // Men's — broad OK (patterned shirts pass naturally)
-        'mens shirts',        // → Shirts
-        // Unisex
-        'denim jackets',      // → DenimJacket
-        // REMOVED — AliExpress "too many similar products" rejection:
-        // 'womens tops', 'womens hoodies', 'mens tshirts', 'mens hoodies',
-        // 'mens pants', 'streetwear', 'mens graphic', 'unisex graphic'
-        // PAUSED — AliExpress requires Mother & Kids templates, not Clothing & Apparel:
-        // 'kids clothing'
+        // ── Watches (AE L1: Watches) ──────────────────────────────────────────
+        'quartz watches',       // → QuartzWristwatches
+        'fashion watches',      // → QuartzWristwatches (fashion/casual)
+        'couple watches',       // → CoupleWatches
+        'digital watches',      // → DigitalWristwatches
+
+        // ── Hats & Caps (AE L1: Apparel Accessories) ─────────────────────────
+        'bucket hats',          // → BucketHats
+        'baseball caps',        // → BaseballCaps
+        'beanies',              // → Hats
+        'cowboy hats',          // → CowboyHats
+
+        // ── Scarves (AE L1: Apparel Accessories) ─────────────────────────────
+        'silk scarves',         // → SilkScarves
+        'winter scarves',       // → Scarves
+        'sun scarves',          // → SunProtectiveScarf
+
+        // ── Hair Accessories (AE L1: Apparel Accessories) ────────────────────
+        'hair claws',           // → HairClaw
+        'hair pins',            // → HairPin
+        'hair accessories set', // → HairAccessoriesSet
+
+        // ── Eyewear (AE L1: Apparel Accessories) ─────────────────────────────
+        'blue light glasses',   // → BlueLightBlockingGlasses
+        'reading glasses',      // → ReadingGlasses (or EyeglassesFrames)
+        'polarized sunglasses', // → Sunglasses
+        'sports sunglasses',    // → SportsSunglasses
+
+        // ── Belts & Gloves (AE L1: Apparel Accessories) ──────────────────────
+        'fashion belts',        // → Belts
+        'fashion gloves',       // → GlovesMittens
+
+        // RED OCEAN — DO NOT RE-ADD:
+        // 'womens skirts', 'womens jumpsuits', 'womens blazers', 'womens leggings',
+        // 'womens sleepwear', 'womens cardigan', 'womens dresses', 'womens jackets',
+        // 'womens sets', 'mens polo', 'mens shorts', 'mens suits', 'mens cargo',
+        // 'mens shirts', 'denim jackets' — ALL Women's/Men's Clothing L1 = Red Ocean
       ]),
       excludeBrands: getEnvArray('EXCLUDE_BRANDS', [
         // 3C / electronics (keep — still filter if they appear in search)

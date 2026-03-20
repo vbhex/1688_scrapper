@@ -170,6 +170,9 @@ export function loadConfig(): Config {
         'lululemon', 'gymshark',
         'supreme', 'off-white', 'stone island', 'palace', 'stüssy', 'stussy',
         'bape', 'a bathing ape', 'north face', 'patagonia', 'columbia',
+        // Trademarked fabric brands (AliExpress flags as IP infringement)
+        'tencel', 'coolmax', 'thermolite', 'gore-tex', 'goretex', 'primaloft',
+        'polartec', 'supplex', 'cordura', 'outlast', 'cocona', 'seacell',
       ]),
     },
     runtime: {

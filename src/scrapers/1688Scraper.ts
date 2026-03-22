@@ -2108,7 +2108,7 @@ export class Scraper1688 {
       // Fallback: find by text content "客服" (Customer Service)
       if (!chatBtn) {
         chatBtn = await this.page.evaluateHandle(() => {
-          const links = document.querySelectorAll('a, button');
+          const links = Array.from(document.querySelectorAll('a, button'));
           for (const el of links) {
             const text = (el.textContent || '').trim();
             if (text === '客服' && (el as HTMLElement).offsetHeight > 0) {

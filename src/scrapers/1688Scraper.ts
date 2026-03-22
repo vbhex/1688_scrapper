@@ -2124,26 +2124,40 @@ export class Scraper1688 {
 
       logger.info('Chat page loaded', { title: await this.page.title(), url: this.page.url().substring(0, 100) });
 
-      // Step 2: Find the chat input field
+      // Step 2: The web IM chat is inside an iframe (def_cbu_web_im_core)
+      // Must access the iframe content to find the input field
+      let chatFrame: any = null;
+      const frames = this.page.frames();
+      for (const frame of frames) {
+        const frameUrl = frame.url();
+        if (frameUrl.includes('def_cbu_web_im_core') || frameUrl.includes('web_im')) {
+          chatFrame = frame;
+          logger.info('Found web IM iframe', { url: frameUrl.substring(0, 100) });
+          break;
+        }
+      }
+
+      // Search context: iframe if found, otherwise main page
+      const searchCtx = chatFrame || this.page;
+
       const inputSelectors = [
         'textarea',
         '[contenteditable="true"]',
-        'textarea[class*="input"]',
-        '.im-input',
-        '[class*="chatInput"]',
-        '[class*="message-input"]',
+        'div[role="textbox"]',
         '[class*="editor"]',
         '[class*="Editor"]',
-        'div[role="textbox"]',
+        '[class*="chatInput"]',
+        '[class*="message-input"]',
+        '.im-input',
       ];
 
       let inputEl: any = null;
       for (const sel of inputSelectors) {
         try {
-          await this.page.waitForSelector(sel, { timeout: 5000 });
-          inputEl = await this.page.$(sel);
+          await searchCtx.waitForSelector(sel, { timeout: 5000 });
+          inputEl = await searchCtx.$(sel);
           if (inputEl) {
-            logger.debug('Found chat input', { selector: sel });
+            logger.debug('Found chat input', { selector: sel, inIframe: !!chatFrame });
             break;
           }
         } catch {
@@ -2152,21 +2166,43 @@ export class Scraper1688 {
       }
 
       if (!inputEl) {
-        logger.warn('Could not find chat input field', { url: this.page.url().substring(0, 100) });
+        logger.warn('Could not find chat input field', { url: this.page.url().substring(0, 100), hasIframe: !!chatFrame });
         return false;
       }
 
-      // Type the message with human-like pacing
+      // Type the message
       await inputEl.click();
       await randomDelay(500, 1000);
-      await this.humanType(this.page, message);
+
+      // For contenteditable divs inside iframes, type via keyboard
+      // (humanType may not work across frame boundaries)
+      if (chatFrame) {
+        await inputEl.type(message, { delay: 10 });
+      } else {
+        await this.humanType(this.page, message);
+      }
       await randomDelay(800, 1500);
 
-      // Send with Enter key
-      await this.page.keyboard.press('Enter');
+      // Send: try Enter key, also look for a send button
+      const sendClicked = await searchCtx.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll('button, [class*="send"], [class*="Send"]'));
+        for (const btn of btns) {
+          const text = (btn.textContent || '').trim();
+          if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
+            (btn as HTMLElement).click();
+            return true;
+          }
+        }
+        return false;
+      });
+
+      if (!sendClicked) {
+        // Fallback: press Enter
+        await this.page.keyboard.press('Enter');
+      }
       await randomDelay(1000, 2000);
 
-      logger.info('Wangwang message sent', { sellerLoginId });
+      logger.info('Wangwang message sent', { sellerLoginId, method: sendClicked ? 'send-button' : 'enter-key' });
 
       return true;
     } catch (error) {

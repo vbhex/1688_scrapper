@@ -421,6 +421,27 @@ async function initializeSchema(): Promise<void> {
     `);
 
     // ──────────────────────────────────────────────────────────────────
+    // Product Store Targets — which store on which platform a product is for.
+    // RULE: One product can appear on multiple platforms (aliexpress + amazon)
+    //       but NEVER on two stores within the same platform (no self-competition).
+    // Enforced by UNIQUE KEY (product_id, platform).
+    // ──────────────────────────────────────────────────────────────────
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS product_store_targets (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        platform VARCHAR(50) NOT NULL,
+        store_id VARCHAR(100) NOT NULL,
+        blue_ocean_category VARCHAR(200),
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_product_platform (product_id, platform),
+        FOREIGN KEY (product_id) REFERENCES products(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // ──────────────────────────────────────────────────────────────────
     // Company Info — our company details for brand authorization requests
     // ──────────────────────────────────────────────────────────────────
 

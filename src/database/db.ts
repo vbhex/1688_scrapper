@@ -384,6 +384,13 @@ async function initializeSchema(): Promise<void> {
       // ignore if already correct
     }
 
+    // Add store-level authorization tracking (migration-safe)
+    try {
+      await connection.execute(`ALTER TABLE authorized_products ADD COLUMN authorized_stores JSON COMMENT 'Array of {platform, store_id} objects'`);
+    } catch (e: any) {
+      if (!e.message?.includes('Duplicate column')) throw e;
+    }
+
     // ──────────────────────────────────────────────────────────────────
     // Provider Certificates — docs received from sellers (brand auth, REACH, CE, etc.)
     // Separate from compliance_certs which tracks certs found on 1688 product pages.
@@ -981,6 +988,45 @@ export async function getBrandSafetyStats(): Promise<{
     pendingVerification: pendingRows[0].count,
     providersByTrust,
   };
+}
+
+/**
+ * Get brand-safe products ready for a specific store to import.
+ *
+ * Workflow: ae-2087779 calls this → gets products that are:
+ *   1. Targeted for this store (products.target_platform + target_store_id)
+ *   2. Brand-verified (in authorized_products, active=true)
+ *   3. Pipeline complete (status = 'ae_enriched')
+ *   4. Not yet exported for this store
+ */
+export async function getBrandSafeProductsForStore(
+  platform: string,
+  storeId: string,
+  limit?: number
+): Promise<Array<{
+  id: number;
+  id1688: string;
+  url: string;
+  titleZh: string;
+  authorizationType: string;
+  sellerConfirmation?: string;
+}>> {
+  const p = await getPool();
+  const limitClause = limit ? `LIMIT ${limit}` : '';
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT p.id, p.id_1688 AS id1688, p.url, p.title_zh AS titleZh,
+            ap.authorization_type AS authorizationType,
+            ap.seller_confirmation AS sellerConfirmation
+     FROM products p
+     JOIN authorized_products ap ON ap.product_id = p.id AND ap.active = TRUE
+     WHERE p.target_platform = ?
+       AND p.target_store_id = ?
+       AND p.status = 'ae_enriched'
+     ORDER BY p.created_at ASC
+     ${limitClause}`,
+    [platform, storeId]
+  );
+  return rows as any[];
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

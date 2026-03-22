@@ -2074,91 +2074,85 @@ export class Scraper1688 {
   async sendWangwangMessage(sellerUrl: string, message: string): Promise<boolean> {
     if (!this.page) throw new Error('Browser not initialized');
 
-    logger.info('Navigating to seller shop for Wangwang message', { sellerUrl });
+    // Extract seller login ID from URL patterns:
+    //   https://detail.1688.com/offer/XXXXX.html → need seller_id from caller
+    //   https://shopXXXXX.1688.com/ → extract XXXXX
+    //   direct seller ID string
+    let sellerLoginId = sellerUrl;
+    const shopMatch = sellerUrl.match(/https?:\/\/shop([^.]+)\.1688\.com/);
+    if (shopMatch) {
+      sellerLoginId = shopMatch[1];
+    } else if (sellerUrl.match(/^https?:\/\//)) {
+      // It's a URL but not a shop URL — could be product URL
+      // In this case, the sellerUrl might actually be the seller login ID
+      // passed directly from Task 8
+      sellerLoginId = sellerUrl;
+    }
+
+    // Use direct Wangwang web IM URL — most reliable approach (2026-03-22)
+    const wangwangUrl = `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(sellerLoginId)}&site=cnalichn`;
+    logger.info('Opening Wangwang web chat', { sellerLoginId, wangwangUrl: wangwangUrl.substring(0, 100) });
 
     try {
-      await this.page.goto(sellerUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await randomDelay(2000, 4000);
-      await this.humanMouseMove(this.page);
+      await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      await randomDelay(3000, 5000);
 
-      // Locate the Wangwang / contact chat button on the page
-      // 2026-03-22: 1688 product pages now use "客服" (Customer Service) buttons
-      const chatBtnSelectors = [
-        'a.customer-service',           // Product page: "客服" link
-        'a.action-link.customer-service', // Product page: full class match
-        'a.action-item',                // Product page: sidebar "客服"
-        'a[href*="wangwang"]',
-        'a[href*="ww.alicdn.com"]',
-        '[class*="wangwang"]',
-        '[class*="contact-btn"]',
-        '[class*="ContactBtn"]',
-        '.contact-supplier',
-        '[data-nick]',
-      ];
-
-      let chatBtn: any = null;
-      for (const sel of chatBtnSelectors) {
-        chatBtn = await this.page.$(sel);
-        if (chatBtn) {
-          logger.debug('Found chat button', { selector: sel });
-          break;
-        }
-      }
-
-      // Fallback: find by text content "客服" (Customer Service)
-      if (!chatBtn) {
-        chatBtn = await this.page.evaluateHandle(() => {
-          const links = Array.from(document.querySelectorAll('a, button'));
-          for (const el of links) {
-            const text = (el.textContent || '').trim();
-            if (text === '客服' && (el as HTMLElement).offsetHeight > 0) {
-              return el;
-            }
+      // Step 1: Click "优先使用网页版" (Prefer web version) if shown
+      const webVersionClicked = await this.page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        for (const btn of buttons) {
+          if ((btn.textContent || '').includes('优先使用网页版') && btn.offsetHeight > 0) {
+            btn.click();
+            return true;
           }
-          return null;
-        });
-        if (chatBtn && (await chatBtn.evaluate((el: any) => el !== null))) {
-          logger.debug('Found chat button by text content "客服"');
-        } else {
-          chatBtn = null;
+        }
+        return false;
+      });
+
+      if (webVersionClicked) {
+        logger.info('Clicked "优先使用网页版" — waiting for web chat to load');
+        await randomDelay(5000, 8000);
+
+        // After clicking, a new tab may open with the actual chat
+        const pages = await this.browser!.pages();
+        if (pages.length > 1) {
+          // Switch to the newest tab (the chat window)
+          this.page = pages[pages.length - 1];
+          await randomDelay(3000, 5000);
         }
       }
 
-      if (!chatBtn) {
-        logger.warn('Could not find Wangwang chat button on seller page', { sellerUrl });
-        return false;
-      }
+      logger.info('Chat page loaded', { title: await this.page.title(), url: this.page.url().substring(0, 100) });
 
-      // Click the chat button — this usually opens a new tab or overlay
-      await chatBtn.click();
-      await sleep(3000);
-
-      // Check if a new tab opened (Wangwang web client)
-      const pages = await this.browser!.pages();
-      const chatPage = pages.length > 1 ? pages[pages.length - 1] : this.page;
-
-      // Wait for the chat input to appear
+      // Step 2: Find the chat input field
       const inputSelectors = [
-        'textarea[class*="input"]',
+        'textarea',
         '[contenteditable="true"]',
+        'textarea[class*="input"]',
         '.im-input',
         '[class*="chatInput"]',
         '[class*="message-input"]',
+        '[class*="editor"]',
+        '[class*="Editor"]',
+        'div[role="textbox"]',
       ];
 
       let inputEl: any = null;
       for (const sel of inputSelectors) {
         try {
-          await chatPage.waitForSelector(sel, { timeout: 8000 });
-          inputEl = await chatPage.$(sel);
-          if (inputEl) break;
+          await this.page.waitForSelector(sel, { timeout: 5000 });
+          inputEl = await this.page.$(sel);
+          if (inputEl) {
+            logger.debug('Found chat input', { selector: sel });
+            break;
+          }
         } catch {
           continue;
         }
       }
 
       if (!inputEl) {
-        logger.warn('Could not find chat input field', { sellerUrl });
+        logger.warn('Could not find chat input field', { url: this.page.url().substring(0, 100) });
         return false;
       }
 

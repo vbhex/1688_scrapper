@@ -232,10 +232,9 @@ async function main(): Promise<void> {
             sellerId, info.sellerName, info.wangwangId, info.shopUrl, info.productIds
           );
 
-          // Send via Wangwang — use product page URL first (more reliable Wangwang button),
-          // fall back to shop URL if no product URL available
-          const contactUrl = info.productUrl || info.shopUrl;
-          const sent = await scraper.sendWangwangMessage(contactUrl, message);
+          // Send via Wangwang — pass seller login ID directly
+          // The scraper builds the direct Wangwang web IM URL from the seller ID
+          const sent = await scraper.sendWangwangMessage(sellerId, message);
           if (sent) {
             await updateContactStatus(sellerId, 'contacted', 'Brand verification + cert request sent (Task 8)');
             contacted++;

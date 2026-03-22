@@ -123,6 +123,7 @@ async function main(): Promise<void> {
   const sellerGroups = new Map<string, {
     sellerName: string;
     wangwangId: string;
+    shopUrl: string;
     productIds: number[];
     productId1688s: string[];
   }>();
@@ -170,9 +171,15 @@ async function main(): Promise<void> {
 
     // Group by seller for batch messaging
     if (!sellerGroups.has(sellerId)) {
+      // Build shop URL: prefer DB value, fallback to 1688 convention
+      const shopUrl = prod.sellerShopUrl
+        || `https://shop${sellerId}.1688.com/`
+        || '';
+
       sellerGroups.set(sellerId, {
         sellerName: prod.sellerName || 'Unknown',
         wangwangId: prod.sellerWangwangId || '',
+        shopUrl,
         productIds: [],
         productId1688s: [],
       });
@@ -210,19 +217,29 @@ async function main(): Promise<void> {
         });
 
         try {
+          if (!info.shopUrl) {
+            logger.warn(`  Skipping seller ${sellerId} — no shop URL available`);
+            messageFailed++;
+            continue;
+          }
+
           const message = await buildBrandVerifyMessage(info.productIds);
 
           // Ensure seller exists in compliance_contacts
           await saveSellerContact(
-            sellerId, info.sellerName, info.wangwangId, '', info.productIds
+            sellerId, info.sellerName, info.wangwangId, info.shopUrl, info.productIds
           );
 
-          // Send via Wangwang
-          await scraper.sendWangwangMessage(info.wangwangId, message);
-          await updateContactStatus(sellerId, 'contacted', 'Brand verification request sent (Task 8)');
-
-          contacted++;
-          logger.info(`  ✓ Message sent to ${info.sellerName}`);
+          // Send via Wangwang — pass shop URL (scraper navigates to shop, clicks Wangwang chat)
+          const sent = await scraper.sendWangwangMessage(info.shopUrl, message);
+          if (sent) {
+            await updateContactStatus(sellerId, 'contacted', 'Brand verification + cert request sent (Task 8)');
+            contacted++;
+            logger.info(`  ✓ Message sent to ${info.sellerName}`);
+          } else {
+            logger.warn(`  ✗ sendWangwangMessage returned false for ${info.sellerName}`);
+            messageFailed++;
+          }
 
         } catch (err: any) {
           logger.error(`  ✗ Failed to contact seller ${sellerId}`, { error: err.message });

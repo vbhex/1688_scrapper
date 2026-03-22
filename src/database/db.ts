@@ -893,13 +893,15 @@ export async function getProductsPendingBrandVerification(limit?: number): Promi
   sellerId?: string;
   sellerName?: string;
   sellerWangwangId?: string;
+  sellerShopUrl?: string;
 }>> {
   const p = await getPool();
   const limitClause = limit ? `LIMIT ${limit}` : '';
   const [rows] = await p.execute<RowDataPacket[]>(
     `SELECT p.id, p.id_1688 AS id1688, p.url, p.title_zh AS titleZh,
             pr.seller_id AS sellerId, pr.seller_name AS sellerName,
-            pr.seller_wangwang_id AS sellerWangwangId
+            pr.seller_wangwang_id AS sellerWangwangId,
+            pr.seller_shop_url AS sellerShopUrl
      FROM products p
      LEFT JOIN products_raw pr ON pr.product_id = p.id
      LEFT JOIN authorized_products ap ON ap.product_id = p.id

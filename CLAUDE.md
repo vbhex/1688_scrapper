@@ -63,9 +63,12 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 
 ---
 
-## Pipeline: 5 Tasks
+## Pipeline: 6 Tasks (Task 8 before Task 4)
 
-Each task is a standalone CLI script. Run them in sequence.
+Each task is a standalone CLI script. Run in this order:
+**Task 1 → 2 → 3 → 8 (brand verify) → 4 (translate) → 5 (AE enrich)**
+
+Task 8 runs BEFORE Task 4 to save translation fees — only authorized products get translated.
 
 ### Task 1: Product Discovery (`src/tasks/task1-discover.ts`)
 - **Input**: Category name + limit

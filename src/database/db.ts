@@ -320,7 +320,7 @@ async function initializeSchema(): Promise<void> {
       CREATE TABLE IF NOT EXISTS providers (
         id INT AUTO_INCREMENT PRIMARY KEY,
         provider_name VARCHAR(500) NOT NULL,
-        platform ENUM('1688','taobao','wechat','direct','other') DEFAULT '1688',
+        platform ENUM('1688','taobao','pinduoduo','jd','wechat','qq','direct','other') DEFAULT '1688',
         platform_id VARCHAR(200),
         wangwang_id VARCHAR(200),
         wechat_id VARCHAR(200),
@@ -367,6 +367,21 @@ async function initializeSchema(): Promise<void> {
       await connection.execute(`ALTER TABLE compliance_contacts ADD COLUMN provider_id INT`);
     } catch (e: any) {
       if (!e.message?.includes('Duplicate column')) throw e;
+    }
+
+    // Multi-platform sourcing: add source_platform to products (migration-safe)
+    // Allows tracking products from taobao, pinduoduo, jd, wechat, etc.
+    try {
+      await connection.execute(`ALTER TABLE products ADD COLUMN source_platform VARCHAR(50) DEFAULT '1688'`);
+    } catch (e: any) {
+      if (!e.message?.includes('Duplicate column')) throw e;
+    }
+
+    // Expand providers platform ENUM (migration-safe)
+    try {
+      await connection.execute(`ALTER TABLE providers MODIFY COLUMN platform ENUM('1688','taobao','pinduoduo','jd','wechat','qq','direct','other') DEFAULT '1688'`);
+    } catch (e: any) {
+      // ignore if already correct
     }
 
     // ──────────────────────────────────────────────────────────────────

@@ -134,7 +134,7 @@ export interface AuthorizedProduct {
   notes?: string;
 }
 
-export type ProviderPlatform = '1688' | 'taobao' | 'wechat' | 'direct' | 'other';
+export type ProviderPlatform = '1688' | 'taobao' | 'pinduoduo' | 'jd' | 'wechat' | 'qq' | 'direct' | 'other';
 export type ProviderTrustLevel = 'new' | 'verified' | 'trusted' | 'preferred' | 'blacklisted';
 
 export interface Provider {

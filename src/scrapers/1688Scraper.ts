@@ -2145,13 +2145,31 @@ export class Scraper1688 {
 
       logger.info('Chat page loaded', { title: await this.page.title(), url: this.page.url().substring(0, 100) });
 
-      // Step 2: The web IM chat is inside an iframe (def_cbu_web_im_core)
-      // Must access the iframe content to find the input field
+      // Step 2: Check ALL tabs for the web IM (it might be in a different tab)
+      // Also check this page — wwwebim.1688.com may auto-redirect to web IM
+      const allPages = await this.browser!.pages();
+      let imPage = this.page;
+      for (const p of allPages) {
+        const pUrl = p.url();
+        if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im')) {
+          imPage = p;
+          this.page = p;
+          await p.bringToFront();
+          logger.info('Found web IM in tab', { url: pUrl.substring(0, 100) });
+          break;
+        }
+      }
+
+      // Wait for page content to fully load
+      await sleep(3000);
+
+      // The web IM chat is inside an iframe (def_cbu_web_im_core)
       let chatFrame: any = null;
-      const frames = this.page.frames();
+      const frames = imPage.frames();
+      logger.info('Frames in chat page', { count: frames.length, urls: frames.map((f: any) => f.url().substring(0, 80)) });
       for (const frame of frames) {
         const frameUrl = frame.url();
-        if (frameUrl.includes('def_cbu_web_im_core') || frameUrl.includes('web_im')) {
+        if (frameUrl.includes('def_cbu_web_im_core') || frameUrl.includes('web_im_core')) {
           chatFrame = frame;
           logger.info('Found web IM iframe', { url: frameUrl.substring(0, 100) });
           break;

@@ -66,8 +66,9 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 ## Pipeline: 6 Tasks (Task 8 before Task 4)
 
 Each task is a standalone CLI script. Run in this order:
-**Task 1 → 2 → 3 → 8 (brand verify) → 4 (translate) → 5 (AE enrich)**
+**Task 1 → 1B (brand pre-filter) → 2 → 3 → 8 (brand verify) → 4 (translate) → 5 (AE enrich)**
 
+Task 1B catches branded products BEFORE we waste time scraping them (Task 2).
 Task 8 runs BEFORE Task 4 to save translation fees — only authorized products get translated.
 
 ### Task 1: Product Discovery (`src/tasks/task1-discover.ts`)
@@ -77,6 +78,15 @@ Task 8 runs BEFORE Task 4 to save translation fees — only authorized products 
 
 ```bash
 node dist/tasks/task1-discover.js --category earphones --limit 20
+```
+
+### Task 1B: Brand Pre-Filter (`src/tasks/task1b-brand-prefilter.ts`)
+- **Input**: Products with status `discovered`
+- **Output**: Branded/suspicious products → `skipped`; clean products stay `discovered`
+- **What it does**: Re-checks titles against latest brand_list, flags suspicious patterns (同款/原单/大牌), checks blacklisted provider URLs, checks prior violation records. No browser needed.
+
+```bash
+node dist/tasks/task1b-brand-prefilter.js --limit 100
 ```
 
 ### Task 2: Detail Scraping (`src/tasks/task2-scrape-details.ts`)

@@ -2,7 +2,10 @@
  * Task 1: Product Discovery
  * Searches 1688.com for products and saves basic info to the database.
  *
- * Usage: node dist/tasks/task1-discover.js --category earphones --limit 20
+ * Usage:
+ *   node dist/tasks/task1-discover.js --category earphones --limit 20
+ *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25     # loop ALL 335 enabled categories
+ *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25 --l1 "Watches"  # filter by L1
  * Runs on: China MacBook
  */
 
@@ -13,11 +16,21 @@ import { createChildLogger } from '../utils/logger';
 import { isBannedBrand, initBrandCache } from '../utils/helpers';
 import { isPriceInRange } from '../services/priceConverter';
 import { config, RED_OCEAN_CLI_CATEGORIES } from '../config';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const logger = createChildLogger('task1-discover');
 
+interface SearchTermEntry {
+  l1: string;
+  search_terms_zh: string[];
+  enabled: boolean;
+}
+
 interface CLIOptions {
   category: string;
+  allBlueOcean: boolean;
+  l1Filter: string;
   limit: number;
   headless: boolean;
 }
@@ -26,6 +39,8 @@ function parseArgs(): CLIOptions {
   const args = process.argv.slice(2);
   const options: CLIOptions = {
     category: 'earphones',
+    allBlueOcean: false,
+    l1Filter: '',
     limit: 20,
     headless: false,
   };
@@ -33,6 +48,10 @@ function parseArgs(): CLIOptions {
   for (let i = 0; i < args.length; i++) {
     if ((args[i] === '--category' || args[i] === '-c') && args[i + 1]) {
       options.category = args[++i];
+    } else if (args[i] === '--all-blue-ocean') {
+      options.allBlueOcean = true;
+    } else if (args[i] === '--l1' && args[i + 1]) {
+      options.l1Filter = args[++i];
     } else if ((args[i] === '--limit' || args[i] === '-l') && args[i + 1]) {
       options.limit = parseInt(args[++i]) || options.limit;
     } else if (args[i] === '--headless') {
@@ -43,31 +62,121 @@ function parseArgs(): CLIOptions {
   return options;
 }
 
-async function main(): Promise<void> {
-  const options = parseArgs();
+function loadBlueOceanCategories(l1Filter: string): Array<{ sheet: string; searchTerm: string; l1: string }> {
+  const filePath = path.join(__dirname, '..', 'data', 'blue-ocean-search-terms.json');
+  const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  const categories: Array<{ sheet: string; searchTerm: string; l1: string }> = [];
 
-  // Load brand list from DB (falls back to JSON if DB unavailable)
-  await initBrandCache();
-
-  // RED OCEAN GUARD — block banned L1 categories before opening a browser
-  if (RED_OCEAN_CLI_CATEGORIES.has(options.category.toLowerCase())) {
-    logger.error(
-      `BLOCKED: "${options.category}" is a Red Ocean category (Women's Clothing, Men's Clothing, or Novelty & Special Use). ` +
-      `These L1 categories are permanently banned for AliExpress store 2087779. ` +
-      `See documents/aliexpress-store/aliexpress-2087779-blue-ocean-categories.md for approved targets.`
-    );
-    process.exit(1);
+  for (const [sheet, entry] of Object.entries(raw)) {
+    if (sheet === '_meta') continue;
+    const e = entry as SearchTermEntry;
+    if (!e.enabled) continue;
+    if (l1Filter && e.l1.toLowerCase() !== l1Filter.toLowerCase()) continue;
+    // Use first search term as primary
+    for (const term of e.search_terms_zh) {
+      categories.push({ sheet, searchTerm: term, l1: e.l1 });
+    }
   }
 
-  logger.info('Task 1: Product Discovery', options);
+  return categories;
+}
 
-  const scraper = await create1688Scraper(options.headless);
+async function discoverCategory(
+  scraper: any,
+  searchTerm: string,
+  categoryLabel: string,
+  limit: number,
+): Promise<{ discovered: number; skipped: number; duplicates: number }> {
   let discovered = 0;
   let skipped = 0;
   let duplicates = 0;
 
+  logger.info('Searching for products', { category: categoryLabel, searchTerm, limit });
+  const products = await scraper.searchProducts(searchTerm, limit);
+  logger.info('Found products from search', { count: products.length, searchTerm });
+
+  for (const product of products) {
+    if (isBannedBrand(product.title)) {
+      logger.info('Skipping banned brand', { title: product.title.substring(0, 60) });
+      skipped++;
+      continue;
+    }
+
+    if (product.priceCNY > 0 && !isPriceInRange(product.priceCNY)) {
+      logger.info('Skipping price out of range', { price: product.priceCNY });
+      skipped++;
+      continue;
+    }
+
+    if (product.minOrderQty > config.filters.minOrderQty) {
+      logger.info('Skipping high MOQ', { moq: product.minOrderQty });
+      skipped++;
+      continue;
+    }
+
+    const thumbnailUrl = product.images.length > 0 ? product.images[0] : '';
+    const id = await discoverProduct(
+      product.id1688,
+      product.url,
+      product.title,
+      categoryLabel,
+      thumbnailUrl,
+    );
+
+    if (id) {
+      discovered++;
+      logger.info(`Discovered ${discovered}: ${product.title.substring(0, 50)}`);
+    } else {
+      duplicates++;
+    }
+  }
+
+  return { discovered, skipped, duplicates };
+}
+
+async function main(): Promise<void> {
+  const options = parseArgs();
+
+  await initBrandCache();
+
+  // Build category list
+  let categories: Array<{ searchTerm: string; label: string; l1: string }>;
+
+  if (options.allBlueOcean) {
+    const blueOcean = loadBlueOceanCategories(options.l1Filter);
+    categories = blueOcean.map(c => ({
+      searchTerm: c.searchTerm,
+      label: c.sheet,
+      l1: c.l1,
+    }));
+    logger.info('All Blue Ocean mode', {
+      totalCategories: categories.length,
+      l1Filter: options.l1Filter || 'ALL',
+      limitPerCategory: options.limit,
+    });
+  } else {
+    // Single category mode (legacy)
+    if (RED_OCEAN_CLI_CATEGORIES.has(options.category.toLowerCase())) {
+      logger.error(
+        `BLOCKED: "${options.category}" is a Red Ocean category (Women's Clothing, Men's Clothing, or Novelty & Special Use). ` +
+        `These L1 categories are permanently banned for AliExpress store 2087779. ` +
+        `See documents/aliexpress-store/aliexpress-2087779-blue-ocean-categories.md for approved targets.`
+      );
+      process.exit(1);
+    }
+    categories = [{ searchTerm: options.category, label: options.category, l1: '' }];
+  }
+
+  logger.info('Task 1: Product Discovery', { mode: options.allBlueOcean ? 'all-blue-ocean' : 'single', totalSearchTerms: categories.length });
+
+  const scraper = await create1688Scraper(options.headless);
+  let totalDiscovered = 0;
+  let totalSkipped = 0;
+  let totalDuplicates = 0;
+  let categoriesProcessed = 0;
+  let categoriesFailed = 0;
+
   try {
-    // Login to 1688
     logger.info('Logging into 1688.com');
     const loggedIn = await scraper.login();
     if (!loggedIn) {
@@ -75,52 +184,42 @@ async function main(): Promise<void> {
       return;
     }
 
-    // Search for products (returns basic info — no detail scraping yet)
-    logger.info('Searching for products', { category: options.category, limit: options.limit });
-    const products = await scraper.searchProducts(options.category, options.limit);
-    logger.info('Found products from search', { count: products.length });
+    for (const cat of categories) {
+      try {
+        categoriesProcessed++;
+        logger.info(`[${categoriesProcessed}/${categories.length}] Processing: ${cat.label} (${cat.searchTerm})`, { l1: cat.l1 });
 
-    // Insert each discovered product
-    for (const product of products) {
-      // Brand check
-      if (isBannedBrand(product.title)) {
-        logger.info('Skipping banned brand', { title: product.title.substring(0, 60) });
-        skipped++;
-        continue;
-      }
+        const result = await discoverCategory(scraper, cat.searchTerm, cat.label, options.limit);
+        totalDiscovered += result.discovered;
+        totalSkipped += result.skipped;
+        totalDuplicates += result.duplicates;
 
-      // Price range check
-      if (product.priceCNY > 0 && !isPriceInRange(product.priceCNY)) {
-        logger.info('Skipping price out of range', { price: product.priceCNY });
-        skipped++;
-        continue;
-      }
+        logger.info(`[${categoriesProcessed}/${categories.length}] Done: ${cat.label}`, {
+          discovered: result.discovered,
+          skipped: result.skipped,
+          duplicates: result.duplicates,
+        });
 
-      // MOQ check
-      if (product.minOrderQty > config.filters.minOrderQty) {
-        logger.info('Skipping high MOQ', { moq: product.minOrderQty });
-        skipped++;
-        continue;
-      }
-
-      const thumbnailUrl = product.images.length > 0 ? product.images[0] : '';
-      const id = await discoverProduct(
-        product.id1688,
-        product.url,
-        product.title,
-        options.category,
-        thumbnailUrl,
-      );
-
-      if (id) {
-        discovered++;
-        logger.info(`Discovered ${discovered}: ${product.title.substring(0, 50)}`);
-      } else {
-        duplicates++;
+        // Small delay between categories to avoid rate limiting
+        if (categoriesProcessed < categories.length) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      } catch (catError) {
+        categoriesFailed++;
+        logger.error(`Category failed: ${cat.label} (${cat.searchTerm})`, { error: (catError as Error).message });
+        // Continue to next category — don't abort the whole run
       }
     }
 
-    logger.info('Task 1 complete', { discovered, skipped, duplicates });
+    logger.info('══════════════════════════════════════════');
+    logger.info('Task 1: Discovery Complete', {
+      categoriesProcessed,
+      categoriesFailed,
+      totalDiscovered,
+      totalSkipped,
+      totalDuplicates,
+    });
+    logger.info('══════════════════════════════════════════');
   } catch (error) {
     logger.error('Task 1 failed', { error: (error as Error).message });
   } finally {

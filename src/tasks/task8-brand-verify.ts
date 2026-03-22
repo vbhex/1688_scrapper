@@ -89,17 +89,32 @@ async function buildBrandVerifyMessage(productIds: number[]): Promise<string> {
     }
   }
 
+  // Determine target platform for authorization
+  const [platformRows] = await p.execute<RowDataPacket[]>(
+    `SELECT DISTINCT target_platform FROM products WHERE id IN (${placeholders})`,
+    productIds
+  );
+  const platforms = (platformRows as any[]).map(r => r.target_platform).filter(Boolean);
+  const platformName = platforms.includes('amazon') && platforms.includes('aliexpress')
+    ? '速卖通和亚马逊'
+    : platforms.includes('amazon') ? '亚马逊' : '速卖通';
+
+  // Company info for authorization docs
+  const companyInfo = '珠海蓝理科技有限公司（统一社会信用代码：91440400MADEDNAN9A）';
+
   // Tailor message based on whether seller has a claimed brand
   if (sellerBrand) {
-    return `老板你好，我做跨境的，在速卖通上卖货。看了你家这几个产品，想拿来上架：
+    return `老板你好，我做跨境的，在${platformName}上卖货。看了你家这几个产品，想拿来上架：
 ${productLines.join('\n')}
 看到产品标注的品牌是"${sellerBrand}"，应该是你们自己的牌子吧？能不能给个品牌授权书？平台要求有授权才能上架销售。
+授权给：${companyInfo}，销售平台：${platformName}。
 另外如果有质检报告、REACH或者OEKO-TEX之类的认证，也麻烦发一下，上架审核用得到。没有的话也没事，我们再聊。谢谢！`;
   }
 
-  return `老板你好，我做跨境的，在速卖通上卖货。看了你家这几个产品，想拿来上架：
+  return `老板你好，我做跨境的，在${platformName}上卖货。看了你家这几个产品，想拿来上架：
 ${productLines.join('\n')}
 想确认下：这几款是有品牌的吗？还是无牌通用款？如果是你们自己的牌子，能给个授权吗？平台查得严，没授权不敢上。
+授权给：${companyInfo}，销售平台：${platformName}。
 另外如果有质检报告、REACH或者OEKO-TEX之类的认证，也麻烦发一下，上架审核用得到。没有的话也没事，我们再聊。谢谢！`;
 }
 

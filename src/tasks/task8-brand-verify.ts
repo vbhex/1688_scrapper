@@ -71,24 +71,10 @@ async function buildBrandVerifyMessage(productIds: number[]): Promise<string> {
   );
   const productLines = rows.map((r: any) => `  • ${r.id_1688} — ${r.url}`).join('\n');
 
-  return `您好！我们是海外电商卖家，长期在AliExpress等平台销售。想跟您确认以下产品的品牌及合规情况：
-
+  return `老板你好，我做跨境的，在速卖通上卖货。看了你家这几个产品，想拿来上架：
 ${productLines}
-
-【品牌确认】
-1. 以上产品是否为品牌产品？品牌名称是什么？
-2. 如果是贵公司自有品牌，能否提供授权书？
-3. 如果是非品牌/通用产品（OEM/ODM），请确认即可。
-（海外平台对未授权品牌处罚非常严格，所以需要提前确认。）
-
-【合规认证】
-如有以下文件也请一并提供：
-- 产品检测报告（SGS/TUV等）
-- REACH 或 OEKO-TEX 认证
-- CE/UKCA认证（如适用）
-如暂时没有也没关系，请告知，我们再沟通。
-
-期待您的回复，谢谢！`;
+想确认下：这几款是有品牌的吗？还是无牌通用款？如果是你们自己的牌子，能给个授权吗？平台查得严，没授权不敢上。
+另外如果有质检报告、REACH或者OEKO-TEX之类的认证，也麻烦发一下，上架审核用得到。没有的话也没事，我们再聊。谢谢！`;
 }
 
 async function main(): Promise<void> {

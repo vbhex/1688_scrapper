@@ -6,18 +6,20 @@
  *   node dist/tasks/task1-discover.js --category earphones --limit 20
  *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25     # loop ALL 335 enabled categories
  *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25 --l1 "Watches"  # filter by L1
+ *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25 --batch 5 --resume  # 5 categories, skip completed
  * Runs on: China MacBook
  */
 
 import { create1688Scraper } from '../scrapers/1688Scraper';
 import { discoverProduct } from '../database/repositories';
-import { closeDatabase } from '../database/db';
+import { closeDatabase, getPool } from '../database/db';
 import { createChildLogger } from '../utils/logger';
 import { isBannedBrand, initBrandCache } from '../utils/helpers';
 import { isPriceInRange } from '../services/priceConverter';
 import { config, RED_OCEAN_CLI_CATEGORIES } from '../config';
 import * as fs from 'fs';
 import * as path from 'path';
+import { RowDataPacket } from 'mysql2';
 
 const logger = createChildLogger('task1-discover');
 
@@ -33,6 +35,8 @@ interface CLIOptions {
   l1Filter: string;
   limit: number;
   headless: boolean;
+  batch: number;      // 0 = all, N = process N categories then exit (for alternating with Task 2)
+  resume: boolean;    // Skip categories that already have >= limit products in DB
 }
 
 function parseArgs(): CLIOptions {
@@ -43,6 +47,8 @@ function parseArgs(): CLIOptions {
     l1Filter: '',
     limit: 20,
     headless: false,
+    batch: 0,
+    resume: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -56,6 +62,10 @@ function parseArgs(): CLIOptions {
       options.limit = parseInt(args[++i]) || options.limit;
     } else if (args[i] === '--headless') {
       options.headless = true;
+    } else if (args[i] === '--batch' && args[i + 1]) {
+      options.batch = parseInt(args[++i]) || 0;
+    } else if (args[i] === '--resume') {
+      options.resume = true;
     }
   }
 
@@ -134,6 +144,17 @@ async function discoverCategory(
   return { discovered, skipped, duplicates };
 }
 
+async function getCompletedCategories(limit: number): Promise<Set<string>> {
+  const pool = getPool();
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT category, COUNT(*) as cnt FROM products
+     WHERE status != 'skipped'
+     GROUP BY category HAVING cnt >= ?`,
+    [limit]
+  );
+  return new Set(rows.map(r => r.category));
+}
+
 async function main(): Promise<void> {
   const options = parseArgs();
 
@@ -149,6 +170,25 @@ async function main(): Promise<void> {
       label: c.sheet,
       l1: c.l1,
     }));
+
+    // Resume mode: skip categories already completed
+    if (options.resume) {
+      const completed = await getCompletedCategories(options.limit);
+      const before = categories.length;
+      categories = categories.filter(c => !completed.has(c.label));
+      logger.info('Resume mode: skipping completed categories', {
+        totalBefore: before,
+        alreadyCompleted: completed.size,
+        remaining: categories.length,
+      });
+    }
+
+    // Batch mode: only process first N categories
+    if (options.batch > 0 && categories.length > options.batch) {
+      categories = categories.slice(0, options.batch);
+      logger.info('Batch mode: limiting to first N categories', { batch: options.batch });
+    }
+
     logger.info('All Blue Ocean mode', {
       totalCategories: categories.length,
       l1Filter: options.l1Filter || 'ALL',

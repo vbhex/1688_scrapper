@@ -1,0 +1,354 @@
+brand_name_en,brand_name_zh,category,risk_level,aliases,notes
+Rolex,劳力士,watches,critical,,Ultra-luxury Swiss watch - most counterfeited watch brand
+Patek Philippe,百达翡丽,watches,critical,,Ultra-luxury Swiss watch
+Audemars Piguet,爱彼,watches,critical,,Ultra-luxury Swiss watch
+Richard Mille,理查德米尔,watches,critical,,Ultra-luxury Swiss watch
+Vacheron Constantin,江诗丹顿,watches,critical,,Ultra-luxury Swiss - Richemont group
+A. Lange & Sohne,朗格,watches,critical,,Ultra-luxury German watch
+Breguet,宝玑,watches,critical,,Ultra-luxury Swiss - Swatch Group
+Blancpain,宝珀,watches,critical,,Ultra-luxury Swiss - Swatch Group
+Jaeger-LeCoultre,积家,watches,critical,,Luxury Swiss - Richemont group
+IWC Schaffhausen,万国,watches,critical,IWC,Luxury Swiss - Richemont group
+Piaget,伯爵,watches,critical,,Luxury Swiss - Richemont group
+Panerai,沛纳海,watches,critical,,Luxury Swiss - Richemont group
+Glashutte Original,格拉苏蒂,watches,high,,Premium German - Swatch Group
+Jaquet Droz,雅克德罗,watches,high,,Luxury Swiss - Swatch Group
+Omega,欧米茄,watches,critical,,Premium Swiss - Swatch Group
+TAG Heuer,泰格豪雅,watches,critical,tag heuer,Premium Swiss - LVMH group
+Breitling,百年灵,watches,critical,,Premium Swiss
+Hublot,宇舶,watches,critical,,Premium Swiss - LVMH group
+Zenith,真力时,watches,high,,Premium Swiss - LVMH group
+Tudor,帝舵,watches,critical,,Rolex sister brand
+Longines,浪琴,watches,critical,,Premium Swiss - Swatch Group
+Rado,雷达,watches,high,,Swiss - Swatch Group
+Tissot,天梭,watches,high,,Swiss - Swatch Group
+Hamilton,汉米尔顿,watches,high,,Swiss - Swatch Group
+Certina,雪铁纳,watches,medium,,Swiss - Swatch Group
+Mido,美度,watches,high,,Swiss - Swatch Group
+Oris,豪利时,watches,high,,Independent Swiss
+Baume & Mercier,名士,watches,high,,Swiss - Richemont group
+Frederique Constant,康斯登,watches,high,,Swiss
+Raymond Weil,蕾蒙威,watches,high,,Independent Swiss
+Movado,摩凡陀,watches,high,,American/Swiss
+Chopard,萧邦,watches,critical,,Luxury Swiss
+Harry Winston,海瑞温斯顿,watches,critical,,Luxury - Swatch Group
+Franck Muller,法穆兰,watches,critical,,Luxury Swiss
+Ulysse Nardin,雅典,watches,high,,Luxury Swiss - Kering
+Girard-Perregaux,芝柏,watches,high,,Luxury Swiss - Kering
+Bell & Ross,柏莱士,watches,high,,Premium Swiss
+Roger Dubuis,罗杰杜彼,watches,high,,Luxury Swiss - Richemont
+Corum,昆仑,watches,high,,Swiss
+Ebel,玉宝,watches,medium,,Swiss
+Bulgari,宝格丽,watches,critical,Bvlgari|BVLGARI,Luxury Italian - LVMH
+Cartier,卡地亚,watches,critical,,Luxury French - Richemont
+Hermes,爱马仕,watches,critical,Hermès,Luxury French
+Chanel,香奈儿,watches,critical,,Luxury French - J12 watches
+Dior,迪奥,watches,critical,Christian Dior,Luxury French - LVMH
+Louis Vuitton,路易威登,watches,critical,LV,Luxury French - LVMH
+Gucci,古驰,watches,critical,,Luxury Italian - Kering
+Michael Kors,迈克科尔斯,watches,high,MK,Fashion brand - Capri Holdings
+Fossil,化石,watches,high,,Fashion watch
+Emporio Armani,安普里奥阿玛尼,watches,high,Armani|EA,Fashion - Giorgio Armani
+Marc Jacobs,马克雅各布斯,watches,high,,Fashion - LVMH
+Versace,范思哲,watches,critical,,Luxury Italian - Prada Group
+Tory Burch,汤丽柏琦,watches,high,,Fashion
+Seiko,精工,watches,high,,Japanese watch brand
+Grand Seiko,冠蓝狮,watches,high,,Premium Japanese
+Casio,卡西欧,watches,high,,Japanese - G-Shock parent
+G-Shock,卡西欧,watches,high,gshock|g shock,Casio sub-brand
+Citizen,西铁城,watches,high,,Japanese watch brand
+Orient,东方双狮,watches,medium,,Japanese - Seiko subsidiary
+Timex,天美时,watches,medium,,American watch brand
+Bulova,宝路华,watches,medium,,American - Citizen subsidiary
+Apple Watch,苹果手表,watches,critical,apple watch,Apple smartwatch
+Samsung Galaxy Watch,三星手表,watches,critical,galaxy watch,Samsung smartwatch
+Garmin,佳明,watches,high,,GPS/smart watch
+Fitbit,飞比特,watches,high,,Fitness watch - Google
+Huawei Watch,华为手表,watches,high,,Chinese smart watch
+Amazfit,华米,watches,high,Zepp|Huami,Chinese smart watch
+Fiyta,飞亚达,watches,high,,Chinese domestic brand
+Rossini,罗西尼,watches,medium,,Chinese domestic brand
+Sea-Gull,海鸥,watches,medium,,Chinese domestic brand - heritage
+Ebohr,依波,watches,medium,,Chinese domestic brand
+Tian Wang,天王,watches,medium,,Chinese domestic brand
+Swatch,斯沃琪,watches,high,,Swiss - Swatch Group
+Ray-Ban,雷朋,eyewear,critical,rayban|ray ban,EssilorLuxottica owned - most sold eyewear brand
+Oakley,欧克利,eyewear,critical,,EssilorLuxottica owned - extremely aggressive enforcement
+Persol,柏索,eyewear,high,,EssilorLuxottica owned
+Oliver Peoples,奥利弗,eyewear,high,,EssilorLuxottica owned
+Arnette,,eyewear,medium,,EssilorLuxottica owned
+Vogue Eyewear,,eyewear,medium,,EssilorLuxottica owned
+Costa Del Mar,,eyewear,high,,EssilorLuxottica owned
+Bolon,暴龙,eyewear,high,,EssilorLuxottica owned - Chinese market
+Foster Grant,,eyewear,medium,,EssilorLuxottica owned
+Maui Jim,茂宜吉姆,eyewear,high,,Premium independent
+Tom Ford,汤姆福特,eyewear,critical,,Luxury designer eyewear
+Gentle Monster,简塔猛特,eyewear,high,,Korean premium eyewear
+Moscot,,eyewear,medium,,Heritage NYC eyewear
+Carrera,卡雷拉,eyewear,high,,Safilo Group
+Porsche Design,保时捷设计,eyewear,high,,Premium designer
+Police,,eyewear,medium,,De Rigo Group
+Silhouette,,eyewear,medium,,Austrian premium
+Lindberg,,eyewear,medium,,Danish luxury
+ic! Berlin,,eyewear,medium,,German premium
+Smith Optics,,eyewear,medium,,Sport eyewear
+Spy Optic,,eyewear,medium,,Sport eyewear
+Rudy Project,,eyewear,medium,,Sport eyewear
+Julbo,,eyewear,medium,,Sport eyewear
+Bollé,宝丽,eyewear,medium,,Sport eyewear
+Nike Vision,耐克眼镜,eyewear,high,,Nike licensed
+Under Armour Vision,,eyewear,high,,UA licensed
+PRSR,帕莎,eyewear,medium,,Chinese domestic eyewear
+Helen Keller,海伦凯勒,eyewear,medium,,Chinese domestic eyewear
+Tiffany & Co.,蒂芙尼,jewelry,critical,Tiffany,Luxury jewelry - LVMH
+Cartier,卡地亚,jewelry,critical,,Luxury jewelry - Richemont
+Van Cleef & Arpels,梵克雅宝,jewelry,critical,VCA,Ultra-luxury - Richemont
+Bulgari,宝格丽,jewelry,critical,Bvlgari|BVLGARI,Luxury - LVMH
+Harry Winston,海瑞温斯顿,jewelry,critical,,Luxury - Swatch Group
+Graff,格拉夫,jewelry,critical,,Ultra-luxury British
+Chopard,萧邦,jewelry,critical,,Luxury Swiss
+Boucheron,宝诗龙,jewelry,critical,,Luxury - Kering
+Chaumet,尚美,jewelry,critical,,Luxury - LVMH
+Mikimoto,御木本,jewelry,critical,,Japanese pearl luxury
+David Yurman,大卫尤曼,jewelry,high,,American luxury
+Pandora,潘多拉,jewelry,high,,Danish jewelry - mass market but heavily enforced
+Swarovski,施华洛世奇,jewelry,high,,Austrian crystal brand
+Thomas Sabo,托马斯萨博,jewelry,medium,,German jewelry
+Monica Vinader,,jewelry,medium,,British jewelry
+Pomellato,,jewelry,high,,Kering group
+Fred,,jewelry,high,,LVMH group
+Messika,梅西卡,jewelry,high,,French jewelry
+De Beers,戴比尔斯,jewelry,critical,,Diamond monopoly
+Tous,桃丝熊,jewelry,medium,,Spanish jewelry
+Vivienne Westwood,薇薇安韦斯特伍德,jewelry,high,,British designer
+Chrome Hearts,克罗心,jewelry,critical,,Extremely litigious streetwear/jewelry
+Chow Tai Fook,周大福,jewelry,high,,Chinese domestic - largest jeweler
+Chow Sang Sang,周生生,jewelry,high,,Chinese domestic
+Luk Fook,六福,jewelry,medium,,Chinese domestic
+TSL Jewellery,谢瑞麟,jewelry,medium,,Chinese domestic
+Laofengxiang,老凤祥,jewelry,high,,Chinese domestic heritage
+Louis Vuitton,路易威登,bags,critical,LV|路易·威登,Most counterfeited luxury bag brand
+Hermes,爱马仕,bags,critical,Hermès|Birkin|Kelly,Ultra-luxury - Birkin/Kelly protected
+Chanel,香奈儿,bags,critical,,Luxury French
+Gucci,古驰,bags,critical,,Luxury - Kering
+Prada,普拉达,bags,critical,,Luxury Italian
+Dior,迪奥,bags,critical,Christian Dior|Lady Dior|Saddle,Luxury - LVMH
+Fendi,芬迪,bags,critical,,Luxury - LVMH - FF monogram protected
+Celine,赛琳,bags,critical,Céline,Luxury - LVMH
+Loewe,罗意威,bags,critical,,Luxury - LVMH
+Bottega Veneta,葆蝶家,bags,critical,BV,Luxury - Kering - intrecciato weave protected
+Goyard,戈雅,bags,critical,,Ultra-luxury - chevron pattern protected
+Balenciaga,巴黎世家,bags,critical,,Luxury - Kering
+Saint Laurent,圣罗兰,bags,critical,YSL,Luxury - Kering
+Givenchy,纪梵希,bags,critical,,Luxury - LVMH
+Valentino,华伦天奴,bags,critical,,Luxury Italian
+Coach,蔻驰,bags,high,,Premium - Tapestry Inc
+Michael Kors,迈克科尔斯,bags,high,MK,Premium - Capri Holdings
+Kate Spade,凯特丝蓓,bags,high,,Premium - Tapestry Inc
+Marc Jacobs,马克雅各布斯,bags,high,,Fashion - LVMH
+Tory Burch,汤丽柏琦,bags,high,,Fashion
+Furla,芙拉,bags,high,,Italian leather
+Mulberry,迈宝瑞,bags,high,,British luxury
+Longchamp,珑骧,bags,high,,French premium
+MCM,,bags,high,,Korean luxury
+Salvatore Ferragamo,菲拉格慕,bags,high,Ferragamo,Italian luxury
+Burberry,博柏利,bags,critical,,British luxury - check pattern TM
+Chloe,蔻依,bags,high,Chloé,Richemont group
+Proenza Schouler,,bags,medium,,American designer
+Rimowa,日默瓦,bags,critical,,LVMH - premium luggage
+Tumi,途明,bags,high,,Premium luggage
+Samsonite,新秀丽,bags,high,,Luggage market leader
+Briggs & Riley,,bags,medium,,Premium luggage
+Away,远途,bags,medium,,DTC luggage brand
+Fjallraven,北极狐,bags,high,Fjällräven|Kanken,Swedish outdoor
+Herschel Supply,,bags,medium,,Canadian bags
+Osprey,鹰,bags,medium,,Outdoor backpack
+The North Face,北面,bags,high,TNF|北脸,VF Corp outdoor
+Dissona,迪桑娜,bags,medium,,Chinese domestic
+Nike,耐克,shoes,critical,"Air Jordan|Jordan|Air Force 1|Dunk|AF1",Most counterfeited sneaker brand
+Adidas,阿迪达斯,shoes,critical,"Yeezy|Superstar|Stan Smith|三叶草|三条杠",Three stripes trademark
+New Balance,新百伦,shoes,critical,NB,Very aggressive IP enforcement
+Puma,彪马,shoes,critical,,Major athletic
+Converse,匡威,shoes,high,,Nike subsidiary - Chuck Taylor star TM
+Vans,范斯,shoes,high,,VF Corp
+Under Armour,安德玛,shoes,high,UA,Athletic brand
+ASICS,亚瑟士,shoes,high,,Japanese athletic
+Saucony,索康尼,shoes,medium,,Running brand
+Brooks,,shoes,medium,,Running brand
+On Running,昂跑,shoes,high,,Swiss running - fast growing
+Hoka,霍卡,shoes,high,,Running - Deckers Brands
+Reebok,锐步,shoes,high,,Athletic
+Christian Louboutin,克里斯提鲁布托,shoes,critical,,Red sole trademark - extremely enforced
+Manolo Blahnik,马诺洛,shoes,critical,,Luxury shoe
+Jimmy Choo,周仰杰,shoes,critical,,Luxury - Capri Holdings
+Stuart Weitzman,斯图尔特韦茨曼,shoes,high,,Tapestry Inc
+Dr. Martens,马丁靴,shoes,high,,Iconic boot brand
+Birkenstock,勃肯,shoes,high,,German sandal
+UGG,雪地靴,shoes,high,,Deckers Brands - boot trademark
+Clarks,其乐,shoes,medium,,British heritage
+Cole Haan,,shoes,medium,,Premium
+Tod's,托德斯,shoes,high,,Italian luxury
+Roger Vivier,罗杰维维亚,shoes,high,,LVMH group
+Anta,安踏,shoes,high,,Chinese domestic
+Li-Ning,李宁,shoes,high,,Chinese domestic
+361 Degrees,361度,shoes,medium,,Chinese domestic
+Peak,匹克,shoes,medium,,Chinese domestic
+Daphne,达芙妮,shoes,medium,,Chinese domestic
+New Era,新时代,hats_scarves,high,,MLB/NFL cap license - very enforced
+47 Brand,,hats_scarves,medium,'47,Sports cap brand
+Stetson,斯泰森,hats_scarves,medium,,American hat heritage
+Kangol,坎戈尔,hats_scarves,medium,,British hat brand
+Brixton,,hats_scarves,medium,,Hat/lifestyle brand
+Hermes,爱马仕,hats_scarves,critical,Hermès,Silk scarves extremely protected
+Burberry,博柏利,hats_scarves,critical,,Nova check pattern trademarked
+Loro Piana,诺悠翩雅,hats_scarves,critical,,LVMH - cashmere luxury
+Johnstons of Elgin,,hats_scarves,medium,,Scottish cashmere
+Supreme,潮牌,fashion_streetwear,critical,,Box logo extremely counterfeited
+Off-White,离白,fashion_streetwear,critical,,Virgil Abloh - arrow logo TM
+A Bathing Ape,猿人,fashion_streetwear,critical,BAPE|bape,Japanese streetwear
+Stussy,斯图西,fashion_streetwear,high,Stüssy,OG streetwear
+Palace,,fashion_streetwear,high,,British streetwear
+Fear of God,,fashion_streetwear,high,FOG|Essentials|fog essentials,Jerry Lorenzo
+Kith,,fashion_streetwear,high,,NYC streetwear/retail
+Comme des Garcons,川久保玲,fashion_streetwear,high,CDG|Comme des Garçons,Japanese designer
+NEIGHBORHOOD,,fashion_streetwear,medium,,Japanese streetwear
+WTAPS,,fashion_streetwear,medium,,Japanese streetwear
+Human Made,,fashion_streetwear,medium,,Nigo brand
+Cactus Plant Flea Market,,fashion_streetwear,medium,CPFM,Limited collab brand
+Yeezy,椰子,fashion_streetwear,critical,,Kanye West brand
+Stone Island,石头岛,fashion_streetwear,high,,Italian - Moncler Group
+CP Company,,fashion_streetwear,high,C.P. Company,Italian - Moncler Group
+Palm Angels,棕榈天使,fashion_streetwear,high,,Italian streetwear
+Rhude,,fashion_streetwear,medium,,American designer
+Amiri,,fashion_streetwear,high,,American luxury streetwear
+Represent,,fashion_streetwear,medium,,British streetwear
+Casablanca,,fashion_streetwear,medium,,French designer
+Kenzo,高田贤三,fashion_streetwear,high,,LVMH
+Maison Kitsune,小狐狸,fashion_streetwear,high,Maison Kitsuné|kitsune fox,French-Japanese
+Mardi Mercredi,马蒂梅克里迪,fashion_streetwear,medium,mardi,Korean brand
+Thom Browne,汤姆布朗,fashion_streetwear,critical,four bar stripe|4 bar stripe|四条杠,American luxury - four bar stripe TM
+Acne Studios,,fashion_streetwear,high,,Swedish fashion
+Ami Paris,,fashion_streetwear,high,,French fashion
+Isabel Marant,,fashion_streetwear,medium,,French designer
+Jacquemus,,fashion_streetwear,high,,French designer
+Rick Owens,,fashion_streetwear,high,,American avant-garde
+Moncler,蒙克莱,fashion_outerwear,critical,,Down jacket luxury
+Canada Goose,加拿大鹅,fashion_outerwear,critical,,Parka luxury
+Arc'teryx,始祖鸟,fashion_outerwear,critical,Arcteryx,Outdoor luxury - Amer Sports
+Patagonia,巴塔哥尼亚,fashion_outerwear,high,,Outdoor/environmental
+Columbia,哥伦比亚,fashion_outerwear,high,,Outdoor
+The North Face,北面,fashion_outerwear,critical,TNF|北脸,VF Corp
+Jack Wolfskin,狼爪,fashion_outerwear,high,,German outdoor
+Mammut,猛犸象,fashion_outerwear,medium,,Swiss outdoor
+Helly Hansen,,fashion_outerwear,medium,,Norwegian outdoor
+Salomon,萨洛蒙,fashion_outerwear,high,,Amer Sports
+Fjallraven,北极狐,fashion_outerwear,high,Fjällräven,Swedish outdoor
+Bosideng,波司登,fashion_outerwear,high,,Chinese domestic down jacket
+Ralph Lauren,拉夫劳伦,fashion_premium,critical,Polo Ralph Lauren|polo ralph|polo pony|polo horse|小马刺绣,Iconic polo player logo TM
+Calvin Klein,卡尔文克莱恩,fashion_premium,critical,CK,PVH Corp
+Tommy Hilfiger,汤米,fashion_premium,critical,,PVH Corp
+Hugo Boss,雨果博斯,fashion_premium,high,,German fashion
+Lacoste,拉科斯特,fashion_premium,high,,French - crocodile logo TM
+Fred Perry,弗雷德佩里,fashion_premium,high,,British - laurel wreath TM
+Paul Smith,,fashion_premium,medium,,British designer
+Ted Baker,,fashion_premium,medium,,British fashion
+Diesel,迪赛,fashion_premium,high,,Italian denim
+True Religion,,fashion_premium,high,,American denim
+G-Star Raw,,fashion_premium,medium,,Dutch denim
+Levi's,李维斯,fashion_premium,high,Levis,American denim heritage
+Wrangler,牧马人,fashion_premium,medium,,American denim
+Lee,,fashion_premium,medium,,American denim
+Zara,,fashion_fast,high,,Inditex - enforces own trademarks
+H&M,,fashion_fast,high,,Swedish fast fashion
+Uniqlo,优衣库,fashion_fast,high,,Japanese fast fashion
+Gap,,fashion_fast,medium,,American
+Mango,,fashion_fast,medium,,Spanish
+Champion,冠军,fashion_premium,high,,Hanesbrands - trefoil logo TM
+Fila,斐乐,fashion_premium,high,,Italian/Korean sports fashion
+Kappa,卡帕,fashion_premium,medium,,Italian sports
+Dsquared2,,fashion_premium,high,Dsquared,Italian fashion
+Moschino,莫斯奇诺,fashion_premium,high,,Italian fashion
+Victoria's Secret,维多利亚的秘密,underwear,high,VS,L Brands
+Calvin Klein,卡尔文克莱恩,underwear,critical,CK,Underwear heavily counterfeited
+La Perla,拉佩尔拉,underwear,high,,Italian luxury intimates
+Agent Provocateur,,underwear,medium,,British luxury lingerie
+Triumph,黛安芬,underwear,medium,,German/Swiss
+Wacoal,华歌尔,underwear,medium,,Japanese
+Spanx,,underwear,medium,,American shapewear
+Lululemon,露露柠檬,underwear,high,,Canadian athletic
+Gymshark,,underwear,medium,,British fitness
+Alo Yoga,,underwear,medium,aloyoga|alo yoga,American yoga wear
+Xiaomi,小米,electronics_3c,critical,,Chinese tech giant
+Huawei,华为,electronics_3c,critical,,Chinese tech giant
+Oppo,,electronics_3c,high,,Chinese phone brand
+Vivo,,electronics_3c,high,,Chinese phone brand
+OnePlus,一加,electronics_3c,high,,Chinese phone brand
+Realme,,electronics_3c,medium,,BBK Electronics
+ZTE,中兴,electronics_3c,medium,,Chinese telecom
+Lenovo,联想,electronics_3c,high,,Chinese tech
+Honor,荣耀,electronics_3c,high,,Ex-Huawei
+TCL,,electronics_3c,medium,,Chinese electronics
+Haier,海尔,electronics_3c,medium,,Chinese appliances
+Midea,美的,electronics_3c,medium,,Chinese appliances
+Hisense,海信,electronics_3c,medium,,Chinese electronics
+DJI,大疆,electronics_3c,critical,,Drone leader
+BYD,比亚迪,electronics_3c,high,,Chinese EV/electronics
+Anker,安克,electronics_3c,high,,Chinese charging brand
+Baseus,倍思,electronics_3c,high,,Chinese accessories
+Disney,迪士尼,entertainment_ip,critical,"Mickey Mouse|Minnie Mouse|Winnie the Pooh|Frozen|Elsa",Extremely aggressive IP enforcement
+Marvel,漫威,entertainment_ip,critical,Avengers|Spider-Man|Iron Man,Disney subsidiary
+Star Wars,星球大战,entertainment_ip,critical,,Disney franchise
+DC Comics,,entertainment_ip,critical,Batman|Superman|Wonder Woman,Warner Bros
+Sanrio,三丽鸥,entertainment_ip,critical,"Hello Kitty|Cinnamoroll|Kuromi|My Melody|Pompompurin|Pochacco",Japanese character IP
+Peanuts,,entertainment_ip,high,Snoopy|Charlie Brown,WildBrain
+Garfield,加菲猫,entertainment_ip,medium,,ViacomCBS
+Emoji Brand,,entertainment_ip,medium,,Trademarked emoji designs
+Pokemon,宝可梦,entertainment_ip,critical,Pikachu|口袋妖怪,Nintendo/The Pokemon Company
+Nintendo,任天堂,entertainment_ip,critical,"Mario|Zelda|Switch",Japanese gaming
+Playboy,花花公子,entertainment_ip,high,,Rabbit logo trademarked
+Coca-Cola,可口可乐,entertainment_ip,high,coca cola,Beverage brand logo
+Pepsi,百事,entertainment_ip,medium,,Beverage brand logo
+NASA,美国宇航局,government,high,,US government agency
+Ferrari,法拉利,automotive,critical,,Prancing horse logo TM
+Lamborghini,兰博基尼,automotive,critical,,Bull logo TM
+Porsche,保时捷,automotive,critical,,Crest logo TM
+McLaren,迈凯伦,automotive,high,,Racing brand
+Bugatti,布加迪,automotive,high,,Hypercar brand
+Harley-Davidson,哈雷,automotive,high,Harley Davidson|harley,Motorcycle brand
+BMW,,automotive,high,,German auto
+Mercedes-Benz,奔驰,automotive,high,Mercedes|Benz,German auto
+Audi,奥迪,automotive,medium,,German auto
+Tesla,特斯拉,automotive,high,,EV brand
+NBA,,sports_leagues,high,,Basketball league
+NFL,,sports_leagues,high,,American football league
+MLB,,sports_leagues,high,,Baseball league
+NHL,,sports_leagues,high,,Hockey league
+NCAA,,sports_leagues,medium,,College athletics
+Premier League,,sports_leagues,high,,English football
+La Liga,,sports_leagues,medium,,Spanish football
+Serie A,,sports_leagues,medium,,Italian football
+UEFA,,sports_leagues,high,,European football governing body
+FIFA,,sports_leagues,high,,World football governing body
+Olympics,,sports_leagues,critical,,IOC - Olympic rings TM
+Li-Ning,李宁,fashion_chinese,high,,Chinese domestic sports
+Anta,安踏,fashion_chinese,high,,Chinese domestic sports
+Xtep,特步,fashion_chinese,medium,,Chinese domestic sports
+Erke,鸿星尔克,fashion_chinese,medium,,Chinese domestic sports
+Semir,森马,fashion_chinese,medium,,Chinese domestic clothing
+Peacebird,太平鸟,fashion_chinese,medium,,Chinese domestic fashion
+HLA,海澜之家,fashion_chinese,medium,,Chinese domestic menswear
+Joeone,九牧王,fashion_chinese,medium,,Chinese domestic menswear
+Youngor,雅戈尔,fashion_chinese,medium,,Chinese domestic suits
+Septwolves,七匹狼,fashion_chinese,medium,,Chinese domestic menswear
+Erdos,鄂尔多斯,fashion_chinese,medium,,Chinese domestic cashmere
+JNBY,江南布衣,fashion_chinese,medium,,Chinese domestic designer
+Meters/bonwe,美特斯邦威,fashion_chinese,medium,,Chinese domestic casual
+Tencel,天丝,textiles_fibers,high,Lyocell Tencel,Lenzing AG trademark
+Gore-Tex,戈尔特斯,textiles_fibers,high,GORE-TEX,W.L. Gore trademark
+Coolmax,,textiles_fibers,medium,,Invista trademark
+Lycra,莱卡,textiles_fibers,medium,,Invista trademark - spandex brand
+Cordura,,textiles_fibers,medium,,Invista trademark - nylon
+Polartec,,textiles_fibers,medium,,Milliken trademark - fleece
+Vibram,维伯拉姆,textiles_fibers,medium,,Italian sole rubber trademark
+YKK,,textiles_fibers,low,,Zipper brand - low risk but trademarked
+Primaloft,,textiles_fibers,medium,,Insulation brand trademark

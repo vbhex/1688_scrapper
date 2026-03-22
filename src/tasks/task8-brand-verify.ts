@@ -55,7 +55,11 @@ function parseArgs(): CLIOptions {
 }
 
 /**
- * Build the Chinese brand verification message.
+ * Build the combined Chinese message for:
+ *   (1) Brand verification — is this product branded?
+ *   (2) Compliance certs — testing report, REACH/OEKO-TEX, and platform-specific certs
+ *
+ * One conversation instead of two separate outreaches. More professional and efficient.
  * Lists 1688 product IDs so the seller knows exactly which products we're asking about.
  */
 async function buildBrandVerifyMessage(productIds: number[]): Promise<string> {
@@ -67,18 +71,38 @@ async function buildBrandVerifyMessage(productIds: number[]): Promise<string> {
   );
   const productLines = rows.map((r: any) => `  • ${r.id_1688} — ${r.url}`).join('\n');
 
-  return `您好！我们在AliExpress和Amazon等平台上销售产品。为确保知识产权合规，想跟您确认以下产品的品牌情况：
+  return `您好！我们在AliExpress和Amazon等海外平台上长期销售产品。为确保合规，想跟您确认以下产品的相关信息：
 
 ${productLines}
 
-请帮忙确认：
+═══ 一、品牌确认 ═══
 1. 以上产品是否为品牌产品？如果是，品牌名称是什么？
 2. 如果是贵公司自有品牌，能否提供品牌授权书，让我们合法在海外平台销售？
 3. 如果是非品牌/通用产品（OEM/ODM），请确认即可。
+⚠️ 这非常重要——海外平台销售未授权品牌产品，店铺会被严重处罚甚至关闭。
 
-这对我们非常重要——如果在海外平台销售未经授权的品牌产品，店铺会被处罚。
+═══ 二、合规认证文件 ═══
+海外各市场对产品合规有严格要求，如有以下文件请一并发给我们：
 
-感谢您的配合！期待您的回复。`;
+📋 通用（所有平台需要）：
+  • 产品检测报告（Testing Report，如SGS、TUV、Intertek等）
+  • REACH检测报告 或 OEKO-TEX Standard 100 认证
+
+🇪🇺 欧盟市场（CE认证）：
+  • CE认证证书（如适用）
+
+🇬🇧 英国市场：
+  • UKCA认证（如适用）
+
+🇺🇸 美国市场：
+  • FCC ID（电子类产品）
+  • CPSIA认证（儿童类产品）
+  • RoHS报告（如有）
+
+如暂时没有上述文件，也请告知，我们可以进一步讨论解决方案。
+有任何文件可直接通过旺旺发送，或发到邮箱也可以。
+
+感谢您的合作！期待您的回复 🙏`;
 }
 
 async function main(): Promise<void> {

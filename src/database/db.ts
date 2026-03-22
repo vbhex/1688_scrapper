@@ -369,6 +369,34 @@ async function initializeSchema(): Promise<void> {
       if (!e.message?.includes('Duplicate column')) throw e;
     }
 
+    // ──────────────────────────────────────────────────────────────────
+    // Compliance Certificates — tracks docs received from sellers
+    // ──────────────────────────────────────────────────────────────────
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS compliance_certs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        provider_id INT NOT NULL,
+        product_id INT,
+        cert_type ENUM('testing_report','reach','oeko_tex','fcc','ce','ukca','rohs','cpsia','brand_authorization','other') NOT NULL,
+        cert_number VARCHAR(300),
+        issuing_body VARCHAR(300) COMMENT 'e.g. SGS, TUV, Intertek, BV',
+        doc_url VARCHAR(1000) COMMENT 'URL or local path to cert file',
+        valid_from DATE,
+        valid_until DATE,
+        covers_platforms JSON DEFAULT ('["aliexpress","amazon"]') COMMENT 'Which platforms this cert enables',
+        verified BOOLEAN DEFAULT FALSE COMMENT 'Have we manually verified this cert is legit',
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL,
+        INDEX idx_provider (provider_id),
+        INDEX idx_cert_type (cert_type),
+        INDEX idx_verified (verified)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     logger.info('Database schema initialized');
   } finally {
     connection.release();
@@ -919,4 +947,91 @@ export async function getBrandSafetyStats(): Promise<{
     pendingVerification: pendingRows[0].count,
     providersByTrust,
   };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Compliance Certs CRUD
+// ──────────────────────────────────────────────────────────────────────────────
+
+export type CertType = 'testing_report' | 'reach' | 'oeko_tex' | 'fcc' | 'ce' | 'ukca' | 'rohs' | 'cpsia' | 'brand_authorization' | 'other';
+
+export interface ComplianceCert {
+  id?: number;
+  providerId: number;
+  productId?: number;
+  certType: CertType;
+  certNumber?: string;
+  issuingBody?: string;
+  docUrl?: string;
+  validFrom?: Date;
+  validUntil?: Date;
+  coversPlatforms: string[];
+  verified: boolean;
+  notes?: string;
+}
+
+/**
+ * Insert a compliance cert record.
+ */
+export async function insertComplianceCert(cert: Omit<ComplianceCert, 'id'>): Promise<number> {
+  const p = await getPool();
+  const [result] = await p.execute<ResultSetHeader>(
+    `INSERT INTO compliance_certs
+       (provider_id, product_id, cert_type, cert_number, issuing_body, doc_url,
+        valid_from, valid_until, covers_platforms, verified, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      cert.providerId,
+      cert.productId || null,
+      cert.certType,
+      cert.certNumber || null,
+      cert.issuingBody || null,
+      cert.docUrl || null,
+      cert.validFrom || null,
+      cert.validUntil || null,
+      JSON.stringify(cert.coversPlatforms),
+      cert.verified ? 1 : 0,
+      cert.notes || null,
+    ]
+  );
+  return result.insertId;
+}
+
+/**
+ * Get all certs for a provider.
+ */
+export async function getCertsByProvider(providerId: number): Promise<ComplianceCert[]> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT * FROM compliance_certs WHERE provider_id = ? ORDER BY created_at DESC`,
+    [providerId]
+  );
+  return rows.map((r: any) => ({
+    id: r.id,
+    providerId: r.provider_id,
+    productId: r.product_id || undefined,
+    certType: r.cert_type,
+    certNumber: r.cert_number || undefined,
+    issuingBody: r.issuing_body || undefined,
+    docUrl: r.doc_url || undefined,
+    validFrom: r.valid_from || undefined,
+    validUntil: r.valid_until || undefined,
+    coversPlatforms: typeof r.covers_platforms === 'string'
+      ? JSON.parse(r.covers_platforms)
+      : (r.covers_platforms || ['aliexpress', 'amazon']),
+    verified: !!r.verified,
+    notes: r.notes || undefined,
+  }));
+}
+
+/**
+ * Check if a provider has a specific cert type.
+ */
+export async function providerHasCert(providerId: number, certType: CertType): Promise<boolean> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT 1 FROM compliance_certs WHERE provider_id = ? AND cert_type = ? LIMIT 1`,
+    [providerId, certType]
+  );
+  return rows.length > 0;
 }

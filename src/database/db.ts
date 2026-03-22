@@ -442,6 +442,31 @@ async function initializeSchema(): Promise<void> {
     `);
 
     // ──────────────────────────────────────────────────────────────────
+    // Listing Mappings — central table mapping source products to platform listings.
+    // One product can be listed on multiple platforms but only one store per platform.
+    // Used for order fulfillment: platform_product_id → product_id → source supplier.
+    // ──────────────────────────────────────────────────────────────────
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS listing_mappings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL COMMENT 'FK → products.id (source product)',
+        source_id VARCHAR(100) COMMENT 'Product ID on source platform (e.g. 1688 offer ID)',
+        platform VARCHAR(50) NOT NULL COMMENT 'aliexpress, amazon, ebay, etsy',
+        store_id VARCHAR(100) NOT NULL COMMENT 'Platform store ID (e.g. 2087779)',
+        platform_product_id VARCHAR(200) COMMENT 'Product ID assigned by the listing platform',
+        platform_url VARCHAR(500) COMMENT 'Direct URL to the listing',
+        status VARCHAR(50) DEFAULT 'listed',
+        listed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_product_platform_store (product_id, platform, store_id),
+        INDEX idx_platform_pid (platform, platform_product_id),
+        INDEX idx_source (source_id),
+        FOREIGN KEY (product_id) REFERENCES products(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // ──────────────────────────────────────────────────────────────────
     // Company Info — our company details for brand authorization requests
     // ──────────────────────────────────────────────────────────────────
 

@@ -322,10 +322,29 @@ async function main(): Promise<void> {
           }
         }
 
-        // NOTE: Do NOT auto-authorize based on spec "品牌: 无" — sellers often
-        // mark unauthorized brands as "无品牌" intentionally. All products must
-        // go through Task 8 seller verification regardless of what the spec says.
-        // The isBannedBrand() title/description check above is the only automated filter.
+        // ── Brand spec tagging (for Task 8 outreach) ──
+        // Do NOT auto-authorize — all products go through Task 8 seller verification.
+        // But tag the brand spec value so Task 8 knows what to ask:
+        //   "品牌: 无" → Task 8 asks: is this really unbranded?
+        //   "品牌: SomeBrand" (not in banned list) → likely seller's own brand,
+        //     Task 8 asks for authorization docs (usually safe, seller owns it)
+        //   "品牌: SomeBrand" (in banned list) → already caught by isBannedBrand() above
+        const brandSpec = detailed.specifications.find(s =>
+          s.name === '品牌' || s.name === 'brand' || s.name === '品牌/型号'
+        );
+        if (brandSpec) {
+          const brandValue = brandSpec.value.trim();
+          const isNoBrand = /^(无品牌|无|OEM|自主品牌|other|其他|null|没有|N\/A|none)$/i.test(brandValue);
+          if (!isNoBrand && brandValue.length > 0) {
+            // Seller claims a specific brand — likely their own. Tag it for Task 8
+            // to request authorization docs (品牌授权书)
+            logger.info('Seller-claimed brand detected', {
+              id: prod.id1688,
+              brand: brandValue,
+              action: 'Task 8 will request authorization',
+            });
+          }
+        }
 
         await updateStatus(prod.id, 'detail_scraped');
         scraped++;

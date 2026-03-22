@@ -66,13 +66,39 @@ async function buildBrandVerifyMessage(productIds: number[]): Promise<string> {
   const p = await getPool();
   const placeholders = productIds.map(() => '?').join(',');
   const [rows] = await p.execute<RowDataPacket[]>(
-    `SELECT id_1688, url FROM products WHERE id IN (${placeholders})`,
+    `SELECT p.id_1688, p.url, pr.specifications_zh
+     FROM products p LEFT JOIN products_raw pr ON pr.product_id = p.id
+     WHERE p.id IN (${placeholders})`,
     productIds
   );
-  const productLines = rows.map((r: any) => `  • ${r.id_1688} — ${r.url}`).join('\n');
+
+  // Check if any product has a seller-claimed brand in specs
+  let sellerBrand: string | null = null;
+  const productLines: string[] = [];
+  for (const r of rows as any[]) {
+    productLines.push(`  • ${r.id_1688} — ${r.url}`);
+    if (!sellerBrand && r.specifications_zh) {
+      const specs = typeof r.specifications_zh === 'string' ? JSON.parse(r.specifications_zh) : r.specifications_zh;
+      const brandSpec = specs.find((s: any) => s.name === '品牌' || s.name === 'brand');
+      if (brandSpec) {
+        const val = brandSpec.value?.trim();
+        if (val && !/^(无品牌|无|OEM|自主品牌|other|其他|null|没有|N\/A|none)$/i.test(val)) {
+          sellerBrand = val;
+        }
+      }
+    }
+  }
+
+  // Tailor message based on whether seller has a claimed brand
+  if (sellerBrand) {
+    return `老板你好，我做跨境的，在速卖通上卖货。看了你家这几个产品，想拿来上架：
+${productLines.join('\n')}
+看到产品标注的品牌是"${sellerBrand}"，应该是你们自己的牌子吧？能不能给个品牌授权书？平台要求有授权才能上架销售。
+另外如果有质检报告、REACH或者OEKO-TEX之类的认证，也麻烦发一下，上架审核用得到。没有的话也没事，我们再聊。谢谢！`;
+  }
 
   return `老板你好，我做跨境的，在速卖通上卖货。看了你家这几个产品，想拿来上架：
-${productLines}
+${productLines.join('\n')}
 想确认下：这几款是有品牌的吗？还是无牌通用款？如果是你们自己的牌子，能给个授权吗？平台查得严，没授权不敢上。
 另外如果有质检报告、REACH或者OEKO-TEX之类的认证，也麻烦发一下，上架审核用得到。没有的话也没事，我们再聊。谢谢！`;
 }

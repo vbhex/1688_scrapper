@@ -413,6 +413,22 @@ async function initializeSchema(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // ──────────────────────────────────────────────────────────────────
+    // Company Info — our company details for brand authorization requests
+    // ──────────────────────────────────────────────────────────────────
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS company_info (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        company_id VARCHAR(100) NOT NULL UNIQUE COMMENT '统一社会信用代码',
+        company_name_zh VARCHAR(300) NOT NULL,
+        company_name_en VARCHAR(300),
+        platforms JSON COMMENT 'Platforms this company sells on',
+        is_default BOOLEAN DEFAULT FALSE COMMENT 'Default company for authorization requests',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     logger.info('Database schema initialized');
   } finally {
     connection.release();
@@ -1053,4 +1069,33 @@ export async function providerHasCert(providerId: number, certType: ProviderCert
     [providerId, certType]
   );
   return rows.length > 0;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Company Info
+// ──────────────────────────────────────────────────────────────────────────────
+
+export interface CompanyInfo {
+  companyId: string;
+  companyNameZh: string;
+  companyNameEn?: string;
+  platforms: string[];
+}
+
+/**
+ * Get the default company info for authorization requests.
+ */
+export async function getDefaultCompanyInfo(): Promise<CompanyInfo | null> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT company_id, company_name_zh, company_name_en, platforms FROM company_info WHERE is_default = TRUE LIMIT 1`
+  );
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    companyId: r.company_id,
+    companyNameZh: r.company_name_zh,
+    companyNameEn: r.company_name_en || undefined,
+    platforms: typeof r.platforms === 'string' ? JSON.parse(r.platforms) : (r.platforms || []),
+  };
 }

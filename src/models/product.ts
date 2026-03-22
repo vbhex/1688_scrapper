@@ -92,9 +92,72 @@ export type ProductStatus =
   | 'images_checked'
   | 'translated'
   | 'ae_enriched'
+  | 'brand_verified'
   | 'images_translated'
   | 'skipped'
   | 'failed';
+
+// ──────────────────────────────────────────────────────────────────
+// Brand Safety System
+// ──────────────────────────────────────────────────────────────────
+
+export type BrandRiskLevel = 'critical' | 'high' | 'medium' | 'low';
+export type BrandSource = 'json_migration' | 'aliexpress_ipr' | 'violation_report' | 'manual' | 'trademark_db';
+
+export interface BrandEntry {
+  id?: number;
+  brandNameEn: string;
+  brandNameZh?: string;
+  category: string;
+  source: BrandSource;
+  riskLevel: BrandRiskLevel;
+  aliases?: string[];
+  exactMatch: boolean;
+  active: boolean;
+  notes?: string;
+}
+
+export type AuthorizationType = 'not_branded' | 'authorized_reseller' | 'own_brand' | 'generic';
+
+export interface AuthorizedProduct {
+  id?: number;
+  productId: number;
+  authorizationType: AuthorizationType;
+  authorizedPlatforms: string[];
+  providerId?: number;
+  sellerConfirmation?: string;
+  authorizationDocUrl?: string;
+  confirmedBy?: string;
+  confirmedAt?: Date;
+  expiresAt?: Date;
+  active: boolean;
+  notes?: string;
+}
+
+export type ProviderPlatform = '1688' | 'taobao' | 'wechat' | 'direct' | 'other';
+export type ProviderTrustLevel = 'new' | 'verified' | 'trusted' | 'preferred' | 'blacklisted';
+
+export interface Provider {
+  id?: number;
+  providerName: string;
+  platform: ProviderPlatform;
+  platformId?: string;
+  wangwangId?: string;
+  wechatId?: string;
+  email?: string;
+  phone?: string;
+  shopUrl?: string;
+  trustLevel: ProviderTrustLevel;
+  totalProducts: number;
+  complianceScore?: number;
+  notes?: string;
+}
+
+export interface BrandMatch {
+  matched: boolean;
+  brandName?: string;
+  riskLevel?: BrandRiskLevel;
+}
 
 export interface ProductRecord {
   id: number;

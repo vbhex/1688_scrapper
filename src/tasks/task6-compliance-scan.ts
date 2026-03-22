@@ -22,6 +22,7 @@ import {
   saveSellerInfoOnRaw,
   saveComplianceCert,
   saveSellerContact,
+  upsertProvider,
   closeDatabase,
 } from '../database/db';
 import { createChildLogger } from '../utils/logger';
@@ -137,10 +138,25 @@ async function main(): Promise<void> {
       await randomDelay(3000, 7000);
     }
 
-    // Persist compliance_contacts (one upsert per unique seller)
-    logger.info(`Persisting ${sellerProductMap.size} seller contacts...`);
+    // Persist compliance_contacts + providers (one upsert per unique seller)
+    logger.info(`Persisting ${sellerProductMap.size} seller contacts + providers...`);
     for (const [sellerId, info] of sellerProductMap.entries()) {
       await saveSellerContact(sellerId, info.name, info.wangwangId, info.shopUrl, info.productIds);
+
+      // Also upsert into providers table for unified supplier tracking
+      try {
+        await upsertProvider({
+          providerName: info.name || 'Unknown',
+          platform: '1688',
+          platformId: sellerId,
+          wangwangId: info.wangwangId || undefined,
+          shopUrl: info.shopUrl || undefined,
+          trustLevel: 'new',
+          totalProducts: info.productIds.length,
+        });
+      } catch (provErr: any) {
+        logger.warn('Failed to upsert provider', { sellerId, error: provErr.message });
+      }
     }
 
   } finally {

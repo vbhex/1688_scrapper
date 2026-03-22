@@ -26,9 +26,9 @@ import {
   VariantValue,
   VariantSku,
 } from '../database/repositories';
-import { closeDatabase, getPool } from '../database/db';
+import { closeDatabase, getPool, upsertProvider, upsertAuthorizedProduct } from '../database/db';
 import { createChildLogger } from '../utils/logger';
-import { isBannedBrand, get1688FullImageUrl, sleep } from '../utils/helpers';
+import { isBannedBrand, initBrandCache, get1688FullImageUrl, sleep } from '../utils/helpers';
 import { ScrapedProduct } from '../models/product';
 
 const logger = createChildLogger('task2-scrape');
@@ -50,6 +50,9 @@ function parseArgs(): { limit: number; headless: boolean } {
 async function main(): Promise<void> {
   const { limit, headless } = parseArgs();
   logger.info('Task 2: Detail Scraping', { limit, headless });
+
+  // Load brand list from DB (falls back to JSON if DB unavailable)
+  await initBrandCache();
 
   // Get discovered products
   const products = await getProductsByStatusWithLimit('discovered', limit);
@@ -301,6 +304,45 @@ async function main(): Promise<void> {
           'UPDATE products SET title_zh = ? WHERE id = ?',
           [detailed.title, prod.id]
         );
+
+        // ── Provider tracking: upsert seller into providers table ──
+        if (detailed.seller.sellerId) {
+          try {
+            await upsertProvider({
+              providerName: detailed.seller.name || 'Unknown',
+              platform: '1688',
+              platformId: detailed.seller.sellerId,
+              wangwangId: detailed.seller.wangwangId,
+              shopUrl: detailed.seller.shopUrl,
+              trustLevel: 'new',
+              totalProducts: 1,
+            });
+          } catch (provErr: any) {
+            logger.warn('Failed to upsert provider', { sellerId: detailed.seller.sellerId, error: provErr.message });
+          }
+        }
+
+        // ── Auto-authorize generic (no-brand) products ──
+        // If 1688 specs say "品牌: 无品牌" or "品牌: 无" or "品牌: OEM", auto-authorize
+        const brandSpec = detailed.specifications.find(s =>
+          s.name === '品牌' || s.name === 'brand' || s.name === '品牌/型号'
+        );
+        if (brandSpec && /^(无品牌|无|OEM|自主品牌|other|其他|null|没有|N\/A|none)$/i.test(brandSpec.value.trim())) {
+          try {
+            await upsertAuthorizedProduct({
+              productId: prod.id,
+              authorizationType: 'generic',
+              authorizedPlatforms: ['aliexpress', 'amazon'],
+              confirmedBy: 'auto',
+              confirmedAt: new Date(),
+              active: true,
+              notes: `Auto-authorized: spec "${brandSpec.name}" = "${brandSpec.value}"`,
+            });
+            logger.info('Auto-authorized as generic (no brand)', { id: prod.id1688, spec: `${brandSpec.name}: ${brandSpec.value}` });
+          } catch (authErr: any) {
+            logger.warn('Failed to auto-authorize product', { id: prod.id1688, error: authErr.message });
+          }
+        }
 
         await updateStatus(prod.id, 'detail_scraped');
         scraped++;

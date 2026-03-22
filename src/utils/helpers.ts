@@ -2,28 +2,119 @@ import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
 import { logger } from './logger';
+import { BrandEntry, BrandMatch, BrandRiskLevel } from '../models/product';
 
 // ---------------------------------------------------------------------------
-// Banned-brands list — loaded from banned-brands.json at project root.
-// To add/remove brands: edit banned-brands.json (no rebuild needed).
+// Banned-brands list — DB-backed with JSON fallback.
+// Call initBrandCache() once at task startup, then isBannedBrand() is sync.
 // ---------------------------------------------------------------------------
-let _bannedBrandsCache: string[] | null = null;
 
-function loadBannedBrands(): string[] {
-  if (_bannedBrandsCache !== null) return _bannedBrandsCache;
+interface CachedBrand {
+  keyword: string;
+  brandName: string;
+  riskLevel: BrandRiskLevel;
+  exactMatch: boolean;
+}
+
+let _brandCache: CachedBrand[] | null = null;
+let _brandCacheExpiry = 0;
+const BRAND_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Pre-load brand cache from DB. Falls back to JSON if DB unavailable.
+ * Call this once at the start of each task's main().
+ */
+export async function initBrandCache(): Promise<void> {
+  if (_brandCache && Date.now() < _brandCacheExpiry) return;
+
+  try {
+    // Dynamic import to avoid circular dependency — db.ts imports from models, not helpers
+    const { getAllActiveBrands } = await import('../database/db');
+    const brands = await getAllActiveBrands();
+    _brandCache = flattenBrandsToCache(brands);
+    _brandCacheExpiry = Date.now() + BRAND_CACHE_TTL_MS;
+    logger.info(`Brand cache loaded from DB: ${_brandCache.length} keywords from ${brands.length} brands`);
+  } catch (err: any) {
+    logger.warn(`Failed to load brands from DB, falling back to JSON: ${err.message}`);
+    _brandCache = loadBrandsFromJson();
+    _brandCacheExpiry = Date.now() + BRAND_CACHE_TTL_MS;
+  }
+}
+
+/**
+ * Flatten BrandEntry[] into a flat keyword cache for fast substring matching.
+ */
+function flattenBrandsToCache(brands: BrandEntry[]): CachedBrand[] {
+  const cache: CachedBrand[] = [];
+  for (const brand of brands) {
+    // Add the primary English name
+    cache.push({
+      keyword: brand.brandNameEn.toLowerCase(),
+      brandName: brand.brandNameEn,
+      riskLevel: brand.riskLevel,
+      exactMatch: brand.exactMatch,
+    });
+    // Add Chinese name if present
+    if (brand.brandNameZh) {
+      cache.push({
+        keyword: brand.brandNameZh.toLowerCase(),
+        brandName: brand.brandNameEn,
+        riskLevel: brand.riskLevel,
+        exactMatch: brand.exactMatch,
+      });
+    }
+    // Add all aliases
+    if (brand.aliases) {
+      for (const alias of brand.aliases) {
+        cache.push({
+          keyword: alias.toLowerCase(),
+          brandName: brand.brandNameEn,
+          riskLevel: brand.riskLevel,
+          exactMatch: brand.exactMatch,
+        });
+      }
+    }
+  }
+  return cache;
+}
+
+/**
+ * JSON fallback — same as the old loadBannedBrands().
+ */
+function loadBrandsFromJson(): CachedBrand[] {
   const jsonPath = path.resolve(__dirname, '../../banned-brands.json');
   try {
     const raw = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-    const keywords: string[] = [];
+    const cache: CachedBrand[] = [];
     for (const list of Object.values(raw.categories ?? {})) {
-      if (Array.isArray(list)) keywords.push(...(list as string[]));
+      if (Array.isArray(list)) {
+        for (const kw of list as string[]) {
+          cache.push({
+            keyword: kw.toLowerCase(),
+            brandName: kw,
+            riskLevel: 'high',
+            exactMatch: false,
+          });
+        }
+      }
     }
-    _bannedBrandsCache = keywords;
+    return cache;
   } catch {
     logger.warn('banned-brands.json not found or invalid — using empty list', { path: jsonPath });
-    _bannedBrandsCache = [];
+    return [];
   }
-  return _bannedBrandsCache;
+}
+
+/**
+ * Get the current brand keyword list (for backward compat with code that calls loadBannedBrands).
+ */
+function getBrandKeywords(): CachedBrand[] {
+  if (!_brandCache) {
+    // Fallback if initBrandCache() wasn't called — use JSON synchronously
+    _brandCache = loadBrandsFromJson();
+    _brandCacheExpiry = Date.now() + BRAND_CACHE_TTL_MS;
+  }
+  return _brandCache;
 }
 
 export function sleep(ms: number): Promise<void> {
@@ -82,10 +173,42 @@ export function isAppleBrand(text: string): boolean {
 }
 
 // CRITICAL: Never scrape/list products from major brands — AliExpress will punish the store.
-// To add/remove brands: edit banned-brands.json at the project root (no rebuild needed).
+// Uses DB-backed cache (loaded via initBrandCache) with JSON fallback.
 export function isBannedBrand(text: string): boolean {
   const lowerText = text.toLowerCase();
-  return loadBannedBrands().some(brand => lowerText.includes(brand));
+  return getBrandKeywords().some(cached => {
+    if (cached.exactMatch) {
+      // Word-boundary matching to avoid false positives (e.g., "cherry" in "cherry red")
+      const regex = new RegExp(`\\b${escapeRegex(cached.keyword)}\\b`, 'i');
+      return regex.test(text);
+    }
+    return lowerText.includes(cached.keyword);
+  });
+}
+
+/**
+ * Enhanced brand check that returns match details (brand name + risk level).
+ * Useful for logging which brand was matched.
+ */
+export function getBannedBrandMatch(text: string): BrandMatch {
+  const lowerText = text.toLowerCase();
+  for (const cached of getBrandKeywords()) {
+    let matched = false;
+    if (cached.exactMatch) {
+      const regex = new RegExp(`\\b${escapeRegex(cached.keyword)}\\b`, 'i');
+      matched = regex.test(text);
+    } else {
+      matched = lowerText.includes(cached.keyword);
+    }
+    if (matched) {
+      return { matched: true, brandName: cached.brandName, riskLevel: cached.riskLevel };
+    }
+  }
+  return { matched: false };
+}
+
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Convert 1688 image URL to full-size version by stripping thumbnail suffixes

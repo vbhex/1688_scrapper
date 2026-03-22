@@ -10,7 +10,7 @@ import { create1688Scraper } from '../scrapers/1688Scraper';
 import { discoverProduct } from '../database/repositories';
 import { closeDatabase } from '../database/db';
 import { createChildLogger } from '../utils/logger';
-import { isBannedBrand } from '../utils/helpers';
+import { isBannedBrand, initBrandCache } from '../utils/helpers';
 import { isPriceInRange } from '../services/priceConverter';
 import { config, RED_OCEAN_CLI_CATEGORIES } from '../config';
 
@@ -45,6 +45,9 @@ function parseArgs(): CLIOptions {
 
 async function main(): Promise<void> {
   const options = parseArgs();
+
+  // Load brand list from DB (falls back to JSON if DB unavailable)
+  await initBrandCache();
 
   // RED OCEAN GUARD — block banned L1 categories before opening a browser
   if (RED_OCEAN_CLI_CATEGORIES.has(options.category.toLowerCase())) {

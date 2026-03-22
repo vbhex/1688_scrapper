@@ -1,5 +1,10 @@
 import mysql, { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
-import { ProductRecord, ProductStatus, ComplianceCert, SellerContact } from '../models/product';
+import {
+  ProductRecord, ProductStatus, ComplianceCert, SellerContact,
+  BrandEntry, BrandRiskLevel, BrandSource, BrandMatch,
+  AuthorizedProduct, AuthorizationType,
+  Provider, ProviderPlatform, ProviderTrustLevel,
+} from '../models/product';
 import { createChildLogger } from '../utils/logger';
 import { config } from '../config';
 
@@ -288,6 +293,82 @@ async function initializeSchema(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // ──────────────────────────────────────────────────────────────────
+    // Brand Safety System — 3 tables
+    // ──────────────────────────────────────────────────────────────────
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS brand_list (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        brand_name_en VARCHAR(200) NOT NULL,
+        brand_name_zh VARCHAR(200),
+        category VARCHAR(100) NOT NULL,
+        source VARCHAR(100) NOT NULL,
+        risk_level ENUM('critical','high','medium','low') DEFAULT 'high',
+        aliases JSON,
+        exact_match BOOLEAN DEFAULT FALSE,
+        active BOOLEAN DEFAULT TRUE,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_brand_en_cat (brand_name_en, category),
+        INDEX idx_active (active)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS providers (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        provider_name VARCHAR(500) NOT NULL,
+        platform ENUM('1688','taobao','wechat','direct','other') DEFAULT '1688',
+        platform_id VARCHAR(200),
+        wangwang_id VARCHAR(200),
+        wechat_id VARCHAR(200),
+        email VARCHAR(300),
+        phone VARCHAR(50),
+        shop_url VARCHAR(500),
+        trust_level ENUM('new','verified','trusted','preferred','blacklisted') DEFAULT 'new',
+        total_products INT DEFAULT 0,
+        compliance_score DECIMAL(3,2),
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_platform_seller (platform, platform_id),
+        INDEX idx_trust_level (trust_level)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS authorized_products (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_id INT NOT NULL,
+        authorization_type ENUM('not_branded','authorized_reseller','own_brand','generic') NOT NULL,
+        authorized_platforms JSON DEFAULT ('["aliexpress"]'),
+        provider_id INT,
+        seller_confirmation TEXT,
+        authorization_doc_url VARCHAR(1000),
+        confirmed_by VARCHAR(100),
+        confirmed_at TIMESTAMP NULL,
+        expires_at TIMESTAMP NULL,
+        active BOOLEAN DEFAULT TRUE,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_product (product_id),
+        FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+        FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL,
+        INDEX idx_authorization_type (authorization_type),
+        INDEX idx_active (active)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Add provider_id FK to compliance_contacts (migration-safe)
+    try {
+      await connection.execute(`ALTER TABLE compliance_contacts ADD COLUMN provider_id INT`);
+    } catch (e: any) {
+      if (!e.message?.includes('Duplicate column')) throw e;
+    }
+
     logger.info('Database schema initialized');
   } finally {
     connection.release();
@@ -493,4 +574,349 @@ export async function getProductsForComplianceScan(limit?: number): Promise<Arra
      ${limitClause}`
   );
   return rows as Array<{ id: number; id1688: string; url: string }>;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Brand List CRUD
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Get all active brands from DB for cache loading.
+ * Returns flattened keyword list: [brandNameEn, brandNameZh, ...aliases] per brand.
+ */
+export async function getAllActiveBrands(): Promise<BrandEntry[]> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT id, brand_name_en, brand_name_zh, category, source,
+            risk_level, aliases, exact_match, active, notes
+     FROM brand_list
+     WHERE active = TRUE`
+  );
+  return rows.map(r => ({
+    id: r.id,
+    brandNameEn: r.brand_name_en,
+    brandNameZh: r.brand_name_zh || undefined,
+    category: r.category,
+    source: r.source,
+    riskLevel: r.risk_level,
+    aliases: r.aliases ? (typeof r.aliases === 'string' ? JSON.parse(r.aliases) : r.aliases) : undefined,
+    exactMatch: !!r.exact_match,
+    active: !!r.active,
+    notes: r.notes || undefined,
+  }));
+}
+
+/**
+ * Insert or update a brand in the brand_list table.
+ */
+export async function upsertBrand(brand: BrandEntry): Promise<number> {
+  const p = await getPool();
+  const [result] = await p.execute<ResultSetHeader>(
+    `INSERT INTO brand_list (brand_name_en, brand_name_zh, category, source, risk_level, aliases, exact_match, active, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       brand_name_zh = COALESCE(VALUES(brand_name_zh), brand_name_zh),
+       source = VALUES(source),
+       risk_level = VALUES(risk_level),
+       aliases = VALUES(aliases),
+       exact_match = VALUES(exact_match),
+       active = VALUES(active),
+       notes = COALESCE(VALUES(notes), notes),
+       updated_at = NOW()`,
+    [
+      brand.brandNameEn,
+      brand.brandNameZh || null,
+      brand.category,
+      brand.source,
+      brand.riskLevel,
+      brand.aliases ? JSON.stringify(brand.aliases) : null,
+      brand.exactMatch ? 1 : 0,
+      brand.active ? 1 : 0,
+      brand.notes || null,
+    ]
+  );
+  return result.insertId || 0;
+}
+
+/**
+ * Look up a brand by English name and category.
+ */
+export async function getBrandByName(brandNameEn: string, category?: string): Promise<BrandEntry | null> {
+  const p = await getPool();
+  const query = category
+    ? `SELECT * FROM brand_list WHERE brand_name_en = ? AND category = ? LIMIT 1`
+    : `SELECT * FROM brand_list WHERE brand_name_en = ? LIMIT 1`;
+  const params = category ? [brandNameEn, category] : [brandNameEn];
+  const [rows] = await p.execute<RowDataPacket[]>(query, params);
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    brandNameEn: r.brand_name_en,
+    brandNameZh: r.brand_name_zh || undefined,
+    category: r.category,
+    source: r.source,
+    riskLevel: r.risk_level,
+    aliases: r.aliases ? (typeof r.aliases === 'string' ? JSON.parse(r.aliases) : r.aliases) : undefined,
+    exactMatch: !!r.exact_match,
+    active: !!r.active,
+    notes: r.notes || undefined,
+  };
+}
+
+/**
+ * Get count of brands in brand_list.
+ */
+export async function getBrandCount(): Promise<number> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>('SELECT COUNT(*) as count FROM brand_list WHERE active = TRUE');
+  return rows[0].count;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Providers CRUD
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Upsert a provider (seller/supplier) from any sourcing platform.
+ */
+export async function upsertProvider(provider: Omit<Provider, 'id'>): Promise<number> {
+  const p = await getPool();
+  const [result] = await p.execute<ResultSetHeader>(
+    `INSERT INTO providers (provider_name, platform, platform_id, wangwang_id, wechat_id, email, phone, shop_url, trust_level, total_products, compliance_score, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       provider_name = VALUES(provider_name),
+       wangwang_id = COALESCE(VALUES(wangwang_id), wangwang_id),
+       wechat_id = COALESCE(VALUES(wechat_id), wechat_id),
+       email = COALESCE(VALUES(email), email),
+       phone = COALESCE(VALUES(phone), phone),
+       shop_url = COALESCE(VALUES(shop_url), shop_url),
+       total_products = VALUES(total_products),
+       compliance_score = COALESCE(VALUES(compliance_score), compliance_score),
+       notes = COALESCE(VALUES(notes), notes),
+       updated_at = NOW()`,
+    [
+      provider.providerName,
+      provider.platform,
+      provider.platformId || null,
+      provider.wangwangId || null,
+      provider.wechatId || null,
+      provider.email || null,
+      provider.phone || null,
+      provider.shopUrl || null,
+      provider.trustLevel,
+      provider.totalProducts,
+      provider.complianceScore ?? null,
+      provider.notes || null,
+    ]
+  );
+  return result.insertId || 0;
+}
+
+/**
+ * Find a provider by platform + platform_id (e.g., 1688 seller ID).
+ */
+export async function getProviderByPlatformId(platform: ProviderPlatform, platformId: string): Promise<Provider | null> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT * FROM providers WHERE platform = ? AND platform_id = ? LIMIT 1`,
+    [platform, platformId]
+  );
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    providerName: r.provider_name,
+    platform: r.platform,
+    platformId: r.platform_id || undefined,
+    wangwangId: r.wangwang_id || undefined,
+    wechatId: r.wechat_id || undefined,
+    email: r.email || undefined,
+    phone: r.phone || undefined,
+    shopUrl: r.shop_url || undefined,
+    trustLevel: r.trust_level,
+    totalProducts: r.total_products,
+    complianceScore: r.compliance_score ? parseFloat(r.compliance_score) : undefined,
+    notes: r.notes || undefined,
+  };
+}
+
+/**
+ * Update a provider's trust level.
+ */
+export async function updateProviderTrustLevel(
+  providerId: number,
+  trustLevel: ProviderTrustLevel,
+  notes?: string
+): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    `UPDATE providers SET trust_level = ?, notes = COALESCE(?, notes), updated_at = NOW() WHERE id = ?`,
+    [trustLevel, notes || null, providerId]
+  );
+}
+
+/**
+ * Increment provider total_products count.
+ */
+export async function incrementProviderProductCount(providerId: number): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    `UPDATE providers SET total_products = total_products + 1, updated_at = NOW() WHERE id = ?`,
+    [providerId]
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Authorized Products CRUD
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Insert or update an authorized product.
+ */
+export async function upsertAuthorizedProduct(auth: Omit<AuthorizedProduct, 'id'>): Promise<number> {
+  const p = await getPool();
+  const [result] = await p.execute<ResultSetHeader>(
+    `INSERT INTO authorized_products
+       (product_id, authorization_type, authorized_platforms, provider_id,
+        seller_confirmation, authorization_doc_url, confirmed_by, confirmed_at,
+        expires_at, active, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       authorization_type = VALUES(authorization_type),
+       authorized_platforms = VALUES(authorized_platforms),
+       provider_id = COALESCE(VALUES(provider_id), provider_id),
+       seller_confirmation = COALESCE(VALUES(seller_confirmation), seller_confirmation),
+       authorization_doc_url = COALESCE(VALUES(authorization_doc_url), authorization_doc_url),
+       confirmed_by = VALUES(confirmed_by),
+       confirmed_at = VALUES(confirmed_at),
+       expires_at = VALUES(expires_at),
+       active = VALUES(active),
+       notes = COALESCE(VALUES(notes), notes),
+       updated_at = NOW()`,
+    [
+      auth.productId,
+      auth.authorizationType,
+      JSON.stringify(auth.authorizedPlatforms),
+      auth.providerId || null,
+      auth.sellerConfirmation || null,
+      auth.authorizationDocUrl || null,
+      auth.confirmedBy || null,
+      auth.confirmedAt || null,
+      auth.expiresAt || null,
+      auth.active ? 1 : 0,
+      auth.notes || null,
+    ]
+  );
+  return result.insertId || 0;
+}
+
+/**
+ * Check if a product is authorized.
+ */
+export async function isProductAuthorized(productId: number): Promise<boolean> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT 1 FROM authorized_products WHERE product_id = ? AND active = TRUE LIMIT 1`,
+    [productId]
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Get authorized product record by product_id.
+ */
+export async function getAuthorizedProduct(productId: number): Promise<AuthorizedProduct | null> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT * FROM authorized_products WHERE product_id = ? LIMIT 1`,
+    [productId]
+  );
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    productId: r.product_id,
+    authorizationType: r.authorization_type,
+    authorizedPlatforms: typeof r.authorized_platforms === 'string'
+      ? JSON.parse(r.authorized_platforms)
+      : (r.authorized_platforms || ['aliexpress']),
+    providerId: r.provider_id || undefined,
+    sellerConfirmation: r.seller_confirmation || undefined,
+    authorizationDocUrl: r.authorization_doc_url || undefined,
+    confirmedBy: r.confirmed_by || undefined,
+    confirmedAt: r.confirmed_at || undefined,
+    expiresAt: r.expires_at || undefined,
+    active: !!r.active,
+    notes: r.notes || undefined,
+  };
+}
+
+/**
+ * Get products pending brand verification (ae_enriched but not in authorized_products).
+ */
+export async function getProductsPendingBrandVerification(limit?: number): Promise<Array<{
+  id: number;
+  id1688: string;
+  url: string;
+  titleZh: string;
+  sellerId?: string;
+  sellerName?: string;
+  sellerWangwangId?: string;
+}>> {
+  const p = await getPool();
+  const limitClause = limit ? `LIMIT ${limit}` : '';
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT p.id, p.id_1688 AS id1688, p.url, p.title_zh AS titleZh,
+            pr.seller_id AS sellerId, pr.seller_name AS sellerName,
+            pr.seller_wangwang_id AS sellerWangwangId
+     FROM products p
+     LEFT JOIN products_raw pr ON pr.product_id = p.id
+     LEFT JOIN authorized_products ap ON ap.product_id = p.id
+     WHERE p.status = 'ae_enriched'
+       AND ap.id IS NULL
+     ORDER BY p.created_at ASC
+     ${limitClause}`
+  );
+  return rows as any[];
+}
+
+/**
+ * Get brand safety stats for reporting.
+ */
+export async function getBrandSafetyStats(): Promise<{
+  totalBrands: number;
+  authorizedProducts: number;
+  pendingVerification: number;
+  providersByTrust: Record<string, number>;
+}> {
+  const p = await getPool();
+
+  const [brandRows] = await p.execute<RowDataPacket[]>(
+    'SELECT COUNT(*) as count FROM brand_list WHERE active = TRUE'
+  );
+  const [authRows] = await p.execute<RowDataPacket[]>(
+    'SELECT COUNT(*) as count FROM authorized_products WHERE active = TRUE'
+  );
+  const [pendingRows] = await p.execute<RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM products p
+     LEFT JOIN authorized_products ap ON ap.product_id = p.id
+     WHERE p.status = 'ae_enriched' AND ap.id IS NULL`
+  );
+  const [trustRows] = await p.execute<RowDataPacket[]>(
+    'SELECT trust_level, COUNT(*) as count FROM providers GROUP BY trust_level'
+  );
+
+  const providersByTrust: Record<string, number> = {};
+  for (const row of trustRows) {
+    providersByTrust[row.trust_level] = row.count;
+  }
+
+  return {
+    totalBrands: brandRows[0].count,
+    authorizedProducts: authRows[0].count,
+    pendingVerification: pendingRows[0].count,
+    providersByTrust,
+  };
 }

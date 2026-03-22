@@ -1,6 +1,6 @@
 import mysql, { Pool, RowDataPacket, ResultSetHeader } from 'mysql2/promise';
 import {
-  ProductRecord, ProductStatus, ComplianceCert, SellerContact,
+  ProductRecord, ProductStatus, SellerContact,
   BrandEntry, BrandRiskLevel, BrandSource, BrandMatch,
   AuthorizedProduct, AuthorizationType,
   Provider, ProviderPlatform, ProviderTrustLevel,
@@ -370,11 +370,12 @@ async function initializeSchema(): Promise<void> {
     }
 
     // ──────────────────────────────────────────────────────────────────
-    // Compliance Certificates — tracks docs received from sellers
+    // Provider Certificates — docs received from sellers (brand auth, REACH, CE, etc.)
+    // Separate from compliance_certs which tracks certs found on 1688 product pages.
     // ──────────────────────────────────────────────────────────────────
 
     await connection.execute(`
-      CREATE TABLE IF NOT EXISTS compliance_certs (
+      CREATE TABLE IF NOT EXISTS provider_certs (
         id INT AUTO_INCREMENT PRIMARY KEY,
         provider_id INT NOT NULL,
         product_id INT,
@@ -950,16 +951,17 @@ export async function getBrandSafetyStats(): Promise<{
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Compliance Certs CRUD
+// Provider Certs CRUD — docs received from sellers (separate from compliance_certs
+// which tracks certs found on 1688 product pages)
 // ──────────────────────────────────────────────────────────────────────────────
 
-export type CertType = 'testing_report' | 'reach' | 'oeko_tex' | 'fcc' | 'ce' | 'ukca' | 'rohs' | 'cpsia' | 'brand_authorization' | 'other';
+export type ProviderCertType = 'testing_report' | 'reach' | 'oeko_tex' | 'fcc' | 'ce' | 'ukca' | 'rohs' | 'cpsia' | 'brand_authorization' | 'other';
 
-export interface ComplianceCert {
+export interface ProviderCert {
   id?: number;
   providerId: number;
   productId?: number;
-  certType: CertType;
+  certType: ProviderCertType;
   certNumber?: string;
   issuingBody?: string;
   docUrl?: string;
@@ -971,12 +973,12 @@ export interface ComplianceCert {
 }
 
 /**
- * Insert a compliance cert record.
+ * Insert a provider cert record (received from seller via Wangwang/WeChat).
  */
-export async function insertComplianceCert(cert: Omit<ComplianceCert, 'id'>): Promise<number> {
+export async function insertProviderCert(cert: Omit<ProviderCert, 'id'>): Promise<number> {
   const p = await getPool();
   const [result] = await p.execute<ResultSetHeader>(
-    `INSERT INTO compliance_certs
+    `INSERT INTO provider_certs
        (provider_id, product_id, cert_type, cert_number, issuing_body, doc_url,
         valid_from, valid_until, covers_platforms, verified, notes)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -1000,10 +1002,10 @@ export async function insertComplianceCert(cert: Omit<ComplianceCert, 'id'>): Pr
 /**
  * Get all certs for a provider.
  */
-export async function getCertsByProvider(providerId: number): Promise<ComplianceCert[]> {
+export async function getProviderCerts(providerId: number): Promise<ProviderCert[]> {
   const p = await getPool();
   const [rows] = await p.execute<RowDataPacket[]>(
-    `SELECT * FROM compliance_certs WHERE provider_id = ? ORDER BY created_at DESC`,
+    `SELECT * FROM provider_certs WHERE provider_id = ? ORDER BY created_at DESC`,
     [providerId]
   );
   return rows.map((r: any) => ({
@@ -1027,10 +1029,10 @@ export async function getCertsByProvider(providerId: number): Promise<Compliance
 /**
  * Check if a provider has a specific cert type.
  */
-export async function providerHasCert(providerId: number, certType: CertType): Promise<boolean> {
+export async function providerHasCert(providerId: number, certType: ProviderCertType): Promise<boolean> {
   const p = await getPool();
   const [rows] = await p.execute<RowDataPacket[]>(
-    `SELECT 1 FROM compliance_certs WHERE provider_id = ? AND cert_type = ? LIMIT 1`,
+    `SELECT 1 FROM provider_certs WHERE provider_id = ? AND cert_type = ? LIMIT 1`,
     [providerId, certType]
   );
   return rows.length > 0;

@@ -159,27 +159,6 @@ export interface BrandMatch {
   riskLevel?: BrandRiskLevel;
 }
 
-// ──────────────────────────────────────────────────────────────────
-// Compliance Certificates
-// ──────────────────────────────────────────────────────────────────
-
-export type CertType = 'testing_report' | 'reach' | 'oeko_tex' | 'fcc' | 'ce' | 'ukca' | 'rohs' | 'cpsia' | 'brand_authorization' | 'other';
-
-export interface ComplianceCert {
-  id?: number;
-  providerId: number;
-  productId?: number;
-  certType: CertType;
-  certNumber?: string;
-  issuingBody?: string;
-  docUrl?: string;
-  validFrom?: Date;
-  validUntil?: Date;
-  coversPlatforms: string[];
-  verified: boolean;
-  notes?: string;
-}
-
 export interface ProductRecord {
   id: number;
   id1688: string;

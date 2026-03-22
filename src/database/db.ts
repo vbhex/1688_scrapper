@@ -967,7 +967,10 @@ export async function getAuthorizedProduct(productId: number): Promise<Authorize
 }
 
 /**
- * Get products pending brand verification (ae_enriched but not in authorized_products).
+ * Get products pending brand verification.
+ * Picks up products at images_checked status (BEFORE translation).
+ * This saves translation fees — only authorized products get translated.
+ * Pipeline order: Task 1→2→3 → Task 8 (verify) → Task 4 (translate) → Task 5 → Excel
  */
 export async function getProductsPendingBrandVerification(limit?: number): Promise<Array<{
   id: number;
@@ -989,7 +992,7 @@ export async function getProductsPendingBrandVerification(limit?: number): Promi
      FROM products p
      LEFT JOIN products_raw pr ON pr.product_id = p.id
      LEFT JOIN authorized_products ap ON ap.product_id = p.id
-     WHERE p.status = 'ae_enriched'
+     WHERE p.status IN ('images_checked', 'translated', 'ae_enriched')
        AND ap.id IS NULL
      ORDER BY p.created_at ASC
      ${limitClause}`

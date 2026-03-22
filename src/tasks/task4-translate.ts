@@ -20,7 +20,8 @@ import {
   updateVariantValueTranslation,
   VariantEN,
 } from '../database/repositories';
-import { closeDatabase } from '../database/db';
+import { closeDatabase, getPool } from '../database/db';
+import { RowDataPacket } from 'mysql2/promise';
 import { createChildLogger } from '../utils/logger';
 import { findClosestColorFamily, cleanVariantName } from '../utils/helpers';
 
@@ -41,14 +42,27 @@ async function main(): Promise<void> {
   const { limit } = parseArgs();
   logger.info('Task 4: Translation', { limit });
 
-  const products = await getProductsByStatusWithLimit('images_checked', limit);
+  // Only translate products that are brand-verified (in authorized_products).
+  // This saves translation fees — unverified products don't get translated.
+  // Pipeline: Task 1→2→3 → Task 8 (verify) → Task 4 (translate) → Task 5 → Excel
+  const pool = await getPool();
+  const safeLimit = Math.max(1, Math.floor(limit));
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT p.id, p.id_1688, p.status, p.url, p.title_zh, p.category, p.raw_data
+     FROM products p
+     JOIN authorized_products ap ON ap.product_id = p.id AND ap.active = TRUE
+     WHERE p.status = 'images_checked'
+     ORDER BY p.id ASC
+     LIMIT ${safeLimit}`
+  );
+  const products = rows as any[];
   if (products.length === 0) {
-    logger.info('No products to translate');
+    logger.info('No authorized products to translate (need Task 8 verification first)');
     closeDatabase();
     return;
   }
 
-  logger.info(`Found ${products.length} products to translate`);
+  logger.info(`Found ${products.length} authorized products to translate`);
 
   let translated = 0;
   let failed = 0;

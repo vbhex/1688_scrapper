@@ -145,7 +145,7 @@ async function discoverCategory(
 }
 
 async function getCompletedCategories(limit: number): Promise<Set<string>> {
-  const pool = getPool();
+  const pool = await getPool();
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT category, COUNT(*) as cnt FROM products
      WHERE status != 'skipped'

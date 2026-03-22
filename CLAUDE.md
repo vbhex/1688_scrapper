@@ -1,12 +1,15 @@
 # 1688 Scrapper — Project Rules & Context
 
-## CRITICAL RULE — HIGHEST PRIORITY
+## CRITICAL RULES — HIGHEST PRIORITY
 
-**NEVER scrape products from major brands.** Downstream stores (AliExpress, etc.) WILL be punished.
-
-Banned brands include: Apple (iphone, ipad, airpods, inpods, macbook), Huaqiangbei, Samsung (galaxy buds), Sony, Bose, JBL, Beats, Nike, Adidas, Google Pixel, Microsoft, Nintendo, Dyson, GoPro, DJI, Gucci, Louis Vuitton, Prada, Rolex, Sennheiser, Lenovo, Huawei, Xiaomi, Oppo, Vivo, OnePlus, Remax, LDNIO, Anker, Baseus, and more.
-
-The full list is in `config.ts` → `excludeBrands`. Always check titles AND descriptions with `isBannedBrand()` from `src/utils/helpers.ts` before scraping. When in doubt, skip the product.
+**BRAND SAFETY — 548+ brands in `1688_source.brand_list` DB.**
+- `isBannedBrand()` in `src/utils/helpers.ts` checks against the DB (with JSON fallback).
+- Checked at Task 1 (title) and Task 2 (title, description, specs, variants, seller name).
+- Substring matching must ALWAYS be aggressive (`exactMatch = false` for all brands). Safety over false positives.
+- Do NOT auto-authorize products based on spec "品牌: 无" — sellers lie. All products must go through Task 8 seller verification.
+- When seller claims a brand not in banned list (likely their own), Task 8 asks for authorization docs. Company info is in `1688_source.company_info` table — only shared after seller agrees.
+- Brand import CLI: `node dist/tasks/task-brand-import.js --source violation --brand "X" --category Y`
+- Full strategy: `documents/aliexpress-store/BRAND_SAFETY_STRATEGY.md`
 
 ---
 

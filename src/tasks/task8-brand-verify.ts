@@ -124,6 +124,7 @@ async function main(): Promise<void> {
     sellerName: string;
     wangwangId: string;
     shopUrl: string;
+    productUrl: string;  // 1688 product page URL — more reliable for finding Wangwang button
     productIds: number[];
     productId1688s: string[];
   }>();
@@ -180,6 +181,7 @@ async function main(): Promise<void> {
         sellerName: prod.sellerName || 'Unknown',
         wangwangId: prod.sellerWangwangId || '',
         shopUrl,
+        productUrl: prod.url || '',  // 1688 product detail page — has reliable Wangwang button
         productIds: [],
         productId1688s: [],
       });
@@ -230,8 +232,10 @@ async function main(): Promise<void> {
             sellerId, info.sellerName, info.wangwangId, info.shopUrl, info.productIds
           );
 
-          // Send via Wangwang — pass shop URL (scraper navigates to shop, clicks Wangwang chat)
-          const sent = await scraper.sendWangwangMessage(info.shopUrl, message);
+          // Send via Wangwang — use product page URL first (more reliable Wangwang button),
+          // fall back to shop URL if no product URL available
+          const contactUrl = info.productUrl || info.shopUrl;
+          const sent = await scraper.sendWangwangMessage(contactUrl, message);
           if (sent) {
             await updateContactStatus(sellerId, 'contacted', 'Brand verification + cert request sent (Task 8)');
             contacted++;

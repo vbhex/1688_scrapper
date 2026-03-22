@@ -2159,19 +2159,14 @@ export class Scraper1688 {
       // Type the message with human-like pacing
       await inputEl.click();
       await randomDelay(500, 1000);
-      await this.humanType(chatPage, message);
+      await this.humanType(this.page, message);
       await randomDelay(800, 1500);
 
       // Send with Enter key
-      await chatPage.keyboard.press('Enter');
+      await this.page.keyboard.press('Enter');
       await randomDelay(1000, 2000);
 
-      logger.info('Wangwang message sent', { sellerUrl });
-
-      // If a separate chat tab was opened, close it and return to main page
-      if (chatPage !== this.page) {
-        await chatPage.close();
-      }
+      logger.info('Wangwang message sent', { sellerLoginId });
 
       return true;
     } catch (error) {

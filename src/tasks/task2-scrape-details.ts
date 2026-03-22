@@ -322,27 +322,10 @@ async function main(): Promise<void> {
           }
         }
 
-        // ── Auto-authorize generic (no-brand) products ──
-        // If 1688 specs say "品牌: 无品牌" or "品牌: 无" or "品牌: OEM", auto-authorize
-        const brandSpec = detailed.specifications.find(s =>
-          s.name === '品牌' || s.name === 'brand' || s.name === '品牌/型号'
-        );
-        if (brandSpec && /^(无品牌|无|OEM|自主品牌|other|其他|null|没有|N\/A|none)$/i.test(brandSpec.value.trim())) {
-          try {
-            await upsertAuthorizedProduct({
-              productId: prod.id,
-              authorizationType: 'generic',
-              authorizedPlatforms: ['aliexpress', 'amazon'],
-              confirmedBy: 'auto',
-              confirmedAt: new Date(),
-              active: true,
-              notes: `Auto-authorized: spec "${brandSpec.name}" = "${brandSpec.value}"`,
-            });
-            logger.info('Auto-authorized as generic (no brand)', { id: prod.id1688, spec: `${brandSpec.name}: ${brandSpec.value}` });
-          } catch (authErr: any) {
-            logger.warn('Failed to auto-authorize product', { id: prod.id1688, error: authErr.message });
-          }
-        }
+        // NOTE: Do NOT auto-authorize based on spec "品牌: 无" — sellers often
+        // mark unauthorized brands as "无品牌" intentionally. All products must
+        // go through Task 8 seller verification regardless of what the spec says.
+        // The isBannedBrand() title/description check above is the only automated filter.
 
         await updateStatus(prod.id, 'detail_scraped');
         scraped++;

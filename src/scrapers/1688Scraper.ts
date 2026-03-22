@@ -2110,15 +2110,36 @@ export class Scraper1688 {
       });
 
       if (webVersionClicked) {
-        logger.info('Clicked "优先使用网页版" — waiting for web chat to load');
-        await randomDelay(5000, 8000);
+        logger.info('Clicked "优先使用网页版" — waiting for web chat tab to open');
+        // The button opens a new tab with the air.1688.com web IM
+        // Wait and poll for the new tab
+        let chatTab: any = null;
+        for (let attempt = 0; attempt < 10; attempt++) {
+          await sleep(2000);
+          const allPages = await this.browser!.pages();
+          for (const p of allPages) {
+            const pUrl = p.url();
+            if (pUrl.includes('air.1688.com') || pUrl.includes('web_im')) {
+              chatTab = p;
+              break;
+            }
+          }
+          if (chatTab) break;
+        }
 
-        // After clicking, a new tab may open with the actual chat
-        const pages = await this.browser!.pages();
-        if (pages.length > 1) {
-          // Switch to the newest tab (the chat window)
-          this.page = pages[pages.length - 1];
-          await randomDelay(3000, 5000);
+        if (chatTab) {
+          this.page = chatTab;
+          await chatTab.bringToFront();
+          logger.info('Switched to web IM tab');
+          // Wait for the iframe inside to load
+          await sleep(5000);
+        } else {
+          // Fallback: use the latest tab
+          const allPages = await this.browser!.pages();
+          if (allPages.length > 1) {
+            this.page = allPages[allPages.length - 1];
+          }
+          logger.warn('Could not find air.1688.com tab, using latest tab');
         }
       }
 

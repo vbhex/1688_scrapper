@@ -173,6 +173,9 @@ async function main(): Promise<void> {
           minOrderQty: detailed.minOrderQty,
           sellerName: detailed.seller.name,
           sellerRating: detailed.seller.rating || 0,
+          sellerId: detailed.seller.sellerId || undefined,
+          sellerShopUrl: detailed.seller.shopUrl || undefined,
+          sellerWangwangId: detailed.seller.wangwangId || undefined,
         });
 
         // Insert gallery images

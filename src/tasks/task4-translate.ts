@@ -48,7 +48,7 @@ async function main(): Promise<void> {
   const pool = await getPool();
   const safeLimit = Math.max(1, Math.floor(limit));
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT p.id, p.id_1688, p.status, p.url, p.title_zh, p.category, p.raw_data
+    `SELECT p.id, p.id_1688 AS id1688, p.status, p.url, p.title_zh AS titleZh, p.category, p.raw_data AS rawData
      FROM products p
      JOIN authorized_products ap ON ap.product_id = p.id AND ap.active = TRUE
      WHERE p.status = 'images_checked'

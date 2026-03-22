@@ -65,21 +65,29 @@ export interface RawProductData {
   minOrderQty: number;
   sellerName: string;
   sellerRating: number;
+  sellerId?: string;
+  sellerShopUrl?: string;
+  sellerWangwangId?: string;
 }
 
 export async function insertProductRaw(data: RawProductData): Promise<number> {
   const p = await getPool();
   const [result] = await p.execute<ResultSetHeader>(
-    `INSERT INTO products_raw (product_id, title_zh, description_zh, specifications_zh, price_cny, min_order_qty, seller_name, seller_rating)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO products_raw (product_id, title_zh, description_zh, specifications_zh, price_cny, min_order_qty, seller_name, seller_rating, seller_id, seller_shop_url, seller_wangwang_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE title_zh=VALUES(title_zh), description_zh=VALUES(description_zh),
        specifications_zh=VALUES(specifications_zh), price_cny=VALUES(price_cny),
        min_order_qty=VALUES(min_order_qty), seller_name=VALUES(seller_name),
-       seller_rating=VALUES(seller_rating), scraped_at=CURRENT_TIMESTAMP`,
+       seller_rating=VALUES(seller_rating),
+       seller_id=COALESCE(VALUES(seller_id), seller_id),
+       seller_shop_url=COALESCE(VALUES(seller_shop_url), seller_shop_url),
+       seller_wangwang_id=COALESCE(VALUES(seller_wangwang_id), seller_wangwang_id),
+       scraped_at=CURRENT_TIMESTAMP`,
     [
       data.productId, data.titleZh, data.descriptionZh,
       JSON.stringify(data.specificationsZh), data.priceCny,
       data.minOrderQty, data.sellerName, data.sellerRating,
+      data.sellerId || null, data.sellerShopUrl || null, data.sellerWangwangId || null,
     ]
   );
   return result.insertId;

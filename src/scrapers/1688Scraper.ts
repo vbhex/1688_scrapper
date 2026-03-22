@@ -2081,8 +2081,12 @@ export class Scraper1688 {
       await randomDelay(2000, 4000);
       await this.humanMouseMove(this.page);
 
-      // Locate the Wangwang / contact chat button on the seller's shop page
+      // Locate the Wangwang / contact chat button on the page
+      // 2026-03-22: 1688 product pages now use "客服" (Customer Service) buttons
       const chatBtnSelectors = [
+        'a.customer-service',           // Product page: "客服" link
+        'a.action-link.customer-service', // Product page: full class match
+        'a.action-item',                // Product page: sidebar "客服"
         'a[href*="wangwang"]',
         'a[href*="ww.alicdn.com"]',
         '[class*="wangwang"]',
@@ -2098,6 +2102,25 @@ export class Scraper1688 {
         if (chatBtn) {
           logger.debug('Found chat button', { selector: sel });
           break;
+        }
+      }
+
+      // Fallback: find by text content "客服" (Customer Service)
+      if (!chatBtn) {
+        chatBtn = await this.page.evaluateHandle(() => {
+          const links = document.querySelectorAll('a, button');
+          for (const el of links) {
+            const text = (el.textContent || '').trim();
+            if (text === '客服' && (el as HTMLElement).offsetHeight > 0) {
+              return el;
+            }
+          }
+          return null;
+        });
+        if (chatBtn && (await chatBtn.evaluate((el: any) => el !== null))) {
+          logger.debug('Found chat button by text content "客服"');
+        } else {
+          chatBtn = null;
         }
       }
 

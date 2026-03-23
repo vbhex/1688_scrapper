@@ -27,6 +27,7 @@ interface SearchTermEntry {
   l1: string;
   search_terms_zh: string[];
   enabled: boolean;
+  brand_safe?: boolean;
 }
 
 interface CLIOptions {
@@ -72,21 +73,27 @@ function parseArgs(): CLIOptions {
   return options;
 }
 
-function loadBlueOceanCategories(l1Filter: string): Array<{ sheet: string; searchTerm: string; l1: string }> {
+function loadBlueOceanCategories(l1Filter: string): Array<{ sheet: string; searchTerm: string; l1: string; brandSafe: boolean }> {
   const filePath = path.join(__dirname, '..', 'data', 'blue-ocean-search-terms.json');
   const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  const categories: Array<{ sheet: string; searchTerm: string; l1: string }> = [];
+  const categories: Array<{ sheet: string; searchTerm: string; l1: string; brandSafe: boolean }> = [];
 
   for (const [sheet, entry] of Object.entries(raw)) {
     if (sheet === '_meta') continue;
     const e = entry as SearchTermEntry;
     if (!e.enabled) continue;
     if (l1Filter && e.l1.toLowerCase() !== l1Filter.toLowerCase()) continue;
-    // Use first search term as primary
     for (const term of e.search_terms_zh) {
-      categories.push({ sheet, searchTerm: term, l1: e.l1 });
+      categories.push({ sheet, searchTerm: term, l1: e.l1, brandSafe: !!e.brand_safe });
     }
   }
+
+  // Sort: brand-safe categories first (they flow through pipeline faster)
+  categories.sort((a, b) => {
+    if (a.brandSafe && !b.brandSafe) return -1;
+    if (!a.brandSafe && b.brandSafe) return 1;
+    return 0;
+  });
 
   return categories;
 }
@@ -161,7 +168,7 @@ async function main(): Promise<void> {
   await initBrandCache();
 
   // Build category list
-  let categories: Array<{ searchTerm: string; label: string; l1: string }>;
+  let categories: Array<{ searchTerm: string; label: string; l1: string; brandSafe: boolean }>;
 
   if (options.allBlueOcean) {
     const blueOcean = loadBlueOceanCategories(options.l1Filter);
@@ -169,6 +176,7 @@ async function main(): Promise<void> {
       searchTerm: c.searchTerm,
       label: c.sheet,
       l1: c.l1,
+      brandSafe: c.brandSafe,
     }));
 
     // Resume mode: skip categories already completed
@@ -204,7 +212,7 @@ async function main(): Promise<void> {
       );
       process.exit(1);
     }
-    categories = [{ searchTerm: options.category, label: options.category, l1: '' }];
+    categories = [{ searchTerm: options.category, label: options.category, l1: '', brandSafe: false }];
   }
 
   logger.info('Task 1: Product Discovery', { mode: options.allBlueOcean ? 'all-blue-ocean' : 'single', totalSearchTerms: categories.length });

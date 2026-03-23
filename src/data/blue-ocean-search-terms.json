@@ -4,430 +4,3139 @@
     "total": 404,
     "description": "1688 search terms for all blue ocean AliExpress categories. Task 1 uses these to discover products."
   },
-  "Accessories": { "l1": "Apparel Accessories", "search_terms_zh": ["时尚配饰"], "enabled": true },
-  "GarmentAccessories": { "l1": "Apparel Accessories", "search_terms_zh": ["服装辅料配件"], "enabled": true },
-  "ChipCases": { "l1": "Apparel Accessories", "search_terms_zh": ["筹码盒"], "enabled": false },
-  "CollarStays": { "l1": "Apparel Accessories", "search_terms_zh": ["领撑"], "enabled": true },
-  "Cummerbunds": { "l1": "Apparel Accessories", "search_terms_zh": ["腰封"], "enabled": true },
-  "FacialHair": { "l1": "Apparel Accessories", "search_terms_zh": ["假胡子"], "enabled": false },
-  "Beard": { "l1": "Apparel Accessories", "search_terms_zh": ["假胡须"], "enabled": false },
-  "FashionableCanes": { "l1": "Apparel Accessories", "search_terms_zh": ["时尚拐杖"], "enabled": false },
-  "Handkerchiefs": { "l1": "Apparel Accessories", "search_terms_zh": ["手帕", "口袋巾"], "enabled": true },
-  "KneeSleeveLegWarmer": { "l1": "Apparel Accessories", "search_terms_zh": ["护膝套", "腿套"], "enabled": true },
-  "Oversleeve": { "l1": "Apparel Accessories", "search_terms_zh": ["袖套", "防晒袖套"], "enabled": true },
-  "PocketSquares": { "l1": "Apparel Accessories", "search_terms_zh": ["口袋巾", "西装口袋巾"], "enabled": true },
-  "Sashes": { "l1": "Apparel Accessories", "search_terms_zh": ["腰带绶带"], "enabled": true },
-  "ShoulderStrap": { "l1": "Apparel Accessories", "search_terms_zh": ["肩带", "包肩带"], "enabled": true },
-  "SuspendersBracesPostureCor": { "l1": "Apparel Accessories", "search_terms_zh": ["背带", "吊带夹"], "enabled": true },
-  "TieBucklesCufflinks": { "l1": "Apparel Accessories", "search_terms_zh": ["领带扣袖扣"], "enabled": true },
-  "TieChains": { "l1": "Apparel Accessories", "search_terms_zh": ["领带链"], "enabled": true },
-  "TieClip": { "l1": "Apparel Accessories", "search_terms_zh": ["领带夹"], "enabled": true },
-  "TieClipsCufflinks": { "l1": "Apparel Accessories", "search_terms_zh": ["领带夹袖扣套装"], "enabled": true },
-  "TiePins": { "l1": "Apparel Accessories", "search_terms_zh": ["领带别针"], "enabled": true },
-  "TieSet": { "l1": "Apparel Accessories", "search_terms_zh": ["领带套装"], "enabled": true },
-  "Ties": { "l1": "Apparel Accessories", "search_terms_zh": ["领带", "男士领带"], "enabled": true },
-  "TiesBows": { "l1": "Apparel Accessories", "search_terms_zh": ["领结", "蝴蝶结领带"], "enabled": true },
-  "ChiffonFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["雪纺面料"], "enabled": false },
-  "CompositeFabric": { "l1": "Apparel Accessories", "search_terms_zh": ["复合面料"], "enabled": false },
-  "CottonFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["棉布面料"], "enabled": false },
-  "CottonSlippers": { "l1": "Apparel Accessories", "search_terms_zh": ["棉拖鞋"], "enabled": false },
-  "DenimFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["牛仔面料"], "enabled": false },
-  "JerseyFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["针织面料"], "enabled": false },
-  "LaceFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["蕾丝面料"], "enabled": false },
-  "LatexFabric": { "l1": "Apparel Accessories", "search_terms_zh": ["乳胶面料"], "enabled": false },
-  "LinenFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["亚麻面料"], "enabled": false },
-  "NylonFabric": { "l1": "Apparel Accessories", "search_terms_zh": ["尼龙面料"], "enabled": false },
-  "OrganzaFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["欧根纱面料"], "enabled": false },
-  "PolyesterFabric": { "l1": "Apparel Accessories", "search_terms_zh": ["涤纶面料"], "enabled": false },
-  "SatinFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["缎面面料"], "enabled": false },
-  "SequinFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["亮片面料"], "enabled": false },
-  "SilkFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["真丝面料"], "enabled": false },
-  "TaffetaFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["塔夫绸面料"], "enabled": false },
-  "TulleFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["网纱面料"], "enabled": false },
-  "VelourFabric": { "l1": "Apparel Accessories", "search_terms_zh": ["天鹅绒面料"], "enabled": false },
-  "VelvetFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["丝绒面料"], "enabled": false },
-  "WaxFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["蜡染面料"], "enabled": false },
-  "WoolBlends": { "l1": "Apparel Accessories", "search_terms_zh": ["羊毛混纺面料"], "enabled": false },
-  "AppliqueFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["贴花面料"], "enabled": false },
-  "BlendedFabric": { "l1": "Apparel Accessories", "search_terms_zh": ["混纺面料"], "enabled": false },
-  "FabricSamples": { "l1": "Apparel Accessories", "search_terms_zh": ["面料样品"], "enabled": false },
-  "FauxLeatherFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["仿皮面料"], "enabled": false },
-  "SuitFabrics": { "l1": "Apparel Accessories", "search_terms_zh": ["西装面料"], "enabled": false },
-  "TextileProductsandTools": { "l1": "Apparel Accessories", "search_terms_zh": ["纺织工具"], "enabled": false },
-  "Belts": { "l1": "Apparel Accessories", "search_terms_zh": ["时尚皮带", "腰带"], "enabled": true },
-  "BeltBuckle": { "l1": "Apparel Accessories", "search_terms_zh": ["皮带扣", "腰带扣头"], "enabled": true },
-  "Earmuffs": { "l1": "Apparel Accessories", "search_terms_zh": ["耳罩", "保暖耳罩"], "enabled": true },
-  "AntislipEarGripHook": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜防滑耳钩"], "enabled": true },
-  "BlueLightBlockingGlasses": { "l1": "Apparel Accessories", "search_terms_zh": ["防蓝光眼镜"], "enabled": true },
-  "ChainsLanyards": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜链", "眼镜挂绳"], "enabled": true },
-  "ContactLensCases": { "l1": "Apparel Accessories", "search_terms_zh": ["隐形眼镜盒"], "enabled": true },
-  "EarHook": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜耳钩"], "enabled": true },
-  "EyeMask": { "l1": "Apparel Accessories", "search_terms_zh": ["眼罩", "睡眠眼罩"], "enabled": true },
-  "EyeglassesFrames": { "l1": "Apparel Accessories", "search_terms_zh": ["光学眼镜框", "近视眼镜架"], "enabled": true },
-  "EyeglassesLenses": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜片"], "enabled": true },
-  "EyewearCasesBags": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜盒", "眼镜袋"], "enabled": true },
-  "FashionGlasses": { "l1": "Apparel Accessories", "search_terms_zh": ["时尚眼镜", "装饰眼镜"], "enabled": true },
-  "GlassesRepairTools": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜维修工具"], "enabled": true },
-  "LensCleaners": { "l1": "Apparel Accessories", "search_terms_zh": ["镜片清洁剂"], "enabled": true },
-  "LensClothes": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜布"], "enabled": true },
-  "MasksEyewear": { "l1": "Apparel Accessories", "search_terms_zh": ["面罩眼镜"], "enabled": false },
-  "NightVisionGlasses": { "l1": "Apparel Accessories", "search_terms_zh": ["夜视眼镜"], "enabled": true },
-  "NosePads": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜鼻托"], "enabled": true },
-  "PrescriptionGlasses": { "l1": "Apparel Accessories", "search_terms_zh": ["近视眼镜", "配镜"], "enabled": true },
-  "ProtectiveGlasses": { "l1": "Apparel Accessories", "search_terms_zh": ["防护眼镜"], "enabled": true },
-  "ReadingGlasses": { "l1": "Apparel Accessories", "search_terms_zh": ["老花镜", "阅读眼镜"], "enabled": true },
-  "RepairToolsKits": { "l1": "Apparel Accessories", "search_terms_zh": ["眼镜修理套装"], "enabled": true },
-  "Sunglasses": { "l1": "Apparel Accessories", "search_terms_zh": ["偏光太阳镜", "墨镜"], "enabled": true },
-  "UltrasonicEyeglassCleaners": { "l1": "Apparel Accessories", "search_terms_zh": ["超声波眼镜清洗机"], "enabled": true },
-  "VisionTestingandRecoveryTo": { "l1": "Apparel Accessories", "search_terms_zh": ["视力测试工具"], "enabled": false },
-  "GlovesHandwear": { "l1": "Apparel Accessories", "search_terms_zh": ["时尚手套"], "enabled": true },
-  "GlovesMittens": { "l1": "Apparel Accessories", "search_terms_zh": ["保暖手套", "连指手套"], "enabled": true },
-  "HairAccessories": { "l1": "Apparel Accessories", "search_terms_zh": ["发饰", "头饰"], "enabled": true },
-  "HairAccessoriesSet": { "l1": "Apparel Accessories", "search_terms_zh": ["发饰套装"], "enabled": true },
-  "HairClaw": { "l1": "Apparel Accessories", "search_terms_zh": ["鲨鱼夹", "抓夹"], "enabled": true },
-  "HairClip": { "l1": "Apparel Accessories", "search_terms_zh": ["发夹", "边夹"], "enabled": true },
-  "HairCrownsTiaras": { "l1": "Apparel Accessories", "search_terms_zh": ["皇冠头饰", "新娘头饰"], "enabled": true },
-  "HairGrips": { "l1": "Apparel Accessories", "search_terms_zh": ["一字夹", "发卡"], "enabled": true },
-  "HairPin": { "l1": "Apparel Accessories", "search_terms_zh": ["发簪", "盘发器"], "enabled": true },
-  "HairScarf": { "l1": "Apparel Accessories", "search_terms_zh": ["发带丝巾"], "enabled": true },
-  "HairTies": { "l1": "Apparel Accessories", "search_terms_zh": ["发绳", "头绳"], "enabled": true },
-  "FlowerCrown": { "l1": "Apparel Accessories", "search_terms_zh": ["花环头饰"], "enabled": true },
-  "Scrunchie": { "l1": "Apparel Accessories", "search_terms_zh": ["大肠发圈"], "enabled": true },
-  "BomberHats": { "l1": "Apparel Accessories", "search_terms_zh": ["雷锋帽", "飞行帽"], "enabled": true },
-  "BucketHats": { "l1": "Apparel Accessories", "search_terms_zh": ["渔夫帽"], "enabled": true },
-  "CowboyHats": { "l1": "Apparel Accessories", "search_terms_zh": ["牛仔帽", "西部帽"], "enabled": true },
-  "Hats": { "l1": "Apparel Accessories", "search_terms_zh": ["针织帽", "毛线帽"], "enabled": true },
-  "Headband": { "l1": "Apparel Accessories", "search_terms_zh": ["发箍", "头箍"], "enabled": true },
-  "Headwear": { "l1": "Apparel Accessories", "search_terms_zh": ["头巾", "头饰"], "enabled": true },
-  "BaseballCaps": { "l1": "Apparel Accessories", "search_terms_zh": ["棒球帽"], "enabled": true },
-  "Berets": { "l1": "Apparel Accessories", "search_terms_zh": ["贝雷帽"], "enabled": true },
-  "CustomizedHat": { "l1": "Apparel Accessories", "search_terms_zh": ["定制帽子"], "enabled": false },
-  "Fascinators": { "l1": "Apparel Accessories", "search_terms_zh": ["礼帽头饰"], "enabled": true },
-  "Fedoras": { "l1": "Apparel Accessories", "search_terms_zh": ["礼帽", "爵士帽"], "enabled": true },
-  "HipHopCaps": { "l1": "Apparel Accessories", "search_terms_zh": ["嘻哈帽", "平沿帽"], "enabled": true },
-  "NewsboyCaps": { "l1": "Apparel Accessories", "search_terms_zh": ["报童帽", "八角帽"], "enabled": true },
-  "OctagonalHats": { "l1": "Apparel Accessories", "search_terms_zh": ["八角帽"], "enabled": true },
-  "PrayerHats": { "l1": "Apparel Accessories", "search_terms_zh": ["穆斯林帽"], "enabled": true },
-  "SkulliesBeanies": { "l1": "Apparel Accessories", "search_terms_zh": ["冷帽", "毛线帽"], "enabled": true },
-  "SunHats": { "l1": "Apparel Accessories", "search_terms_zh": ["遮阳帽", "防晒帽"], "enabled": true },
-  "Visors": { "l1": "Apparel Accessories", "search_terms_zh": ["空顶帽", "遮阳帽"], "enabled": true },
-  "Mask": { "l1": "Apparel Accessories", "search_terms_zh": ["口罩", "防晒口罩"], "enabled": true },
-  "Scarf": { "l1": "Apparel Accessories", "search_terms_zh": ["围巾"], "enabled": true },
-  "Scarves": { "l1": "Apparel Accessories", "search_terms_zh": ["针织围巾", "冬季围巾"], "enabled": true },
-  "Bandana": { "l1": "Apparel Accessories", "search_terms_zh": ["方巾", "头巾"], "enabled": true },
-  "Neckerchief": { "l1": "Apparel Accessories", "search_terms_zh": ["领巾", "小方巾"], "enabled": true },
-  "ScarfAccessories": { "l1": "Apparel Accessories", "search_terms_zh": ["围巾扣", "丝巾扣"], "enabled": true },
-  "ScarfHatGloveSets": { "l1": "Apparel Accessories", "search_terms_zh": ["围巾帽子手套套装"], "enabled": true },
-  "SilkScarves": { "l1": "Apparel Accessories", "search_terms_zh": ["真丝丝巾", "桑蚕丝围巾"], "enabled": true },
-  "SunProtectiveScarf": { "l1": "Apparel Accessories", "search_terms_zh": ["防晒丝巾"], "enabled": true },
-  "SunprotectiveSleeve": { "l1": "Apparel Accessories", "search_terms_zh": ["防晒冰袖"], "enabled": true },
-  "Wraps": { "l1": "Apparel Accessories", "search_terms_zh": ["披肩"], "enabled": true },
-
-  "BodyChain": { "l1": "Jewelry & Accessories", "search_terms_zh": ["身体链", "腰链"], "enabled": true },
-  "EarringJackets": { "l1": "Jewelry & Accessories", "search_terms_zh": ["耳套耳饰"], "enabled": true },
-  "Anklets": { "l1": "Jewelry & Accessories", "search_terms_zh": ["脚链"], "enabled": true },
-  "Bangles": { "l1": "Jewelry & Accessories", "search_terms_zh": ["手镯"], "enabled": true },
-  "Beads": { "l1": "Jewelry & Accessories", "search_terms_zh": ["串珠", "DIY珠子"], "enabled": true },
-  "BodyJewelryStickers": { "l1": "Jewelry & Accessories", "search_terms_zh": ["身体贴纸"], "enabled": true },
-  "Bracelets": { "l1": "Jewelry & Accessories", "search_terms_zh": ["时尚手链"], "enabled": true },
-  "Brooches": { "l1": "Jewelry & Accessories", "search_terms_zh": ["胸针"], "enabled": true },
-  "Chain": { "l1": "Jewelry & Accessories", "search_terms_zh": ["项链链条", "首饰链"], "enabled": true },
-  "Charms": { "l1": "Jewelry & Accessories", "search_terms_zh": ["吊坠配件", "DIY挂件"], "enabled": true },
-  "ClipEarrings": { "l1": "Jewelry & Accessories", "search_terms_zh": ["耳夹", "无耳洞耳环"], "enabled": true },
-  "DangleEarrings": { "l1": "Jewelry & Accessories", "search_terms_zh": ["耳坠", "长款耳环"], "enabled": true },
-  "DentalGrills": { "l1": "Jewelry & Accessories", "search_terms_zh": ["牙饰"], "enabled": true },
-  "FauxBodyPiercingJewelry": { "l1": "Jewelry & Accessories", "search_terms_zh": ["假穿刺饰品"], "enabled": true },
-  "HairJewelry": { "l1": "Jewelry & Accessories", "search_terms_zh": ["发饰珠宝"], "enabled": true },
-  "HoopEarrings": { "l1": "Jewelry & Accessories", "search_terms_zh": ["圈形耳环", "大耳圈"], "enabled": true },
-  "JewelryMask": { "l1": "Jewelry & Accessories", "search_terms_zh": ["珠宝面具"], "enabled": false },
-  "JewelrySets": { "l1": "Jewelry & Accessories", "search_terms_zh": ["首饰套装", "项链耳环套装"], "enabled": true },
-  "KeyChains": { "l1": "Jewelry & Accessories", "search_terms_zh": ["钥匙扣", "创意钥匙链"], "enabled": true },
-  "Necklace": { "l1": "Jewelry & Accessories", "search_terms_zh": ["项链", "锁骨链"], "enabled": true },
-  "Pendants": { "l1": "Jewelry & Accessories", "search_terms_zh": ["吊坠", "项链挂坠"], "enabled": true },
-  "PiercingJewelry": { "l1": "Jewelry & Accessories", "search_terms_zh": ["穿刺饰品", "鼻环耳钉"], "enabled": true },
-  "Rings": { "l1": "Jewelry & Accessories", "search_terms_zh": ["戒指", "时尚指环"], "enabled": true },
-  "StudEarrings": { "l1": "Jewelry & Accessories", "search_terms_zh": ["耳钉"], "enabled": true },
-  "ToeRings": { "l1": "Jewelry & Accessories", "search_terms_zh": ["脚趾戒"], "enabled": true },
-  "JewelryFindingsComponentsO": { "l1": "Jewelry & Accessories", "search_terms_zh": ["首饰配件", "DIY饰品材料"], "enabled": false },
-  "JewelryPackagingDisplay": { "l1": "Jewelry & Accessories", "search_terms_zh": ["首饰包装盒"], "enabled": false },
-  "JewelryToolsEquipments": { "l1": "Jewelry & Accessories", "search_terms_zh": ["首饰制作工具"], "enabled": false },
-  "SmartJewelry": { "l1": "Jewelry & Accessories", "search_terms_zh": ["智能首饰"], "enabled": false },
-
-  "Backpacks": { "l1": "Luggage & Bags", "search_terms_zh": ["时尚双肩包", "背包"], "enabled": true },
-  "AnimeBackpacksWalletsLugga": { "l1": "Luggage & Bags", "search_terms_zh": ["动漫双肩包"], "enabled": true },
-  "BusinessCommuterLaptopBag": { "l1": "Luggage & Bags", "search_terms_zh": ["商务电脑包", "通勤包"], "enabled": true },
-  "BagPartsAccessories": { "l1": "Luggage & Bags", "search_terms_zh": ["包配件", "包带"], "enabled": true },
-  "DrawstringBags": { "l1": "Luggage & Bags", "search_terms_zh": ["抽绳包", "束口袋"], "enabled": true },
-  "LuggageCover": { "l1": "Luggage & Bags", "search_terms_zh": ["行李箱保护套"], "enabled": true },
-  "RollingLuggage": { "l1": "Luggage & Bags", "search_terms_zh": ["拉杆箱", "行李箱"], "enabled": true },
-  "SchoolBags": { "l1": "Luggage & Bags", "search_terms_zh": ["书包", "学生背包"], "enabled": true },
-  "CoolerBags": { "l1": "Luggage & Bags", "search_terms_zh": ["保温袋", "冷藏包"], "enabled": true },
-  "CosmeticBagsCases": { "l1": "Luggage & Bags", "search_terms_zh": ["化妆包", "收纳包"], "enabled": true },
-  "HairScissorsBags": { "l1": "Luggage & Bags", "search_terms_zh": ["剪刀包"], "enabled": false },
-  "InstrumentBagsCases": { "l1": "Luggage & Bags", "search_terms_zh": ["乐器包"], "enabled": true },
-  "LunchBags": { "l1": "Luggage & Bags", "search_terms_zh": ["饭盒袋", "午餐包"], "enabled": true },
-  "ShoppingBags": { "l1": "Luggage & Bags", "search_terms_zh": ["购物袋", "环保袋"], "enabled": true },
-  "TravelTote": { "l1": "Luggage & Bags", "search_terms_zh": ["旅行手提包"], "enabled": true },
-  "WaistPacks": { "l1": "Luggage & Bags", "search_terms_zh": ["腰包", "胸包"], "enabled": true },
-  "Wallets": { "l1": "Luggage & Bags", "search_terms_zh": ["钱包", "长款钱包"], "enabled": true },
-  "CardIDHolders": { "l1": "Luggage & Bags", "search_terms_zh": ["卡包", "证件套"], "enabled": true },
-  "CoinPurses": { "l1": "Luggage & Bags", "search_terms_zh": ["零钱包"], "enabled": true },
-  "KeyWallets": { "l1": "Luggage & Bags", "search_terms_zh": ["钥匙包"], "enabled": true },
-  "MoneyClips": { "l1": "Luggage & Bags", "search_terms_zh": ["钱夹"], "enabled": true },
-
-  "FamilyMatchingOutfits": { "l1": "Mother & Kids", "search_terms_zh": ["亲子装"], "enabled": true },
-
-  "MensBootsDoNotPostinThisCa": { "l1": "Shoes", "search_terms_zh": ["男靴"], "enabled": true },
-  "MensCompressionShorts": { "l1": "Shoes", "search_terms_zh": ["男士压缩短裤"], "enabled": false },
-  "MensHijabs": { "l1": "Shoes", "search_terms_zh": ["男士头巾"], "enabled": false },
-  "MensMoslemTShirts": { "l1": "Shoes", "search_terms_zh": ["穆斯林男装"], "enabled": false },
-  "MensMuslimShirts": { "l1": "Shoes", "search_terms_zh": ["穆斯林衬衫"], "enabled": false },
-  "MensPrayerGarment": { "l1": "Shoes", "search_terms_zh": ["男士礼拜服"], "enabled": false },
-  "MensRainShoes": { "l1": "Shoes", "search_terms_zh": ["男士雨鞋", "防水鞋"], "enabled": true },
-  "MensSlippersDoNotPostinThi": { "l1": "Shoes", "search_terms_zh": ["男士拖鞋"], "enabled": true },
-  "MensSocks": { "l1": "Shoes", "search_terms_zh": ["男袜"], "enabled": true },
-  "MensToeSocks": { "l1": "Shoes", "search_terms_zh": ["男士五指袜"], "enabled": true },
-  "WomensBootsDoNotPostinThis": { "l1": "Shoes", "search_terms_zh": ["女靴"], "enabled": true },
-  "WomensCasualShoesObsoleteD": { "l1": "Shoes", "search_terms_zh": ["女士休闲鞋"], "enabled": true },
-  "WomensHijabs": { "l1": "Shoes", "search_terms_zh": ["女士头巾"], "enabled": false },
-  "WomensIntimatesAccessories": { "l1": "Shoes", "search_terms_zh": ["内衣配件"], "enabled": false },
-  "WomensPrayerGarment": { "l1": "Shoes", "search_terms_zh": ["女士礼拜服"], "enabled": false },
-  "WomensRainShoes": { "l1": "Shoes", "search_terms_zh": ["女士雨鞋"], "enabled": true },
-  "WomensSandalsDoNotPostinTh": { "l1": "Shoes", "search_terms_zh": ["女士凉鞋"], "enabled": true },
-  "WomensSlippersDoNotPostinT": { "l1": "Shoes", "search_terms_zh": ["女士拖鞋"], "enabled": true },
-  "WomensToeSocks": { "l1": "Shoes", "search_terms_zh": ["女士五指袜"], "enabled": true },
-  "CustomCasualShoes": { "l1": "Shoes", "search_terms_zh": ["休闲鞋"], "enabled": true },
-  "CasualSneakers": { "l1": "Shoes", "search_terms_zh": ["休闲运动鞋"], "enabled": true },
-  "LeatherCasualShoes": { "l1": "Shoes", "search_terms_zh": ["皮鞋休闲鞋"], "enabled": true },
-  "MensDressShoes": { "l1": "Shoes", "search_terms_zh": ["男士正装鞋"], "enabled": true },
-  "MensLoafers": { "l1": "Shoes", "search_terms_zh": ["男士乐福鞋", "豆豆鞋"], "enabled": true },
-  "MensSandals": { "l1": "Shoes", "search_terms_zh": ["男士凉鞋"], "enabled": true },
-  "MensVulcanizeShoes": { "l1": "Shoes", "search_terms_zh": ["男士硫化鞋", "帆布鞋"], "enabled": true },
-  "MensWovenShoes": { "l1": "Shoes", "search_terms_zh": ["男士编织鞋"], "enabled": true },
-  "MeshShoes": { "l1": "Shoes", "search_terms_zh": ["网面鞋", "透气鞋"], "enabled": true },
-  "NonLeatherCasualShoes": { "l1": "Shoes", "search_terms_zh": ["非皮休闲鞋"], "enabled": true },
-  "OxfordBoots": { "l1": "Shoes", "search_terms_zh": ["牛津靴"], "enabled": true },
-  "CustomizedShoeAccessories": { "l1": "Shoes", "search_terms_zh": ["鞋配件定制"], "enabled": false },
-  "DisposableSlippers": { "l1": "Shoes", "search_terms_zh": ["一次性拖鞋"], "enabled": true },
-  "IceGripper": { "l1": "Shoes", "search_terms_zh": ["冰爪防滑鞋套"], "enabled": true },
-  "Inserts": { "l1": "Shoes", "search_terms_zh": ["鞋垫增高垫"], "enabled": true },
-  "Insoles": { "l1": "Shoes", "search_terms_zh": ["鞋垫"], "enabled": true },
-  "ShoeBrushes": { "l1": "Shoes", "search_terms_zh": ["鞋刷"], "enabled": true },
-  "ShoeCare": { "l1": "Shoes", "search_terms_zh": ["鞋油护理"], "enabled": true },
-  "ShoeCareKit": { "l1": "Shoes", "search_terms_zh": ["鞋护理套装"], "enabled": true },
-  "ShoeCleaning": { "l1": "Shoes", "search_terms_zh": ["洗鞋清洁剂"], "enabled": true },
-  "ShoeDecorations": { "l1": "Shoes", "search_terms_zh": ["鞋花鞋扣", "洞洞鞋装饰"], "enabled": true },
-  "ShoeHorns": { "l1": "Shoes", "search_terms_zh": ["鞋拔"], "enabled": true },
-  "ShoeMeasuringDevices": { "l1": "Shoes", "search_terms_zh": ["量脚器"], "enabled": true },
-  "ShoeNonslipAccessories": { "l1": "Shoes", "search_terms_zh": ["鞋底防滑贴"], "enabled": true },
-  "ShoeProtectiveAccessories": { "l1": "Shoes", "search_terms_zh": ["鞋头保护贴"], "enabled": true },
-  "ShoeRepairKit": { "l1": "Shoes", "search_terms_zh": ["修鞋工具"], "enabled": true },
-  "ShoeTrees": { "l1": "Shoes", "search_terms_zh": ["鞋撑"], "enabled": true },
-  "Shoelaces": { "l1": "Shoes", "search_terms_zh": ["鞋带"], "enabled": true },
-  "ShoesCovers": { "l1": "Shoes", "search_terms_zh": ["鞋套防水"], "enabled": true },
-  "CustomSlippers": { "l1": "Shoes", "search_terms_zh": ["定制拖鞋"], "enabled": false },
-  "FashionSlippers": { "l1": "Shoes", "search_terms_zh": ["时尚拖鞋"], "enabled": true },
-  "Shoes": { "l1": "Shoes", "search_terms_zh": ["时尚鞋子"], "enabled": true },
-  "SnowBoots": { "l1": "Shoes", "search_terms_zh": ["雪地靴"], "enabled": true },
-  "SummerBoots": { "l1": "Shoes", "search_terms_zh": ["夏季靴子", "镂空靴"], "enabled": true },
-  "WesternBoots": { "l1": "Shoes", "search_terms_zh": ["西部靴"], "enabled": true },
-  "WhiteShoes": { "l1": "Shoes", "search_terms_zh": ["小白鞋"], "enabled": true },
-  "HouseSlippers": { "l1": "Shoes", "search_terms_zh": ["家居拖鞋", "棉拖鞋"], "enabled": true },
-  "TherapeuticShoes": { "l1": "Shoes", "search_terms_zh": ["健康鞋"], "enabled": false },
-  "AnkleBootie": { "l1": "Shoes", "search_terms_zh": ["短靴", "踝靴"], "enabled": true },
-  "ChelseaBoots": { "l1": "Shoes", "search_terms_zh": ["切尔西靴"], "enabled": true },
-  "ChunkySneakers": { "l1": "Shoes", "search_terms_zh": ["老爹鞋", "厚底运动鞋"], "enabled": true },
-  "Clogs": { "l1": "Shoes", "search_terms_zh": ["洞洞鞋"], "enabled": true },
-  "FlatSandals": { "l1": "Shoes", "search_terms_zh": ["平底凉鞋"], "enabled": true },
-  "Flats": { "l1": "Shoes", "search_terms_zh": ["平底鞋", "单鞋"], "enabled": true },
-  "FlipFlops": { "l1": "Shoes", "search_terms_zh": ["人字拖"], "enabled": true },
-  "GladiatorSandals": { "l1": "Shoes", "search_terms_zh": ["罗马凉鞋"], "enabled": true },
-  "HiddenHeelShoes": { "l1": "Shoes", "search_terms_zh": ["内增高鞋"], "enabled": true },
-  "HighHeelPumps": { "l1": "Shoes", "search_terms_zh": ["高跟鞋"], "enabled": true },
-  "HighHeelSandals": { "l1": "Shoes", "search_terms_zh": ["高跟凉鞋"], "enabled": true },
-  "HighTopBoots": { "l1": "Shoes", "search_terms_zh": ["高筒靴", "过膝靴"], "enabled": true },
-  "LowHeelPumps": { "l1": "Shoes", "search_terms_zh": ["低跟鞋"], "enabled": true },
-  "MidHeelPumps": { "l1": "Shoes", "search_terms_zh": ["中跟鞋"], "enabled": true },
-  "PumpsDoNotPostinThisCatego": { "l1": "Shoes", "search_terms_zh": ["女士高跟鞋"], "enabled": false },
-  "WedgePlatformsSandals": { "l1": "Shoes", "search_terms_zh": ["坡跟凉鞋", "厚底凉鞋"], "enabled": true },
-  "WomensLoafers": { "l1": "Shoes", "search_terms_zh": ["女士乐福鞋"], "enabled": true },
-  "WomensMaryJaneShoes": { "l1": "Shoes", "search_terms_zh": ["玛丽珍鞋"], "enabled": true },
-  "WomensMules": { "l1": "Shoes", "search_terms_zh": ["穆勒鞋", "半拖鞋"], "enabled": true },
-  "WomensOxfordShoes": { "l1": "Shoes", "search_terms_zh": ["女士牛津鞋"], "enabled": true },
-  "WomensVulcanizeShoes": { "l1": "Shoes", "search_terms_zh": ["女士帆布鞋"], "enabled": true },
-  "WomensWovenShoes": { "l1": "Shoes", "search_terms_zh": ["女士编织鞋"], "enabled": true },
-
-  "AbRollers": { "l1": "Sports & Entertainment", "search_terms_zh": ["健腹轮"], "enabled": true },
-  "ABTrainerAids": { "l1": "Sports & Entertainment", "search_terms_zh": ["腹肌训练器"], "enabled": true },
-  "ABZones": { "l1": "Sports & Entertainment", "search_terms_zh": ["腹部训练带"], "enabled": true },
-  "AirBike": { "l1": "Sports & Entertainment", "search_terms_zh": ["风阻单车"], "enabled": true },
-  "BalanceBoard": { "l1": "Sports & Entertainment", "search_terms_zh": ["平衡板"], "enabled": true },
-  "BattleRope": { "l1": "Sports & Entertainment", "search_terms_zh": ["战绳"], "enabled": true },
-  "BreatheTrainerLungCapacity": { "l1": "Sports & Entertainment", "search_terms_zh": ["呼吸训练器"], "enabled": true },
-  "CatchTrainer": { "l1": "Sports & Entertainment", "search_terms_zh": ["接球训练器"], "enabled": false },
-  "ClimbingMachineStairSteppe": { "l1": "Sports & Entertainment", "search_terms_zh": ["登山机", "踏步机"], "enabled": true },
-  "Dumbbells": { "l1": "Sports & Entertainment", "search_terms_zh": ["哑铃"], "enabled": true },
-  "DumbbellsPartsAccessories": { "l1": "Sports & Entertainment", "search_terms_zh": ["哑铃配件"], "enabled": false },
-  "EllipticalMachine": { "l1": "Sports & Entertainment", "search_terms_zh": ["椭圆机"], "enabled": true },
-  "EmsFitnessEquipment": { "l1": "Sports & Entertainment", "search_terms_zh": ["EMS健身器"], "enabled": true },
-  "FitnessBalls": { "l1": "Sports & Entertainment", "search_terms_zh": ["瑜伽球"], "enabled": true },
-  "FitnessHammer": { "l1": "Sports & Entertainment", "search_terms_zh": ["健身锤"], "enabled": false },
-  "FitnessPedal": { "l1": "Sports & Entertainment", "search_terms_zh": ["健身踏板"], "enabled": true },
-  "FitnessSlidingDisk": { "l1": "Sports & Entertainment", "search_terms_zh": ["健身滑盘"], "enabled": true },
-  "Flexibar": { "l1": "Sports & Entertainment", "search_terms_zh": ["飞力仕棒"], "enabled": true },
-  "FoldingExerciseBike": { "l1": "Sports & Entertainment", "search_terms_zh": ["折叠健身车"], "enabled": true },
-  "FootTrainer": { "l1": "Sports & Entertainment", "search_terms_zh": ["足部训练器"], "enabled": true },
-  "HandGripperStrengths": { "l1": "Sports & Entertainment", "search_terms_zh": ["握力器"], "enabled": true },
-  "HandGrips": { "l1": "Sports & Entertainment", "search_terms_zh": ["助力带", "握力带"], "enabled": true },
-  "HipTrainingDevice": { "l1": "Sports & Entertainment", "search_terms_zh": ["美臀训练器"], "enabled": true },
-  "HorizontalBars": { "l1": "Sports & Entertainment", "search_terms_zh": ["单杠"], "enabled": true },
-  "HorseRidingMachines": { "l1": "Sports & Entertainment", "search_terms_zh": ["骑马机"], "enabled": true },
-  "IndoorBicyclesPartsAccesso": { "l1": "Sports & Entertainment", "search_terms_zh": ["动感单车配件"], "enabled": false },
-  "IndoorCyclingBikes": { "l1": "Sports & Entertainment", "search_terms_zh": ["动感单车"], "enabled": true },
-  "IntegratedFitnessEquipment": { "l1": "Sports & Entertainment", "search_terms_zh": ["综合训练器"], "enabled": true },
-  "JumpRopes": { "l1": "Sports & Entertainment", "search_terms_zh": ["跳绳"], "enabled": true },
-  "JumpTrainer": { "l1": "Sports & Entertainment", "search_terms_zh": ["弹跳训练器"], "enabled": true },
-  "Kettlebells": { "l1": "Sports & Entertainment", "search_terms_zh": ["壶铃"], "enabled": true },
-  "LegTrainer": { "l1": "Sports & Entertainment", "search_terms_zh": ["腿部训练器"], "enabled": true },
-  "ParallelBars": { "l1": "Sports & Entertainment", "search_terms_zh": ["双杠"], "enabled": true },
-  "Pedometers": { "l1": "Sports & Entertainment", "search_terms_zh": ["计步器"], "enabled": true },
-  "Pilatesbed": { "l1": "Sports & Entertainment", "search_terms_zh": ["普拉提床"], "enabled": true },
-  "PilatesBedPartsAccessories": { "l1": "Sports & Entertainment", "search_terms_zh": ["普拉提床配件"], "enabled": false },
-  "PowerCagesHomeGymSystems": { "l1": "Sports & Entertainment", "search_terms_zh": ["深蹲架", "家用龙门架"], "enabled": true },
-  "PowerWrists": { "l1": "Sports & Entertainment", "search_terms_zh": ["腕力球"], "enabled": true },
-  "PullupBar": { "l1": "Sports & Entertainment", "search_terms_zh": ["引体向上器"], "enabled": true },
-  "Racks": { "l1": "Sports & Entertainment", "search_terms_zh": ["哑铃架"], "enabled": true },
-  "ResistanceBands": { "l1": "Sports & Entertainment", "search_terms_zh": ["弹力带", "阻力带"], "enabled": true },
-  "RowMachinesPartsAccessorie": { "l1": "Sports & Entertainment", "search_terms_zh": ["划船机配件"], "enabled": false },
-  "SitUpBenches": { "l1": "Sports & Entertainment", "search_terms_zh": ["仰卧板"], "enabled": true },
-  "SlidingMat": { "l1": "Sports & Entertainment", "search_terms_zh": ["滑行垫"], "enabled": true },
-  "SmartFitnessMirror": { "l1": "Sports & Entertainment", "search_terms_zh": ["智能健身镜"], "enabled": true },
-  "SmithMachine": { "l1": "Sports & Entertainment", "search_terms_zh": ["史密斯机"], "enabled": true },
-  "SportHoops": { "l1": "Sports & Entertainment", "search_terms_zh": ["呼啦圈"], "enabled": true },
-  "Steppers": { "l1": "Sports & Entertainment", "search_terms_zh": ["踏步机"], "enabled": true },
-  "SteppersPartsAccessories": { "l1": "Sports & Entertainment", "search_terms_zh": ["踏步机配件"], "enabled": false },
-  "SurfingMachine": { "l1": "Sports & Entertainment", "search_terms_zh": ["冲浪训练机"], "enabled": false },
-  "Trampolines": { "l1": "Sports & Entertainment", "search_terms_zh": ["蹦床"], "enabled": true },
-  "TreadmillPartsAccessories": { "l1": "Sports & Entertainment", "search_terms_zh": ["跑步机配件"], "enabled": false },
-  "TwistBoards": { "l1": "Sports & Entertainment", "search_terms_zh": ["扭腰盘"], "enabled": true },
-  "VibrationPlate": { "l1": "Sports & Entertainment", "search_terms_zh": ["震动平台"], "enabled": true },
-  "WeightbearingEquipment": { "l1": "Sports & Entertainment", "search_terms_zh": ["负重装备", "沙袋"], "enabled": true },
-  "WeightBenches": { "l1": "Sports & Entertainment", "search_terms_zh": ["卧推架"], "enabled": true },
-  "FacialMuscleTrainer": { "l1": "Sports & Entertainment", "search_terms_zh": ["面部训练器"], "enabled": true },
-  "Fasciotome": { "l1": "Sports & Entertainment", "search_terms_zh": ["筋膜枪"], "enabled": true },
-  "PushUpsStands": { "l1": "Sports & Entertainment", "search_terms_zh": ["俯卧撑支架"], "enabled": true },
-
-  "CustomizedMensSleepLounge": { "l1": "Underwear", "search_terms_zh": ["男士睡衣定制"], "enabled": false },
-  "MensPlusSizeSleepLoungeBot": { "l1": "Underwear", "search_terms_zh": ["大码男士睡裤"], "enabled": true },
-  "MensPlusSizeSleepLoungeSet": { "l1": "Underwear", "search_terms_zh": ["大码男士睡衣套装"], "enabled": true },
-  "MensPlusSizeSleepLoungeTop": { "l1": "Underwear", "search_terms_zh": ["大码男士睡衣上衣"], "enabled": true },
-  "CustomizedMensSocks": { "l1": "Underwear", "search_terms_zh": ["男袜定制"], "enabled": false },
-  "Boxers": { "l1": "Underwear", "search_terms_zh": ["男士内裤", "平角裤"], "enabled": true },
-  "CustomizedBoxers": { "l1": "Underwear", "search_terms_zh": ["定制内裤"], "enabled": false },
-  "MensDisposableUnderwear": { "l1": "Underwear", "search_terms_zh": ["一次性内裤"], "enabled": true },
-  "LongJohns": { "l1": "Underwear", "search_terms_zh": ["秋裤", "保暖裤"], "enabled": true },
-  "OnepieceUnderwear": { "l1": "Underwear", "search_terms_zh": ["连体内衣"], "enabled": true },
-  "PlusSizeBoxers": { "l1": "Underwear", "search_terms_zh": ["大码内裤"], "enabled": true },
-  "ThermalUnderwearBottoms": { "l1": "Underwear", "search_terms_zh": ["保暖内衣裤"], "enabled": true },
-  "ThermalUnderwearSets": { "l1": "Underwear", "search_terms_zh": ["保暖内衣套装"], "enabled": true },
-  "ThermalUnderwearTops": { "l1": "Underwear", "search_terms_zh": ["保暖内衣上衣"], "enabled": true },
-  "Undershirts": { "l1": "Underwear", "search_terms_zh": ["男士背心", "打底衫"], "enabled": true },
-  "ActiveBra": { "l1": "Underwear", "search_terms_zh": ["运动内衣"], "enabled": true },
-  "BraBriefSets": { "l1": "Underwear", "search_terms_zh": ["文胸内裤套装"], "enabled": true },
-  "BraExtenderStrap": { "l1": "Underwear", "search_terms_zh": ["文胸延长扣", "肩带"], "enabled": true },
-  "Bras": { "l1": "Underwear", "search_terms_zh": ["文胸", "内衣"], "enabled": true },
-  "BreastFeeding": { "l1": "Underwear", "search_terms_zh": ["哺乳内衣"], "enabled": true },
-  "Briefs": { "l1": "Underwear", "search_terms_zh": ["三角内裤"], "enabled": true },
-  "CustomizedPanties": { "l1": "Underwear", "search_terms_zh": ["定制内裤"], "enabled": false },
-  "DisposablePantie": { "l1": "Underwear", "search_terms_zh": ["一次性内裤女"], "enabled": true },
-  "GStringsThongs": { "l1": "Underwear", "search_terms_zh": ["丁字裤"], "enabled": true },
-  "Garters": { "l1": "Underwear", "search_terms_zh": ["吊袜带"], "enabled": true },
-  "InvisibleBra": { "l1": "Underwear", "search_terms_zh": ["隐形胸贴"], "enabled": true },
-  "MenstrualPanties": { "l1": "Underwear", "search_terms_zh": ["生理期内裤"], "enabled": true },
-  "Panties": { "l1": "Underwear", "search_terms_zh": ["女士内裤"], "enabled": true },
-  "PlusSizeBras": { "l1": "Underwear", "search_terms_zh": ["大码文胸"], "enabled": true },
-  "PlusSizeBriefs": { "l1": "Underwear", "search_terms_zh": ["大码三角裤"], "enabled": true },
-  "PlusSizePanties": { "l1": "Underwear", "search_terms_zh": ["大码内裤女"], "enabled": true },
-  "Shapers": { "l1": "Underwear", "search_terms_zh": ["塑身衣", "束腰"], "enabled": true },
-  "ShapewearLeggings": { "l1": "Underwear", "search_terms_zh": ["塑身裤", "收腹裤"], "enabled": true },
-  "UnderwearAccessories": { "l1": "Underwear", "search_terms_zh": ["内衣配件"], "enabled": true },
-  "CustomizedWomensSleepLoung": { "l1": "Underwear", "search_terms_zh": ["女士睡衣定制"], "enabled": false },
-  "NightgownsSleepshirts": { "l1": "Underwear", "search_terms_zh": ["睡裙", "家居服"], "enabled": true },
-  "NursingHomewearSets": { "l1": "Underwear", "search_terms_zh": ["月子服套装"], "enabled": true },
-  "NursingNightdress": { "l1": "Underwear", "search_terms_zh": ["哺乳睡裙"], "enabled": true },
-  "Onesies": { "l1": "Underwear", "search_terms_zh": ["连体睡衣"], "enabled": true },
-  "OutdoorHomewearBottoms": { "l1": "Underwear", "search_terms_zh": ["家居裤"], "enabled": true },
-  "OutdoorHomewearSets": { "l1": "Underwear", "search_terms_zh": ["家居服套装"], "enabled": true },
-  "OutdoorHomewearTops": { "l1": "Underwear", "search_terms_zh": ["家居服上衣"], "enabled": true },
-  "PajamaSets": { "l1": "Underwear", "search_terms_zh": ["睡衣套装"], "enabled": true },
-  "PlusSizeNightgowns": { "l1": "Underwear", "search_terms_zh": ["大码睡裙"], "enabled": true },
-  "PlusSizePajamasSets": { "l1": "Underwear", "search_terms_zh": ["大码睡衣套装"], "enabled": true },
-  "PlusSizeRobes": { "l1": "Underwear", "search_terms_zh": ["大码浴袍"], "enabled": true },
-  "PlusSizeSleepBottoms": { "l1": "Underwear", "search_terms_zh": ["大码睡裤"], "enabled": true },
-  "PlusSizeSleepTops": { "l1": "Underwear", "search_terms_zh": ["大码睡衣上衣"], "enabled": true },
-  "RobeGown": { "l1": "Underwear", "search_terms_zh": ["浴袍睡袍"], "enabled": true },
-  "RobeGownSets": { "l1": "Underwear", "search_terms_zh": ["睡袍套装"], "enabled": true },
-  "RobeSets": { "l1": "Underwear", "search_terms_zh": ["浴袍套装"], "enabled": true },
-  "Robes": { "l1": "Underwear", "search_terms_zh": ["浴袍", "晨袍"], "enabled": true },
-  "SilkPajamas": { "l1": "Underwear", "search_terms_zh": ["真丝睡衣"], "enabled": true },
-  "SleepBottoms": { "l1": "Underwear", "search_terms_zh": ["睡裤"], "enabled": true },
-  "SleepTops": { "l1": "Underwear", "search_terms_zh": ["睡衣上衣"], "enabled": true },
-  "Slips": { "l1": "Underwear", "search_terms_zh": ["吊带裙衬裙"], "enabled": true },
-  "KneeHigh": { "l1": "Underwear", "search_terms_zh": ["中筒袜"], "enabled": true },
-  "MidCalf": { "l1": "Underwear", "search_terms_zh": ["小腿袜"], "enabled": true },
-  "OvertheKnee": { "l1": "Underwear", "search_terms_zh": ["过膝袜"], "enabled": true },
-  "Socks": { "l1": "Underwear", "search_terms_zh": ["袜子"], "enabled": true },
-  "SocksHosiery": { "l1": "Underwear", "search_terms_zh": ["丝袜"], "enabled": true },
-  "Stockings": { "l1": "Underwear", "search_terms_zh": ["长筒丝袜"], "enabled": true },
-  "AnkleSocks": { "l1": "Underwear", "search_terms_zh": ["船袜", "隐形袜"], "enabled": true },
-  "CrewSocks": { "l1": "Underwear", "search_terms_zh": ["中筒袜"], "enabled": true },
-  "CustomizedWomensSocks": { "l1": "Underwear", "search_terms_zh": ["定制女袜"], "enabled": false },
-  "DisposableSocks": { "l1": "Underwear", "search_terms_zh": ["一次性袜子"], "enabled": true },
-  "LegWarmers": { "l1": "Underwear", "search_terms_zh": ["腿套保暖"], "enabled": true },
-  "LongSocks": { "l1": "Underwear", "search_terms_zh": ["长袜"], "enabled": true },
-  "LowCutSocks": { "l1": "Underwear", "search_terms_zh": ["低帮袜"], "enabled": true },
-  "PedsLiners": { "l1": "Underwear", "search_terms_zh": ["隐形船袜"], "enabled": true },
-  "SockAccessories": { "l1": "Underwear", "search_terms_zh": ["袜子配件"], "enabled": false },
-  "StockingsTightsSocks": { "l1": "Underwear", "search_terms_zh": ["连裤袜"], "enabled": true },
-  "Tights": { "l1": "Underwear", "search_terms_zh": ["打底裤袜"], "enabled": true },
-
-  "ChildrensWatches": { "l1": "Watches", "search_terms_zh": ["儿童手表"], "enabled": true },
-  "CoupleWatches": { "l1": "Watches", "search_terms_zh": ["情侣手表"], "enabled": true },
-  "CustomizedWatches": { "l1": "Watches", "search_terms_zh": ["定制手表"], "enabled": false },
-  "PocketFobWatches": { "l1": "Watches", "search_terms_zh": ["怀表"], "enabled": true },
-  "PocketWatchChains": { "l1": "Watches", "search_terms_zh": ["怀表链"], "enabled": true },
-  "Watchbands": { "l1": "Watches", "search_terms_zh": ["表带", "手表带"], "enabled": true },
-  "WatchBatteries": { "l1": "Watches", "search_terms_zh": ["手表电池"], "enabled": true },
-  "WatchBoxes": { "l1": "Watches", "search_terms_zh": ["手表盒", "表盒收纳"], "enabled": true },
-  "WatchBuckle": { "l1": "Watches", "search_terms_zh": ["表扣"], "enabled": true },
-  "WatchCases": { "l1": "Watches", "search_terms_zh": ["表壳"], "enabled": true },
-  "Watchcharger": { "l1": "Watches", "search_terms_zh": ["手表充电器"], "enabled": true },
-  "WatchConnector": { "l1": "Watches", "search_terms_zh": ["表带连接器"], "enabled": true },
-  "WatchFaces": { "l1": "Watches", "search_terms_zh": ["表盘"], "enabled": true },
-  "WatchHands": { "l1": "Watches", "search_terms_zh": ["表针"], "enabled": true },
-  "WatchMovement": { "l1": "Watches", "search_terms_zh": ["手表机芯"], "enabled": true },
-  "WatchScreenProtectors": { "l1": "Watches", "search_terms_zh": ["手表贴膜"], "enabled": true },
-  "WatchStents": { "l1": "Watches", "search_terms_zh": ["手表支架"], "enabled": true },
-  "WatchWinders": { "l1": "Watches", "search_terms_zh": ["摇表器"], "enabled": true },
-  "DigitalWristwatches": { "l1": "Watches", "search_terms_zh": ["数字运动手表", "电子表"], "enabled": true },
-  "MechanicalWristwatches": { "l1": "Watches", "search_terms_zh": ["机械手表"], "enabled": true },
-  "QuartzWristwatches": { "l1": "Watches", "search_terms_zh": ["石英手表", "石英表"], "enabled": true },
-  "QuartzWristwatches1": { "l1": "Watches", "search_terms_zh": ["时尚石英表"], "enabled": true },
-  "WristwatchBlindBox": { "l1": "Watches", "search_terms_zh": ["手表盲盒"], "enabled": true },
-  "WristwatchGifts": { "l1": "Watches", "search_terms_zh": ["手表礼品"], "enabled": true },
-
-  "_amazon_3c_meta": { "l1": "_meta", "search_terms_zh": [], "enabled": false },
-  "Earphones": { "l1": "Amazon 3C", "search_terms_zh": ["游戏蓝牙耳机 低延迟 跨境"], "enabled": false },
-  "SmartWatches": { "l1": "Amazon 3C", "search_terms_zh": ["智能手表 运动 心率 血氧 跨境"], "enabled": false },
-  "ActionCameras": { "l1": "Amazon 3C", "search_terms_zh": ["运动相机 4K 防水 WiFi 跨境"], "enabled": false },
-  "PortableProjector": { "l1": "Amazon 3C", "search_terms_zh": ["投影仪 便携式 迷你 家用 跨境"], "enabled": false },
-  "VRGlasses": { "l1": "Amazon 3C", "search_terms_zh": ["VR眼镜 一体机 游戏 跨境"], "enabled": false },
-  "PowerStation": { "l1": "Amazon 3C", "search_terms_zh": ["户外电源 太阳能 磷酸铁锂 跨境"], "enabled": false },
-  "Soundbar": { "l1": "Amazon 3C", "search_terms_zh": ["回音壁 蓝牙 家庭影院 电视 跨境"], "enabled": false },
-  "IPCamera": { "l1": "Amazon 3C", "search_terms_zh": ["网络摄像头 WiFi 夜视 双向语音 跨境"], "enabled": false },
-  "SmartDoorbell": { "l1": "Amazon 3C", "search_terms_zh": ["智能可视门铃 WiFi 远程 跨境"], "enabled": false },
-  "GimbalStabilizer": { "l1": "Amazon 3C", "search_terms_zh": ["手持稳定器 手机云台 三轴 跨境"], "enabled": false },
-  "LavalierMicrophone": { "l1": "Amazon 3C", "search_terms_zh": ["无线领夹麦克风 直播 一拖二 跨境"], "enabled": false },
-  "SmartRing": { "l1": "Amazon 3C", "search_terms_zh": ["智能戒指 健康监测 NFC 跨境"], "enabled": false },
-  "SolarPanel": { "l1": "Amazon 3C", "search_terms_zh": ["太阳能充电板 折叠 便携 跨境"], "enabled": false }
+  "Accessories": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "时尚配饰"
+    ],
+    "enabled": true
+  },
+  "GarmentAccessories": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "服装辅料配件"
+    ],
+    "enabled": true
+  },
+  "ChipCases": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "筹码盒"
+    ],
+    "enabled": false
+  },
+  "CollarStays": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领撑"
+    ],
+    "enabled": true
+  },
+  "Cummerbunds": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "腰封"
+    ],
+    "enabled": true
+  },
+  "FacialHair": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "假胡子"
+    ],
+    "enabled": false
+  },
+  "Beard": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "假胡须"
+    ],
+    "enabled": false
+  },
+  "FashionableCanes": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "时尚拐杖"
+    ],
+    "enabled": false
+  },
+  "Handkerchiefs": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "手帕",
+      "口袋巾"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "KneeSleeveLegWarmer": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "护膝套",
+      "腿套"
+    ],
+    "enabled": true
+  },
+  "Oversleeve": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "袖套",
+      "防晒袖套"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "PocketSquares": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "口袋巾",
+      "西装口袋巾"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Sashes": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "腰带绶带"
+    ],
+    "enabled": true
+  },
+  "ShoulderStrap": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "肩带",
+      "包肩带"
+    ],
+    "enabled": true
+  },
+  "SuspendersBracesPostureCor": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "背带",
+      "吊带夹"
+    ],
+    "enabled": true
+  },
+  "TieBucklesCufflinks": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领带扣袖扣"
+    ],
+    "enabled": true
+  },
+  "TieChains": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领带链"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "TieClip": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领带夹"
+    ],
+    "enabled": true
+  },
+  "TieClipsCufflinks": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领带夹袖扣套装"
+    ],
+    "enabled": true
+  },
+  "TiePins": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领带别针"
+    ],
+    "enabled": true
+  },
+  "TieSet": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领带套装"
+    ],
+    "enabled": true
+  },
+  "Ties": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领带",
+      "男士领带"
+    ],
+    "enabled": true
+  },
+  "TiesBows": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领结",
+      "蝴蝶结领带"
+    ],
+    "enabled": true
+  },
+  "ChiffonFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "雪纺面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "CompositeFabric": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "复合面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "CottonFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "棉布面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "CottonSlippers": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "棉拖鞋"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "DenimFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "牛仔面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "JerseyFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "针织面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "LaceFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "蕾丝面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "LatexFabric": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "乳胶面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "LinenFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "亚麻面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "NylonFabric": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "尼龙面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "OrganzaFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "欧根纱面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "PolyesterFabric": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "涤纶面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "SatinFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "缎面面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "SequinFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "亮片面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "SilkFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "真丝面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "TaffetaFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "塔夫绸面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "TulleFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "网纱面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "VelourFabric": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "天鹅绒面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "VelvetFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "丝绒面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "WaxFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "蜡染面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "WoolBlends": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "羊毛混纺面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "AppliqueFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "贴花面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "BlendedFabric": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "混纺面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "FabricSamples": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "面料样品"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "FauxLeatherFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "仿皮面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "SuitFabrics": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "西装面料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "TextileProductsandTools": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "纺织工具"
+    ],
+    "enabled": false
+  },
+  "Belts": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "时尚皮带",
+      "腰带"
+    ],
+    "enabled": true
+  },
+  "BeltBuckle": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "皮带扣",
+      "腰带扣头"
+    ],
+    "enabled": true
+  },
+  "Earmuffs": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "耳罩",
+      "保暖耳罩"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "AntislipEarGripHook": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜防滑耳钩"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "BlueLightBlockingGlasses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "防蓝光眼镜"
+    ],
+    "enabled": true
+  },
+  "ChainsLanyards": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜链",
+      "眼镜挂绳"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ContactLensCases": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "隐形眼镜盒"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "EarHook": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜耳钩"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "EyeMask": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼罩",
+      "睡眠眼罩"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "EyeglassesFrames": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "光学眼镜框",
+      "近视眼镜架"
+    ],
+    "enabled": true
+  },
+  "EyeglassesLenses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜片"
+    ],
+    "enabled": true
+  },
+  "EyewearCasesBags": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜盒",
+      "眼镜袋"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "FashionGlasses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "时尚眼镜",
+      "装饰眼镜"
+    ],
+    "enabled": true
+  },
+  "GlassesRepairTools": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜维修工具"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "LensCleaners": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "镜片清洁剂"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "LensClothes": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜布"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "MasksEyewear": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "面罩眼镜"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "NightVisionGlasses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "夜视眼镜"
+    ],
+    "enabled": true
+  },
+  "NosePads": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜鼻托"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "PrescriptionGlasses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "近视眼镜",
+      "配镜"
+    ],
+    "enabled": true
+  },
+  "ProtectiveGlasses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "防护眼镜"
+    ],
+    "enabled": true
+  },
+  "ReadingGlasses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "老花镜",
+      "阅读眼镜"
+    ],
+    "enabled": true
+  },
+  "RepairToolsKits": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "眼镜修理套装"
+    ],
+    "enabled": true
+  },
+  "Sunglasses": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "偏光太阳镜",
+      "墨镜"
+    ],
+    "enabled": true
+  },
+  "UltrasonicEyeglassCleaners": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "超声波眼镜清洗机"
+    ],
+    "enabled": true
+  },
+  "VisionTestingandRecoveryTo": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "视力测试工具"
+    ],
+    "enabled": false
+  },
+  "GlovesHandwear": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "时尚手套"
+    ],
+    "enabled": true
+  },
+  "GlovesMittens": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "保暖手套",
+      "连指手套"
+    ],
+    "enabled": true
+  },
+  "HairAccessories": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "发饰",
+      "头饰"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairAccessoriesSet": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "发饰套装"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairClaw": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "鲨鱼夹",
+      "抓夹"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairClip": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "发夹",
+      "边夹"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairCrownsTiaras": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "皇冠头饰",
+      "新娘头饰"
+    ],
+    "enabled": true
+  },
+  "HairGrips": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "一字夹",
+      "发卡"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairPin": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "发簪",
+      "盘发器"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairScarf": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "发带丝巾"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairTies": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "发绳",
+      "头绳"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "FlowerCrown": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "花环头饰"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Scrunchie": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "大肠发圈"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "BomberHats": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "雷锋帽",
+      "飞行帽"
+    ],
+    "enabled": true
+  },
+  "BucketHats": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "渔夫帽"
+    ],
+    "enabled": true
+  },
+  "CowboyHats": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "牛仔帽",
+      "西部帽"
+    ],
+    "enabled": true
+  },
+  "Hats": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "针织帽",
+      "毛线帽"
+    ],
+    "enabled": true
+  },
+  "Headband": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "发箍",
+      "头箍"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Headwear": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "头巾",
+      "头饰"
+    ],
+    "enabled": true
+  },
+  "BaseballCaps": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "棒球帽"
+    ],
+    "enabled": true
+  },
+  "Berets": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "贝雷帽"
+    ],
+    "enabled": true
+  },
+  "CustomizedHat": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "定制帽子"
+    ],
+    "enabled": false
+  },
+  "Fascinators": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "礼帽头饰"
+    ],
+    "enabled": true
+  },
+  "Fedoras": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "礼帽",
+      "爵士帽"
+    ],
+    "enabled": true
+  },
+  "HipHopCaps": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "嘻哈帽",
+      "平沿帽"
+    ],
+    "enabled": true
+  },
+  "NewsboyCaps": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "报童帽",
+      "八角帽"
+    ],
+    "enabled": true
+  },
+  "OctagonalHats": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "八角帽"
+    ],
+    "enabled": true
+  },
+  "PrayerHats": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "穆斯林帽"
+    ],
+    "enabled": true
+  },
+  "SkulliesBeanies": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "冷帽",
+      "毛线帽"
+    ],
+    "enabled": true
+  },
+  "SunHats": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "遮阳帽",
+      "防晒帽"
+    ],
+    "enabled": true
+  },
+  "Visors": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "空顶帽",
+      "遮阳帽"
+    ],
+    "enabled": true
+  },
+  "Mask": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "口罩",
+      "防晒口罩"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Scarf": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "围巾"
+    ],
+    "enabled": true
+  },
+  "Scarves": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "针织围巾",
+      "冬季围巾"
+    ],
+    "enabled": true
+  },
+  "Bandana": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "方巾",
+      "头巾"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Neckerchief": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "领巾",
+      "小方巾"
+    ],
+    "enabled": true
+  },
+  "ScarfAccessories": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "围巾扣",
+      "丝巾扣"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ScarfHatGloveSets": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "围巾帽子手套套装"
+    ],
+    "enabled": true
+  },
+  "SilkScarves": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "真丝丝巾",
+      "桑蚕丝围巾"
+    ],
+    "enabled": true
+  },
+  "SunProtectiveScarf": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "防晒丝巾"
+    ],
+    "enabled": true
+  },
+  "SunprotectiveSleeve": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "防晒冰袖"
+    ],
+    "enabled": true
+  },
+  "Wraps": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "披肩"
+    ],
+    "enabled": true
+  },
+  "BodyChain": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "身体链",
+      "腰链"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "EarringJackets": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "耳套耳饰"
+    ],
+    "enabled": true
+  },
+  "Anklets": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "脚链"
+    ],
+    "enabled": true
+  },
+  "Bangles": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "手镯"
+    ],
+    "enabled": true
+  },
+  "Beads": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "串珠",
+      "DIY珠子"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "BodyJewelryStickers": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "身体贴纸"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Bracelets": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "时尚手链"
+    ],
+    "enabled": true
+  },
+  "Brooches": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "胸针"
+    ],
+    "enabled": true
+  },
+  "Chain": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "项链链条",
+      "首饰链"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Charms": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "吊坠配件",
+      "DIY挂件"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ClipEarrings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "耳夹",
+      "无耳洞耳环"
+    ],
+    "enabled": true
+  },
+  "DangleEarrings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "耳坠",
+      "长款耳环"
+    ],
+    "enabled": true
+  },
+  "DentalGrills": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "牙饰"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "FauxBodyPiercingJewelry": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "假穿刺饰品"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HairJewelry": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "发饰珠宝"
+    ],
+    "enabled": true
+  },
+  "HoopEarrings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "圈形耳环",
+      "大耳圈"
+    ],
+    "enabled": true
+  },
+  "JewelryMask": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "珠宝面具"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "JewelrySets": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "首饰套装",
+      "项链耳环套装"
+    ],
+    "enabled": true
+  },
+  "KeyChains": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "钥匙扣",
+      "创意钥匙链"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Necklace": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "项链",
+      "锁骨链"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Pendants": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "吊坠",
+      "项链挂坠"
+    ],
+    "enabled": true
+  },
+  "PiercingJewelry": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "穿刺饰品",
+      "鼻环耳钉"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Rings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "戒指",
+      "时尚指环"
+    ],
+    "enabled": true
+  },
+  "StudEarrings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "耳钉"
+    ],
+    "enabled": true
+  },
+  "ToeRings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "脚趾戒"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "JewelryFindingsComponentsO": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "首饰配件",
+      "DIY饰品材料"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "JewelryPackagingDisplay": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "首饰包装盒"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "JewelryToolsEquipments": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "首饰制作工具"
+    ],
+    "enabled": false,
+    "brand_safe": true
+  },
+  "SmartJewelry": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "智能首饰"
+    ],
+    "enabled": false
+  },
+  "Backpacks": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "时尚双肩包",
+      "背包"
+    ],
+    "enabled": true
+  },
+  "AnimeBackpacksWalletsLugga": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "动漫双肩包"
+    ],
+    "enabled": true
+  },
+  "BusinessCommuterLaptopBag": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "商务电脑包",
+      "通勤包"
+    ],
+    "enabled": true
+  },
+  "BagPartsAccessories": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "包配件",
+      "包带"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "DrawstringBags": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "抽绳包",
+      "束口袋"
+    ],
+    "enabled": true
+  },
+  "LuggageCover": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "行李箱保护套"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "RollingLuggage": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "拉杆箱",
+      "行李箱"
+    ],
+    "enabled": true
+  },
+  "SchoolBags": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "书包",
+      "学生背包"
+    ],
+    "enabled": true
+  },
+  "CoolerBags": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "保温袋",
+      "冷藏包"
+    ],
+    "enabled": true
+  },
+  "CosmeticBagsCases": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "化妆包",
+      "收纳包"
+    ],
+    "enabled": true
+  },
+  "HairScissorsBags": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "剪刀包"
+    ],
+    "enabled": false
+  },
+  "InstrumentBagsCases": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "乐器包"
+    ],
+    "enabled": true
+  },
+  "LunchBags": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "饭盒袋",
+      "午餐包"
+    ],
+    "enabled": true
+  },
+  "ShoppingBags": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "购物袋",
+      "环保袋"
+    ],
+    "enabled": true
+  },
+  "TravelTote": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "旅行手提包"
+    ],
+    "enabled": true
+  },
+  "WaistPacks": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "腰包",
+      "胸包"
+    ],
+    "enabled": true
+  },
+  "Wallets": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "钱包",
+      "长款钱包"
+    ],
+    "enabled": true
+  },
+  "CardIDHolders": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "卡包",
+      "证件套"
+    ],
+    "enabled": true
+  },
+  "CoinPurses": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "零钱包"
+    ],
+    "enabled": true
+  },
+  "KeyWallets": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "钥匙包"
+    ],
+    "enabled": true
+  },
+  "MoneyClips": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "钱夹"
+    ],
+    "enabled": true
+  },
+  "FamilyMatchingOutfits": {
+    "l1": "Mother & Kids",
+    "search_terms_zh": [
+      "亲子装"
+    ],
+    "enabled": true
+  },
+  "MensBootsDoNotPostinThisCa": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男靴"
+    ],
+    "enabled": true
+  },
+  "MensCompressionShorts": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士压缩短裤"
+    ],
+    "enabled": false
+  },
+  "MensHijabs": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士头巾"
+    ],
+    "enabled": false
+  },
+  "MensMoslemTShirts": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "穆斯林男装"
+    ],
+    "enabled": false
+  },
+  "MensMuslimShirts": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "穆斯林衬衫"
+    ],
+    "enabled": false
+  },
+  "MensPrayerGarment": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士礼拜服"
+    ],
+    "enabled": false
+  },
+  "MensRainShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士雨鞋",
+      "防水鞋"
+    ],
+    "enabled": true
+  },
+  "MensSlippersDoNotPostinThi": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士拖鞋"
+    ],
+    "enabled": true
+  },
+  "MensSocks": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男袜"
+    ],
+    "enabled": true
+  },
+  "MensToeSocks": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士五指袜"
+    ],
+    "enabled": true
+  },
+  "WomensBootsDoNotPostinThis": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女靴"
+    ],
+    "enabled": true
+  },
+  "WomensCasualShoesObsoleteD": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士休闲鞋"
+    ],
+    "enabled": true
+  },
+  "WomensHijabs": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士头巾"
+    ],
+    "enabled": false
+  },
+  "WomensIntimatesAccessories": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "内衣配件"
+    ],
+    "enabled": false
+  },
+  "WomensPrayerGarment": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士礼拜服"
+    ],
+    "enabled": false
+  },
+  "WomensRainShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士雨鞋"
+    ],
+    "enabled": true
+  },
+  "WomensSandalsDoNotPostinTh": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士凉鞋"
+    ],
+    "enabled": true
+  },
+  "WomensSlippersDoNotPostinT": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士拖鞋"
+    ],
+    "enabled": true
+  },
+  "WomensToeSocks": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士五指袜"
+    ],
+    "enabled": true
+  },
+  "CustomCasualShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "休闲鞋"
+    ],
+    "enabled": true
+  },
+  "CasualSneakers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "休闲运动鞋"
+    ],
+    "enabled": true
+  },
+  "LeatherCasualShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "皮鞋休闲鞋"
+    ],
+    "enabled": true
+  },
+  "MensDressShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士正装鞋"
+    ],
+    "enabled": true
+  },
+  "MensLoafers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士乐福鞋",
+      "豆豆鞋"
+    ],
+    "enabled": true
+  },
+  "MensSandals": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士凉鞋"
+    ],
+    "enabled": true
+  },
+  "MensVulcanizeShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士硫化鞋",
+      "帆布鞋"
+    ],
+    "enabled": true
+  },
+  "MensWovenShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "男士编织鞋"
+    ],
+    "enabled": true
+  },
+  "MeshShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "网面鞋",
+      "透气鞋"
+    ],
+    "enabled": true
+  },
+  "NonLeatherCasualShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "非皮休闲鞋"
+    ],
+    "enabled": true
+  },
+  "OxfordBoots": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "牛津靴"
+    ],
+    "enabled": true
+  },
+  "CustomizedShoeAccessories": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋配件定制"
+    ],
+    "enabled": false
+  },
+  "DisposableSlippers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "一次性拖鞋"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "IceGripper": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "冰爪防滑鞋套"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Inserts": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋垫增高垫"
+    ],
+    "enabled": true
+  },
+  "Insoles": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋垫"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoeBrushes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋刷"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoeCare": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋油护理"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoeCareKit": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋护理套装"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoeCleaning": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "洗鞋清洁剂"
+    ],
+    "enabled": true
+  },
+  "ShoeDecorations": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋花鞋扣",
+      "洞洞鞋装饰"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoeHorns": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋拔"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoeMeasuringDevices": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "量脚器"
+    ],
+    "enabled": true
+  },
+  "ShoeNonslipAccessories": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋底防滑贴"
+    ],
+    "enabled": true
+  },
+  "ShoeProtectiveAccessories": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋头保护贴"
+    ],
+    "enabled": true
+  },
+  "ShoeRepairKit": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "修鞋工具"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoeTrees": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋撑"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Shoelaces": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋带"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "ShoesCovers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "鞋套防水"
+    ],
+    "enabled": true
+  },
+  "CustomSlippers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "定制拖鞋"
+    ],
+    "enabled": false
+  },
+  "FashionSlippers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "时尚拖鞋"
+    ],
+    "enabled": true
+  },
+  "Shoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "时尚鞋子"
+    ],
+    "enabled": true
+  },
+  "SnowBoots": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "雪地靴"
+    ],
+    "enabled": true
+  },
+  "SummerBoots": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "夏季靴子",
+      "镂空靴"
+    ],
+    "enabled": true
+  },
+  "WesternBoots": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "西部靴"
+    ],
+    "enabled": true
+  },
+  "WhiteShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "小白鞋"
+    ],
+    "enabled": true
+  },
+  "HouseSlippers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "家居拖鞋",
+      "棉拖鞋"
+    ],
+    "enabled": true
+  },
+  "TherapeuticShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "健康鞋"
+    ],
+    "enabled": false
+  },
+  "AnkleBootie": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "短靴",
+      "踝靴"
+    ],
+    "enabled": true
+  },
+  "ChelseaBoots": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "切尔西靴"
+    ],
+    "enabled": true
+  },
+  "ChunkySneakers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "老爹鞋",
+      "厚底运动鞋"
+    ],
+    "enabled": true
+  },
+  "Clogs": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "洞洞鞋"
+    ],
+    "enabled": true
+  },
+  "FlatSandals": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "平底凉鞋"
+    ],
+    "enabled": true
+  },
+  "Flats": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "平底鞋",
+      "单鞋"
+    ],
+    "enabled": true
+  },
+  "FlipFlops": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "人字拖"
+    ],
+    "enabled": true
+  },
+  "GladiatorSandals": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "罗马凉鞋"
+    ],
+    "enabled": true
+  },
+  "HiddenHeelShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "内增高鞋"
+    ],
+    "enabled": true
+  },
+  "HighHeelPumps": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "高跟鞋"
+    ],
+    "enabled": true
+  },
+  "HighHeelSandals": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "高跟凉鞋"
+    ],
+    "enabled": true
+  },
+  "HighTopBoots": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "高筒靴",
+      "过膝靴"
+    ],
+    "enabled": true
+  },
+  "LowHeelPumps": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "低跟鞋"
+    ],
+    "enabled": true
+  },
+  "MidHeelPumps": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "中跟鞋"
+    ],
+    "enabled": true
+  },
+  "PumpsDoNotPostinThisCatego": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士高跟鞋"
+    ],
+    "enabled": false
+  },
+  "WedgePlatformsSandals": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "坡跟凉鞋",
+      "厚底凉鞋"
+    ],
+    "enabled": true
+  },
+  "WomensLoafers": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士乐福鞋"
+    ],
+    "enabled": true
+  },
+  "WomensMaryJaneShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "玛丽珍鞋"
+    ],
+    "enabled": true
+  },
+  "WomensMules": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "穆勒鞋",
+      "半拖鞋"
+    ],
+    "enabled": true
+  },
+  "WomensOxfordShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士牛津鞋"
+    ],
+    "enabled": true
+  },
+  "WomensVulcanizeShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士帆布鞋"
+    ],
+    "enabled": true
+  },
+  "WomensWovenShoes": {
+    "l1": "Shoes",
+    "search_terms_zh": [
+      "女士编织鞋"
+    ],
+    "enabled": true
+  },
+  "AbRollers": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "健腹轮"
+    ],
+    "enabled": true
+  },
+  "ABTrainerAids": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "腹肌训练器"
+    ],
+    "enabled": true
+  },
+  "ABZones": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "腹部训练带"
+    ],
+    "enabled": true
+  },
+  "AirBike": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "风阻单车"
+    ],
+    "enabled": true
+  },
+  "BalanceBoard": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "平衡板"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "BattleRope": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "战绳"
+    ],
+    "enabled": true
+  },
+  "BreatheTrainerLungCapacity": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "呼吸训练器"
+    ],
+    "enabled": true
+  },
+  "CatchTrainer": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "接球训练器"
+    ],
+    "enabled": false
+  },
+  "ClimbingMachineStairSteppe": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "登山机",
+      "踏步机"
+    ],
+    "enabled": true
+  },
+  "Dumbbells": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "哑铃"
+    ],
+    "enabled": true
+  },
+  "DumbbellsPartsAccessories": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "哑铃配件"
+    ],
+    "enabled": false
+  },
+  "EllipticalMachine": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "椭圆机"
+    ],
+    "enabled": true
+  },
+  "EmsFitnessEquipment": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "EMS健身器"
+    ],
+    "enabled": true
+  },
+  "FitnessBalls": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "瑜伽球"
+    ],
+    "enabled": true
+  },
+  "FitnessHammer": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "健身锤"
+    ],
+    "enabled": false
+  },
+  "FitnessPedal": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "健身踏板"
+    ],
+    "enabled": true
+  },
+  "FitnessSlidingDisk": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "健身滑盘"
+    ],
+    "enabled": true
+  },
+  "Flexibar": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "飞力仕棒"
+    ],
+    "enabled": true
+  },
+  "FoldingExerciseBike": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "折叠健身车"
+    ],
+    "enabled": true
+  },
+  "FootTrainer": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "足部训练器"
+    ],
+    "enabled": true
+  },
+  "HandGripperStrengths": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "握力器"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HandGrips": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "助力带",
+      "握力带"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "HipTrainingDevice": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "美臀训练器"
+    ],
+    "enabled": true
+  },
+  "HorizontalBars": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "单杠"
+    ],
+    "enabled": true
+  },
+  "HorseRidingMachines": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "骑马机"
+    ],
+    "enabled": true
+  },
+  "IndoorBicyclesPartsAccesso": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "动感单车配件"
+    ],
+    "enabled": false
+  },
+  "IndoorCyclingBikes": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "动感单车"
+    ],
+    "enabled": true
+  },
+  "IntegratedFitnessEquipment": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "综合训练器"
+    ],
+    "enabled": true
+  },
+  "JumpRopes": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "跳绳"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "JumpTrainer": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "弹跳训练器"
+    ],
+    "enabled": true
+  },
+  "Kettlebells": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "壶铃"
+    ],
+    "enabled": true
+  },
+  "LegTrainer": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "腿部训练器"
+    ],
+    "enabled": true
+  },
+  "ParallelBars": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "双杠"
+    ],
+    "enabled": true
+  },
+  "Pedometers": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "计步器"
+    ],
+    "enabled": true
+  },
+  "Pilatesbed": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "普拉提床"
+    ],
+    "enabled": true
+  },
+  "PilatesBedPartsAccessories": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "普拉提床配件"
+    ],
+    "enabled": false
+  },
+  "PowerCagesHomeGymSystems": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "深蹲架",
+      "家用龙门架"
+    ],
+    "enabled": true
+  },
+  "PowerWrists": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "腕力球"
+    ],
+    "enabled": true
+  },
+  "PullupBar": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "引体向上器"
+    ],
+    "enabled": true
+  },
+  "Racks": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "哑铃架"
+    ],
+    "enabled": true
+  },
+  "ResistanceBands": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "弹力带",
+      "阻力带"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "RowMachinesPartsAccessorie": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "划船机配件"
+    ],
+    "enabled": false
+  },
+  "SitUpBenches": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "仰卧板"
+    ],
+    "enabled": true
+  },
+  "SlidingMat": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "滑行垫"
+    ],
+    "enabled": true
+  },
+  "SmartFitnessMirror": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "智能健身镜"
+    ],
+    "enabled": true
+  },
+  "SmithMachine": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "史密斯机"
+    ],
+    "enabled": true
+  },
+  "SportHoops": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "呼啦圈"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Steppers": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "踏步机"
+    ],
+    "enabled": true
+  },
+  "SteppersPartsAccessories": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "踏步机配件"
+    ],
+    "enabled": false
+  },
+  "SurfingMachine": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "冲浪训练机"
+    ],
+    "enabled": false
+  },
+  "Trampolines": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "蹦床"
+    ],
+    "enabled": true
+  },
+  "TreadmillPartsAccessories": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "跑步机配件"
+    ],
+    "enabled": false
+  },
+  "TwistBoards": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "扭腰盘"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "VibrationPlate": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "震动平台"
+    ],
+    "enabled": true
+  },
+  "WeightbearingEquipment": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "负重装备",
+      "沙袋"
+    ],
+    "enabled": true
+  },
+  "WeightBenches": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "卧推架"
+    ],
+    "enabled": true
+  },
+  "FacialMuscleTrainer": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "面部训练器"
+    ],
+    "enabled": true
+  },
+  "Fasciotome": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "筋膜枪"
+    ],
+    "enabled": true
+  },
+  "PushUpsStands": {
+    "l1": "Sports & Entertainment",
+    "search_terms_zh": [
+      "俯卧撑支架"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "CustomizedMensSleepLounge": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "男士睡衣定制"
+    ],
+    "enabled": false
+  },
+  "MensPlusSizeSleepLoungeBot": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码男士睡裤"
+    ],
+    "enabled": true
+  },
+  "MensPlusSizeSleepLoungeSet": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码男士睡衣套装"
+    ],
+    "enabled": true
+  },
+  "MensPlusSizeSleepLoungeTop": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码男士睡衣上衣"
+    ],
+    "enabled": true
+  },
+  "CustomizedMensSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "男袜定制"
+    ],
+    "enabled": false
+  },
+  "Boxers": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "男士内裤",
+      "平角裤"
+    ],
+    "enabled": true
+  },
+  "CustomizedBoxers": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "定制内裤"
+    ],
+    "enabled": false
+  },
+  "MensDisposableUnderwear": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "一次性内裤"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "LongJohns": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "秋裤",
+      "保暖裤"
+    ],
+    "enabled": true
+  },
+  "OnepieceUnderwear": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "连体内衣"
+    ],
+    "enabled": true
+  },
+  "PlusSizeBoxers": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码内裤"
+    ],
+    "enabled": true
+  },
+  "ThermalUnderwearBottoms": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "保暖内衣裤"
+    ],
+    "enabled": true
+  },
+  "ThermalUnderwearSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "保暖内衣套装"
+    ],
+    "enabled": true
+  },
+  "ThermalUnderwearTops": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "保暖内衣上衣"
+    ],
+    "enabled": true
+  },
+  "Undershirts": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "男士背心",
+      "打底衫"
+    ],
+    "enabled": true
+  },
+  "ActiveBra": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "运动内衣"
+    ],
+    "enabled": true
+  },
+  "BraBriefSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "文胸内裤套装"
+    ],
+    "enabled": true
+  },
+  "BraExtenderStrap": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "文胸延长扣",
+      "肩带"
+    ],
+    "enabled": true
+  },
+  "Bras": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "文胸",
+      "内衣"
+    ],
+    "enabled": true
+  },
+  "BreastFeeding": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "哺乳内衣"
+    ],
+    "enabled": true
+  },
+  "Briefs": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "三角内裤"
+    ],
+    "enabled": true
+  },
+  "CustomizedPanties": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "定制内裤"
+    ],
+    "enabled": false
+  },
+  "DisposablePantie": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "一次性内裤女"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "GStringsThongs": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "丁字裤"
+    ],
+    "enabled": true
+  },
+  "Garters": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "吊袜带"
+    ],
+    "enabled": true
+  },
+  "InvisibleBra": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "隐形胸贴"
+    ],
+    "enabled": true
+  },
+  "MenstrualPanties": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "生理期内裤"
+    ],
+    "enabled": true
+  },
+  "Panties": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "女士内裤"
+    ],
+    "enabled": true
+  },
+  "PlusSizeBras": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码文胸"
+    ],
+    "enabled": true
+  },
+  "PlusSizeBriefs": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码三角裤"
+    ],
+    "enabled": true
+  },
+  "PlusSizePanties": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码内裤女"
+    ],
+    "enabled": true
+  },
+  "Shapers": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "塑身衣",
+      "束腰"
+    ],
+    "enabled": true
+  },
+  "ShapewearLeggings": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "塑身裤",
+      "收腹裤"
+    ],
+    "enabled": true
+  },
+  "UnderwearAccessories": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "内衣配件"
+    ],
+    "enabled": true
+  },
+  "CustomizedWomensSleepLoung": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "女士睡衣定制"
+    ],
+    "enabled": false
+  },
+  "NightgownsSleepshirts": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "睡裙",
+      "家居服"
+    ],
+    "enabled": true
+  },
+  "NursingHomewearSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "月子服套装"
+    ],
+    "enabled": true
+  },
+  "NursingNightdress": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "哺乳睡裙"
+    ],
+    "enabled": true
+  },
+  "Onesies": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "连体睡衣"
+    ],
+    "enabled": true
+  },
+  "OutdoorHomewearBottoms": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "家居裤"
+    ],
+    "enabled": true
+  },
+  "OutdoorHomewearSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "家居服套装"
+    ],
+    "enabled": true
+  },
+  "OutdoorHomewearTops": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "家居服上衣"
+    ],
+    "enabled": true
+  },
+  "PajamaSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "睡衣套装"
+    ],
+    "enabled": true
+  },
+  "PlusSizeNightgowns": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码睡裙"
+    ],
+    "enabled": true
+  },
+  "PlusSizePajamasSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码睡衣套装"
+    ],
+    "enabled": true
+  },
+  "PlusSizeRobes": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码浴袍"
+    ],
+    "enabled": true
+  },
+  "PlusSizeSleepBottoms": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码睡裤"
+    ],
+    "enabled": true
+  },
+  "PlusSizeSleepTops": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "大码睡衣上衣"
+    ],
+    "enabled": true
+  },
+  "RobeGown": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "浴袍睡袍"
+    ],
+    "enabled": true
+  },
+  "RobeGownSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "睡袍套装"
+    ],
+    "enabled": true
+  },
+  "RobeSets": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "浴袍套装"
+    ],
+    "enabled": true
+  },
+  "Robes": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "浴袍",
+      "晨袍"
+    ],
+    "enabled": true
+  },
+  "SilkPajamas": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "真丝睡衣"
+    ],
+    "enabled": true
+  },
+  "SleepBottoms": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "睡裤"
+    ],
+    "enabled": true
+  },
+  "SleepTops": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "睡衣上衣"
+    ],
+    "enabled": true
+  },
+  "Slips": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "吊带裙衬裙"
+    ],
+    "enabled": true
+  },
+  "KneeHigh": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "中筒袜"
+    ],
+    "enabled": true
+  },
+  "MidCalf": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "小腿袜"
+    ],
+    "enabled": true
+  },
+  "OvertheKnee": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "过膝袜"
+    ],
+    "enabled": true
+  },
+  "Socks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "袜子"
+    ],
+    "enabled": true
+  },
+  "SocksHosiery": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "丝袜"
+    ],
+    "enabled": true
+  },
+  "Stockings": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "长筒丝袜"
+    ],
+    "enabled": true
+  },
+  "AnkleSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "船袜",
+      "隐形袜"
+    ],
+    "enabled": true
+  },
+  "CrewSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "中筒袜"
+    ],
+    "enabled": true
+  },
+  "CustomizedWomensSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "定制女袜"
+    ],
+    "enabled": false
+  },
+  "DisposableSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "一次性袜子"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "LegWarmers": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "腿套保暖"
+    ],
+    "enabled": true
+  },
+  "LongSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "长袜"
+    ],
+    "enabled": true
+  },
+  "LowCutSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "低帮袜"
+    ],
+    "enabled": true
+  },
+  "PedsLiners": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "隐形船袜"
+    ],
+    "enabled": true
+  },
+  "SockAccessories": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "袜子配件"
+    ],
+    "enabled": false
+  },
+  "StockingsTightsSocks": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "连裤袜"
+    ],
+    "enabled": true
+  },
+  "Tights": {
+    "l1": "Underwear",
+    "search_terms_zh": [
+      "打底裤袜"
+    ],
+    "enabled": true
+  },
+  "ChildrensWatches": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "儿童手表"
+    ],
+    "enabled": true
+  },
+  "CoupleWatches": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "情侣手表"
+    ],
+    "enabled": true
+  },
+  "CustomizedWatches": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "定制手表"
+    ],
+    "enabled": false
+  },
+  "PocketFobWatches": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "怀表"
+    ],
+    "enabled": true
+  },
+  "PocketWatchChains": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "怀表链"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Watchbands": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "表带",
+      "手表带"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchBatteries": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表电池"
+    ],
+    "enabled": true
+  },
+  "WatchBoxes": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表盒",
+      "表盒收纳"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchBuckle": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "表扣"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchCases": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "表壳"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "Watchcharger": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表充电器"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchConnector": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "表带连接器"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchFaces": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "表盘"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchHands": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "表针"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchMovement": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表机芯"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchScreenProtectors": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表贴膜"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchStents": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表支架"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "WatchWinders": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "摇表器"
+    ],
+    "enabled": true,
+    "brand_safe": true
+  },
+  "DigitalWristwatches": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "数字运动手表",
+      "电子表"
+    ],
+    "enabled": true
+  },
+  "MechanicalWristwatches": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "机械手表"
+    ],
+    "enabled": true
+  },
+  "QuartzWristwatches": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "石英手表",
+      "石英表"
+    ],
+    "enabled": true
+  },
+  "QuartzWristwatches1": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "时尚石英表"
+    ],
+    "enabled": true
+  },
+  "WristwatchBlindBox": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表盲盒"
+    ],
+    "enabled": true
+  },
+  "WristwatchGifts": {
+    "l1": "Watches",
+    "search_terms_zh": [
+      "手表礼品"
+    ],
+    "enabled": true
+  },
+  "_amazon_3c_meta": {
+    "l1": "_meta",
+    "search_terms_zh": [],
+    "enabled": false
+  },
+  "Earphones": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "游戏蓝牙耳机 低延迟 跨境"
+    ],
+    "enabled": false
+  },
+  "SmartWatches": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "智能手表 运动 心率 血氧 跨境"
+    ],
+    "enabled": false
+  },
+  "ActionCameras": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "运动相机 4K 防水 WiFi 跨境"
+    ],
+    "enabled": false
+  },
+  "PortableProjector": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "投影仪 便携式 迷你 家用 跨境"
+    ],
+    "enabled": false
+  },
+  "VRGlasses": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "VR眼镜 一体机 游戏 跨境"
+    ],
+    "enabled": false
+  },
+  "PowerStation": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "户外电源 太阳能 磷酸铁锂 跨境"
+    ],
+    "enabled": false
+  },
+  "Soundbar": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "回音壁 蓝牙 家庭影院 电视 跨境"
+    ],
+    "enabled": false
+  },
+  "IPCamera": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "网络摄像头 WiFi 夜视 双向语音 跨境"
+    ],
+    "enabled": false
+  },
+  "SmartDoorbell": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "智能可视门铃 WiFi 远程 跨境"
+    ],
+    "enabled": false
+  },
+  "GimbalStabilizer": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "手持稳定器 手机云台 三轴 跨境"
+    ],
+    "enabled": false
+  },
+  "LavalierMicrophone": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "无线领夹麦克风 直播 一拖二 跨境"
+    ],
+    "enabled": false
+  },
+  "SmartRing": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "智能戒指 健康监测 NFC 跨境"
+    ],
+    "enabled": false
+  },
+  "SolarPanel": {
+    "l1": "Amazon 3C",
+    "search_terms_zh": [
+      "太阳能充电板 折叠 便携 跨境"
+    ],
+    "enabled": false
+  }
 }

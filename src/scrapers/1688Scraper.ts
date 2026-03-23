@@ -945,6 +945,16 @@ export class Scraper1688 {
     const maxPrice = config.filters.maxPriceCNY;
 
     try {
+      // Close stale tabs from previous search — keep only the first tab
+      const allTabs = await this.browser!.pages();
+      if (allTabs.length > 1) {
+        for (let i = allTabs.length - 1; i > 0; i--) {
+          await allTabs[i].close().catch(() => {});
+        }
+        this.page = allTabs[0];
+        logger.info('Closed stale tabs before new search', { closed: allTabs.length - 1 });
+      }
+
       // Navigate to 1688 homepage and type Chinese keywords into search bar
       await this.page.goto('https://www.1688.com', {
         waitUntil: 'domcontentloaded',

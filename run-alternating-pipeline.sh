@@ -53,6 +53,15 @@ while true; do
   echo "[$(date +%H:%M:%S)] Task 3: Image checking..."
   node dist/tasks/task3-image-check.js --limit 500 2>&1 | tail -3
 
+  echo "[$(date +%H:%M:%S)] Task 8B: Auto-verify (price + brand layers)..."
+  node dist/tasks/task8b-auto-verify.js --limit 500 2>&1 | tail -5
+
+  echo "[$(date +%H:%M:%S)] Task 4: Translating authorized products..."
+  node dist/tasks/task4-translate.js --limit 100 2>&1 | tail -3
+
+  echo "[$(date +%H:%M:%S)] Task 5: Enriching translated products..."
+  node dist/tasks/task5-ae-enrich.js --limit 100 2>&1 | tail -3
+
   # Show pipeline status
   echo "[$(date +%H:%M:%S)] Pipeline status after round $ROUND:"
   mysql -u root -p***REMOVED*** 1688_source -e "

@@ -119,6 +119,19 @@ export interface BrandEntry {
 
 export type AuthorizationType = 'not_branded' | 'authorized_reseller' | 'own_brand' | 'generic';
 
+export type AuthorizationConfidence = 'seller_confirmed' | 'auto_verified' | 'manual';
+
+export interface AutoCheckResults {
+  brand_list_check: 'pass' | 'fail';
+  price_check: 'pass' | 'fail' | 'warn';
+  image_logo_check?: 'pass' | 'fail' | 'skipped';
+  cross_platform_check?: 'pass' | 'fail' | 'skipped';
+  seller_profile_check?: 'pass' | 'fail' | 'skipped';
+  price_cny?: number;
+  category?: string;
+  checked_at: string;
+}
+
 export interface AuthorizedProduct {
   id?: number;
   productId: number;
@@ -131,6 +144,8 @@ export interface AuthorizedProduct {
   confirmedAt?: Date;
   expiresAt?: Date;
   active: boolean;
+  confidence?: AuthorizationConfidence;
+  autoCheckResults?: AutoCheckResults;
   notes?: string;
 }
 

@@ -894,8 +894,8 @@ export async function upsertAuthorizedProduct(auth: Omit<AuthorizedProduct, 'id'
     `INSERT INTO authorized_products
        (product_id, authorization_type, authorized_platforms, provider_id,
         seller_confirmation, authorization_doc_url, confirmed_by, confirmed_at,
-        expires_at, active, notes)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        expires_at, active, confidence, auto_check_results, notes)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        authorization_type = VALUES(authorization_type),
        authorized_platforms = VALUES(authorized_platforms),
@@ -906,6 +906,8 @@ export async function upsertAuthorizedProduct(auth: Omit<AuthorizedProduct, 'id'
        confirmed_at = VALUES(confirmed_at),
        expires_at = VALUES(expires_at),
        active = VALUES(active),
+       confidence = VALUES(confidence),
+       auto_check_results = COALESCE(VALUES(auto_check_results), auto_check_results),
        notes = COALESCE(VALUES(notes), notes),
        updated_at = NOW()`,
     [
@@ -919,6 +921,8 @@ export async function upsertAuthorizedProduct(auth: Omit<AuthorizedProduct, 'id'
       auth.confirmedAt || null,
       auth.expiresAt || null,
       auth.active ? 1 : 0,
+      auth.confidence || 'seller_confirmed',
+      auth.autoCheckResults ? JSON.stringify(auth.autoCheckResults) : null,
       auth.notes || null,
     ]
   );

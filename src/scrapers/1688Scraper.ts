@@ -945,14 +945,24 @@ export class Scraper1688 {
     const maxPrice = config.filters.maxPriceCNY;
 
     try {
-      // Close stale tabs from previous search — keep only the first tab
+      // Close stale tabs from previous search — keep only one tab
       const allTabs = await this.browser!.pages();
       if (allTabs.length > 1) {
-        for (let i = allTabs.length - 1; i > 0; i--) {
-          await allTabs[i].close().catch(() => {});
-        }
+        // Keep the first valid tab, close the rest
         this.page = allTabs[0];
+        for (let i = allTabs.length - 1; i > 0; i--) {
+          try { await allTabs[i].close(); } catch { /* already closed */ }
+        }
         logger.info('Closed stale tabs before new search', { closed: allTabs.length - 1 });
+      }
+
+      // Verify page is still usable (not detached)
+      try {
+        await this.page.evaluate(() => document.title);
+      } catch {
+        // Page is detached — create a fresh one
+        logger.warn('Page was detached, creating fresh tab');
+        this.page = await this.browser!.newPage();
       }
 
       // Navigate to 1688 homepage and type Chinese keywords into search bar
@@ -1080,13 +1090,23 @@ export class Scraper1688 {
       await sleep(3000);
       const allPages = await this.browser!.pages();
       if (allPages.length > 1) {
-        this.page = allPages[allPages.length - 1];
+        // Switch to the newest tab (search results)
+        const newPage = allPages[allPages.length - 1];
+        this.page = newPage;
         logger.info('Switched to new search results tab', { tabs: allPages.length });
-      }
 
-      await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {
-        logger.warn('Navigation wait timed out, continuing');
-      });
+        // Wait for the new tab to finish loading (it may already be loaded)
+        try {
+          await newPage.waitForSelector('body', { timeout: 10000 });
+        } catch {
+          logger.warn('New tab body wait timed out, continuing');
+        }
+      } else {
+        // Search didn't open new tab — wait for navigation in current page
+        await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {
+          logger.warn('Navigation wait timed out, continuing');
+        });
+      }
 
       await randomDelay(3000, 5000);
 

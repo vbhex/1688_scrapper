@@ -130,7 +130,7 @@ async function getPendingProducts(limit: number, minAgeHours: number): Promise<P
   const pool = await getPool();
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT p.id, p.id_1688, p.title_zh, p.category, p.created_at,
-            pr.price_cny, p.seller_id,
+            pr.price_cny, pr.seller_name as seller_id,
             JSON_UNQUOTE(JSON_EXTRACT(pr.specifications_zh, '$."品牌"')) as specs_brand
      FROM products p
      JOIN products_raw pr ON pr.product_id = p.id

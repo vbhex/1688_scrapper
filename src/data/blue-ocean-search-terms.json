@@ -414,5 +414,20 @@
   "QuartzWristwatches": { "l1": "Watches", "search_terms_zh": ["石英手表", "石英表"], "enabled": true },
   "QuartzWristwatches1": { "l1": "Watches", "search_terms_zh": ["时尚石英表"], "enabled": true },
   "WristwatchBlindBox": { "l1": "Watches", "search_terms_zh": ["手表盲盒"], "enabled": true },
-  "WristwatchGifts": { "l1": "Watches", "search_terms_zh": ["手表礼品"], "enabled": true }
+  "WristwatchGifts": { "l1": "Watches", "search_terms_zh": ["手表礼品"], "enabled": true },
+
+  "_amazon_3c_meta": { "l1": "_meta", "search_terms_zh": [], "enabled": false },
+  "Earphones": { "l1": "Amazon 3C", "search_terms_zh": ["游戏蓝牙耳机 低延迟 跨境"], "enabled": false },
+  "SmartWatches": { "l1": "Amazon 3C", "search_terms_zh": ["智能手表 运动 心率 血氧 跨境"], "enabled": false },
+  "ActionCameras": { "l1": "Amazon 3C", "search_terms_zh": ["运动相机 4K 防水 WiFi 跨境"], "enabled": false },
+  "PortableProjector": { "l1": "Amazon 3C", "search_terms_zh": ["投影仪 便携式 迷你 家用 跨境"], "enabled": false },
+  "VRGlasses": { "l1": "Amazon 3C", "search_terms_zh": ["VR眼镜 一体机 游戏 跨境"], "enabled": false },
+  "PowerStation": { "l1": "Amazon 3C", "search_terms_zh": ["户外电源 太阳能 磷酸铁锂 跨境"], "enabled": false },
+  "Soundbar": { "l1": "Amazon 3C", "search_terms_zh": ["回音壁 蓝牙 家庭影院 电视 跨境"], "enabled": false },
+  "IPCamera": { "l1": "Amazon 3C", "search_terms_zh": ["网络摄像头 WiFi 夜视 双向语音 跨境"], "enabled": false },
+  "SmartDoorbell": { "l1": "Amazon 3C", "search_terms_zh": ["智能可视门铃 WiFi 远程 跨境"], "enabled": false },
+  "GimbalStabilizer": { "l1": "Amazon 3C", "search_terms_zh": ["手持稳定器 手机云台 三轴 跨境"], "enabled": false },
+  "LavalierMicrophone": { "l1": "Amazon 3C", "search_terms_zh": ["无线领夹麦克风 直播 一拖二 跨境"], "enabled": false },
+  "SmartRing": { "l1": "Amazon 3C", "search_terms_zh": ["智能戒指 健康监测 NFC 跨境"], "enabled": false },
+  "SolarPanel": { "l1": "Amazon 3C", "search_terms_zh": ["太阳能充电板 折叠 便携 跨境"], "enabled": false }
 }

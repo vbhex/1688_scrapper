@@ -13,14 +13,38 @@ const RATE_LIMIT_DELAY_MS = 100;
 
 type TranslateProvider = 'google' | 'baidu';
 
+// Track Baidu rate limit failures to auto-fallback to Google
+let baiduRateLimitCount = 0;
+let baiduRateLimitResetTime = 0;
+const BAIDU_RATE_LIMIT_THRESHOLD = 5;  // After 5 rate limits, switch to Google
+const BAIDU_COOLDOWN_MS = 60 * 1000;   // Try Baidu again after 60s
+
 function getProvider(): TranslateProvider {
-  if (config.baidu.translateAppId && config.baidu.translateSecret) {
+  const hasBaidu = !!(config.baidu.translateAppId && config.baidu.translateSecret);
+  const hasGoogle = !!config.google.apiKey;
+
+  if (hasBaidu) {
+    // Check if Baidu is rate-limited and Google is available as fallback
+    if (baiduRateLimitCount >= BAIDU_RATE_LIMIT_THRESHOLD && hasGoogle) {
+      if (Date.now() < baiduRateLimitResetTime) {
+        logger.info('Baidu rate-limited, using Google as fallback');
+        return 'google';
+      }
+      // Cooldown expired, try Baidu again
+      baiduRateLimitCount = 0;
+    }
     return 'baidu';
   }
-  if (config.google.apiKey) {
+  if (hasGoogle) {
     return 'google';
   }
   throw new Error('No translation API configured. Set GOOGLE_CLOUD_API_KEY or BAIDU_TRANSLATE_APPID + BAIDU_TRANSLATE_SECRET in .env');
+}
+
+export function reportBaiduRateLimit(): void {
+  baiduRateLimitCount++;
+  baiduRateLimitResetTime = Date.now() + BAIDU_COOLDOWN_MS;
+  logger.warn('Baidu rate limit hit', { count: baiduRateLimitCount, threshold: BAIDU_RATE_LIMIT_THRESHOLD });
 }
 
 // ─── HTML entity decoding ─────────────────────────────────────────────
@@ -137,7 +161,11 @@ async function baiduTranslateText(text: string): Promise<string> {
   if (response.data.error_code) {
     // Error code 54003 = rate limit
     if (response.data.error_code === '54003') {
-      logger.warn('Baidu rate limited, waiting before retry');
+      reportBaiduRateLimit();
+      // If Google is available and we've hit threshold, fallback immediately
+      if (baiduRateLimitCount >= BAIDU_RATE_LIMIT_THRESHOLD && config.google.apiKey) {
+        return googleTranslateText(text);
+      }
       await sleep(1500);
       return baiduTranslateText(text);
     }
@@ -202,6 +230,14 @@ async function baiduTranslateBatch(texts: string[]): Promise<string[]> {
 
     if (response.data.error_code) {
       if (response.data.error_code === '54003') {
+        reportBaiduRateLimit();
+        // If Google is available, fallback to Google batch for this chunk
+        if (config.google.apiKey) {
+          const chunkTexts = chunk.map(c => c.text);
+          const googleResults = await googleTranslateBatch(chunkTexts);
+          chunk.forEach((item, i) => { result[item.index] = googleResults[i] || item.text; });
+          continue;
+        }
         await sleep(1500);
         // Retry this chunk by falling back to individual translations
         for (const item of chunk) {

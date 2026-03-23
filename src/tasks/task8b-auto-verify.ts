@@ -128,29 +128,37 @@ function parseArgs(): CLIOptions {
 
 async function getPendingProducts(limit: number, minAgeHours: number): Promise<PendingProduct[]> {
   const pool = await getPool();
-  const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT p.id, p.id_1688, p.title_zh, p.category, p.created_at,
+  const query = `SELECT p.id, p.id_1688, p.title_zh, p.category, p.created_at,
             pr.price_cny, pr.seller_name as seller_id,
-            JSON_UNQUOTE(JSON_EXTRACT(pr.specifications_zh, '$."品牌"')) as specs_brand
+            pr.specifications_zh
      FROM products p
      JOIN products_raw pr ON pr.product_id = p.id
      WHERE p.status = 'images_checked'
        AND p.id NOT IN (SELECT product_id FROM authorized_products)
        AND p.created_at <= DATE_SUB(NOW(), INTERVAL ${Number(minAgeHours)} HOUR)
      ORDER BY p.created_at ASC
-     LIMIT ?`,
-    [limit]
-  );
-  return rows.map(r => ({
-    id: r.id,
-    id_1688: r.id_1688,
-    title_zh: r.title_zh,
-    category: r.category,
-    price_cny: r.price_cny,
-    seller_id: r.seller_id,
-    created_at: r.created_at,
-    specs_brand: r.specs_brand,
-  }));
+     LIMIT ${Number(limit)}`;
+  const [rows] = await pool.query<RowDataPacket[]>(query);
+  return rows.map(r => {
+    let specsBrand: string | null = null;
+    try {
+      const specs = typeof r.specifications_zh === 'string'
+        ? JSON.parse(r.specifications_zh) : r.specifications_zh;
+      if (specs && typeof specs === 'object') {
+        specsBrand = specs['品牌'] || specs['brand'] || null;
+      }
+    } catch { /* ignore parse errors */ }
+    return {
+      id: r.id,
+      id_1688: r.id_1688,
+      title_zh: r.title_zh,
+      category: r.category,
+      price_cny: r.price_cny,
+      seller_id: r.seller_id,
+      created_at: r.created_at,
+      specs_brand: specsBrand,
+    };
+  });
 }
 
 function checkLayer1ImageLogos(product: PendingProduct): 'pass' | 'fail' {

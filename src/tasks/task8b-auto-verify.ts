@@ -136,10 +136,10 @@ async function getPendingProducts(limit: number, minAgeHours: number): Promise<P
      JOIN products_raw pr ON pr.product_id = p.id
      WHERE p.status = 'images_checked'
        AND p.id NOT IN (SELECT product_id FROM authorized_products)
-       AND p.created_at <= DATE_SUB(NOW(), INTERVAL ? HOUR)
+       AND p.created_at <= DATE_SUB(NOW(), INTERVAL ${Number(minAgeHours)} HOUR)
      ORDER BY p.created_at ASC
      LIMIT ?`,
-    [minAgeHours, limit]
+    [limit]
   );
   return rows.map(r => ({
     id: r.id,

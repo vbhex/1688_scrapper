@@ -9,14 +9,16 @@
     "search_terms_zh": [
       "时尚配饰"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "GarmentAccessories": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "服装辅料配件"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ChipCases": {
     "l1": "Apparel Accessories",
@@ -30,14 +32,16 @@
     "search_terms_zh": [
       "领撑"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Cummerbunds": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "腰封"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FacialHair": {
     "l1": "Apparel Accessories",
@@ -75,7 +79,8 @@
       "护膝套",
       "腿套"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Oversleeve": {
     "l1": "Apparel Accessories",
@@ -100,7 +105,8 @@
     "search_terms_zh": [
       "腰带绶带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ShoulderStrap": {
     "l1": "Apparel Accessories",
@@ -108,7 +114,8 @@
       "肩带",
       "包肩带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SuspendersBracesPostureCor": {
     "l1": "Apparel Accessories",
@@ -116,14 +123,16 @@
       "背带",
       "吊带夹"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TieBucklesCufflinks": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "领带扣袖扣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TieChains": {
     "l1": "Apparel Accessories",
@@ -138,28 +147,32 @@
     "search_terms_zh": [
       "领带夹"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TieClipsCufflinks": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "领带夹袖扣套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TiePins": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "领带别针"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TieSet": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "领带套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Ties": {
     "l1": "Apparel Accessories",
@@ -167,7 +180,8 @@
       "领带",
       "男士领带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TiesBows": {
     "l1": "Apparel Accessories",
@@ -175,7 +189,8 @@
       "领结",
       "蝴蝶结领带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ChiffonFabrics": {
     "l1": "Apparel Accessories",
@@ -398,7 +413,8 @@
       "时尚皮带",
       "腰带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BeltBuckle": {
     "l1": "Apparel Accessories",
@@ -406,7 +422,8 @@
       "皮带扣",
       "腰带扣头"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Earmuffs": {
     "l1": "Apparel Accessories",
@@ -430,7 +447,8 @@
     "search_terms_zh": [
       "防蓝光眼镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ChainsLanyards": {
     "l1": "Apparel Accessories",
@@ -472,14 +490,16 @@
       "光学眼镜框",
       "近视眼镜架"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "EyeglassesLenses": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "眼镜片"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "EyewearCasesBags": {
     "l1": "Apparel Accessories",
@@ -496,7 +516,8 @@
       "时尚眼镜",
       "装饰眼镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "GlassesRepairTools": {
     "l1": "Apparel Accessories",
@@ -535,7 +556,8 @@
     "search_terms_zh": [
       "夜视眼镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "NosePads": {
     "l1": "Apparel Accessories",
@@ -551,14 +573,16 @@
       "近视眼镜",
       "配镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ProtectiveGlasses": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "防护眼镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ReadingGlasses": {
     "l1": "Apparel Accessories",
@@ -566,14 +590,16 @@
       "老花镜",
       "阅读眼镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "RepairToolsKits": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "眼镜修理套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Sunglasses": {
     "l1": "Apparel Accessories",
@@ -581,14 +607,16 @@
       "偏光太阳镜",
       "墨镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "UltrasonicEyeglassCleaners": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "超声波眼镜清洗机"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "VisionTestingandRecoveryTo": {
     "l1": "Apparel Accessories",
@@ -602,7 +630,8 @@
     "search_terms_zh": [
       "时尚手套"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "GlovesMittens": {
     "l1": "Apparel Accessories",
@@ -610,7 +639,8 @@
       "保暖手套",
       "连指手套"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HairAccessories": {
     "l1": "Apparel Accessories",
@@ -653,7 +683,8 @@
       "皇冠头饰",
       "新娘头饰"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HairGrips": {
     "l1": "Apparel Accessories",
@@ -712,14 +743,16 @@
       "雷锋帽",
       "飞行帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BucketHats": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "渔夫帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CowboyHats": {
     "l1": "Apparel Accessories",
@@ -727,7 +760,8 @@
       "牛仔帽",
       "西部帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Hats": {
     "l1": "Apparel Accessories",
@@ -735,7 +769,8 @@
       "针织帽",
       "毛线帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Headband": {
     "l1": "Apparel Accessories",
@@ -752,21 +787,24 @@
       "头巾",
       "头饰"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BaseballCaps": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "棒球帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Berets": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "贝雷帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedHat": {
     "l1": "Apparel Accessories",
@@ -780,7 +818,8 @@
     "search_terms_zh": [
       "礼帽头饰"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Fedoras": {
     "l1": "Apparel Accessories",
@@ -788,7 +827,8 @@
       "礼帽",
       "爵士帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HipHopCaps": {
     "l1": "Apparel Accessories",
@@ -796,7 +836,8 @@
       "嘻哈帽",
       "平沿帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "NewsboyCaps": {
     "l1": "Apparel Accessories",
@@ -804,21 +845,24 @@
       "报童帽",
       "八角帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "OctagonalHats": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "八角帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PrayerHats": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "穆斯林帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SkulliesBeanies": {
     "l1": "Apparel Accessories",
@@ -826,7 +870,8 @@
       "冷帽",
       "毛线帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SunHats": {
     "l1": "Apparel Accessories",
@@ -834,7 +879,8 @@
       "遮阳帽",
       "防晒帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Visors": {
     "l1": "Apparel Accessories",
@@ -842,7 +888,8 @@
       "空顶帽",
       "遮阳帽"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Mask": {
     "l1": "Apparel Accessories",
@@ -858,7 +905,8 @@
     "search_terms_zh": [
       "围巾"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Scarves": {
     "l1": "Apparel Accessories",
@@ -866,7 +914,8 @@
       "针织围巾",
       "冬季围巾"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Bandana": {
     "l1": "Apparel Accessories",
@@ -883,7 +932,8 @@
       "领巾",
       "小方巾"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ScarfAccessories": {
     "l1": "Apparel Accessories",
@@ -899,7 +949,8 @@
     "search_terms_zh": [
       "围巾帽子手套套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SilkScarves": {
     "l1": "Apparel Accessories",
@@ -907,28 +958,32 @@
       "真丝丝巾",
       "桑蚕丝围巾"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SunProtectiveScarf": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "防晒丝巾"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SunprotectiveSleeve": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "防晒冰袖"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Wraps": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
       "披肩"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BodyChain": {
     "l1": "Jewelry & Accessories",
@@ -944,21 +999,24 @@
     "search_terms_zh": [
       "耳套耳饰"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Anklets": {
     "l1": "Jewelry & Accessories",
     "search_terms_zh": [
       "脚链"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Bangles": {
     "l1": "Jewelry & Accessories",
     "search_terms_zh": [
       "手镯"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Beads": {
     "l1": "Jewelry & Accessories",
@@ -982,14 +1040,16 @@
     "search_terms_zh": [
       "时尚手链"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Brooches": {
     "l1": "Jewelry & Accessories",
     "search_terms_zh": [
       "胸针"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Chain": {
     "l1": "Jewelry & Accessories",
@@ -1015,7 +1075,8 @@
       "耳夹",
       "无耳洞耳环"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "DangleEarrings": {
     "l1": "Jewelry & Accessories",
@@ -1023,7 +1084,8 @@
       "耳坠",
       "长款耳环"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "DentalGrills": {
     "l1": "Jewelry & Accessories",
@@ -1046,7 +1108,8 @@
     "search_terms_zh": [
       "发饰珠宝"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HoopEarrings": {
     "l1": "Jewelry & Accessories",
@@ -1054,7 +1117,8 @@
       "圈形耳环",
       "大耳圈"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "JewelryMask": {
     "l1": "Jewelry & Accessories",
@@ -1070,7 +1134,8 @@
       "首饰套装",
       "项链耳环套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "KeyChains": {
     "l1": "Jewelry & Accessories",
@@ -1096,7 +1161,8 @@
       "吊坠",
       "项链挂坠"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PiercingJewelry": {
     "l1": "Jewelry & Accessories",
@@ -1113,14 +1179,16 @@
       "戒指",
       "时尚指环"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "StudEarrings": {
     "l1": "Jewelry & Accessories",
     "search_terms_zh": [
       "耳钉"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ToeRings": {
     "l1": "Jewelry & Accessories",
@@ -1168,14 +1236,16 @@
       "时尚双肩包",
       "背包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "AnimeBackpacksWalletsLugga": {
     "l1": "Luggage & Bags",
     "search_terms_zh": [
       "动漫双肩包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BusinessCommuterLaptopBag": {
     "l1": "Luggage & Bags",
@@ -1183,7 +1253,8 @@
       "商务电脑包",
       "通勤包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BagPartsAccessories": {
     "l1": "Luggage & Bags",
@@ -1200,7 +1271,8 @@
       "抽绳包",
       "束口袋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "LuggageCover": {
     "l1": "Luggage & Bags",
@@ -1216,7 +1288,8 @@
       "拉杆箱",
       "行李箱"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SchoolBags": {
     "l1": "Luggage & Bags",
@@ -1224,7 +1297,8 @@
       "书包",
       "学生背包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CoolerBags": {
     "l1": "Luggage & Bags",
@@ -1232,7 +1306,8 @@
       "保温袋",
       "冷藏包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CosmeticBagsCases": {
     "l1": "Luggage & Bags",
@@ -1240,7 +1315,8 @@
       "化妆包",
       "收纳包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HairScissorsBags": {
     "l1": "Luggage & Bags",
@@ -1254,7 +1330,8 @@
     "search_terms_zh": [
       "乐器包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "LunchBags": {
     "l1": "Luggage & Bags",
@@ -1262,7 +1339,8 @@
       "饭盒袋",
       "午餐包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ShoppingBags": {
     "l1": "Luggage & Bags",
@@ -1270,14 +1348,16 @@
       "购物袋",
       "环保袋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TravelTote": {
     "l1": "Luggage & Bags",
     "search_terms_zh": [
       "旅行手提包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WaistPacks": {
     "l1": "Luggage & Bags",
@@ -1285,7 +1365,8 @@
       "腰包",
       "胸包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Wallets": {
     "l1": "Luggage & Bags",
@@ -1293,7 +1374,8 @@
       "钱包",
       "长款钱包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CardIDHolders": {
     "l1": "Luggage & Bags",
@@ -1301,42 +1383,48 @@
       "卡包",
       "证件套"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CoinPurses": {
     "l1": "Luggage & Bags",
     "search_terms_zh": [
       "零钱包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "KeyWallets": {
     "l1": "Luggage & Bags",
     "search_terms_zh": [
       "钥匙包"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MoneyClips": {
     "l1": "Luggage & Bags",
     "search_terms_zh": [
       "钱夹"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FamilyMatchingOutfits": {
     "l1": "Mother & Kids",
     "search_terms_zh": [
       "亲子装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensBootsDoNotPostinThisCa": {
     "l1": "Shoes",
     "search_terms_zh": [
       "男靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensCompressionShorts": {
     "l1": "Shoes",
@@ -1379,42 +1467,48 @@
       "男士雨鞋",
       "防水鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensSlippersDoNotPostinThi": {
     "l1": "Shoes",
     "search_terms_zh": [
       "男士拖鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensSocks": {
     "l1": "Shoes",
     "search_terms_zh": [
       "男袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensToeSocks": {
     "l1": "Shoes",
     "search_terms_zh": [
       "男士五指袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensBootsDoNotPostinThis": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensCasualShoesObsoleteD": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士休闲鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensHijabs": {
     "l1": "Shoes",
@@ -1442,56 +1536,64 @@
     "search_terms_zh": [
       "女士雨鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensSandalsDoNotPostinTh": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士凉鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensSlippersDoNotPostinT": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士拖鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensToeSocks": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士五指袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomCasualShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "休闲鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CasualSneakers": {
     "l1": "Shoes",
     "search_terms_zh": [
       "休闲运动鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "LeatherCasualShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "皮鞋休闲鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensDressShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "男士正装鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensLoafers": {
     "l1": "Shoes",
@@ -1499,14 +1601,16 @@
       "男士乐福鞋",
       "豆豆鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensSandals": {
     "l1": "Shoes",
     "search_terms_zh": [
       "男士凉鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensVulcanizeShoes": {
     "l1": "Shoes",
@@ -1514,14 +1618,16 @@
       "男士硫化鞋",
       "帆布鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensWovenShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "男士编织鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MeshShoes": {
     "l1": "Shoes",
@@ -1529,21 +1635,24 @@
       "网面鞋",
       "透气鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "NonLeatherCasualShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "非皮休闲鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "OxfordBoots": {
     "l1": "Shoes",
     "search_terms_zh": [
       "牛津靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedShoeAccessories": {
     "l1": "Shoes",
@@ -1573,7 +1682,8 @@
     "search_terms_zh": [
       "鞋垫增高垫"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Insoles": {
     "l1": "Shoes",
@@ -1612,7 +1722,8 @@
     "search_terms_zh": [
       "洗鞋清洁剂"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ShoeDecorations": {
     "l1": "Shoes",
@@ -1636,21 +1747,24 @@
     "search_terms_zh": [
       "量脚器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ShoeNonslipAccessories": {
     "l1": "Shoes",
     "search_terms_zh": [
       "鞋底防滑贴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ShoeProtectiveAccessories": {
     "l1": "Shoes",
     "search_terms_zh": [
       "鞋头保护贴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ShoeRepairKit": {
     "l1": "Shoes",
@@ -1681,7 +1795,8 @@
     "search_terms_zh": [
       "鞋套防水"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomSlippers": {
     "l1": "Shoes",
@@ -1695,21 +1810,24 @@
     "search_terms_zh": [
       "时尚拖鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Shoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "时尚鞋子"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SnowBoots": {
     "l1": "Shoes",
     "search_terms_zh": [
       "雪地靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SummerBoots": {
     "l1": "Shoes",
@@ -1717,21 +1835,24 @@
       "夏季靴子",
       "镂空靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WesternBoots": {
     "l1": "Shoes",
     "search_terms_zh": [
       "西部靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WhiteShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "小白鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HouseSlippers": {
     "l1": "Shoes",
@@ -1739,7 +1860,8 @@
       "家居拖鞋",
       "棉拖鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TherapeuticShoes": {
     "l1": "Shoes",
@@ -1754,14 +1876,16 @@
       "短靴",
       "踝靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ChelseaBoots": {
     "l1": "Shoes",
     "search_terms_zh": [
       "切尔西靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ChunkySneakers": {
     "l1": "Shoes",
@@ -1769,21 +1893,24 @@
       "老爹鞋",
       "厚底运动鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Clogs": {
     "l1": "Shoes",
     "search_terms_zh": [
       "洞洞鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FlatSandals": {
     "l1": "Shoes",
     "search_terms_zh": [
       "平底凉鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Flats": {
     "l1": "Shoes",
@@ -1791,42 +1918,48 @@
       "平底鞋",
       "单鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FlipFlops": {
     "l1": "Shoes",
     "search_terms_zh": [
       "人字拖"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "GladiatorSandals": {
     "l1": "Shoes",
     "search_terms_zh": [
       "罗马凉鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HiddenHeelShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "内增高鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HighHeelPumps": {
     "l1": "Shoes",
     "search_terms_zh": [
       "高跟鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HighHeelSandals": {
     "l1": "Shoes",
     "search_terms_zh": [
       "高跟凉鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HighTopBoots": {
     "l1": "Shoes",
@@ -1834,21 +1967,24 @@
       "高筒靴",
       "过膝靴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "LowHeelPumps": {
     "l1": "Shoes",
     "search_terms_zh": [
       "低跟鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MidHeelPumps": {
     "l1": "Shoes",
     "search_terms_zh": [
       "中跟鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PumpsDoNotPostinThisCatego": {
     "l1": "Shoes",
@@ -1863,21 +1999,24 @@
       "坡跟凉鞋",
       "厚底凉鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensLoafers": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士乐福鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensMaryJaneShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "玛丽珍鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensMules": {
     "l1": "Shoes",
@@ -1885,56 +2024,64 @@
       "穆勒鞋",
       "半拖鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensOxfordShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士牛津鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensVulcanizeShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士帆布鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WomensWovenShoes": {
     "l1": "Shoes",
     "search_terms_zh": [
       "女士编织鞋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "AbRollers": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "健腹轮"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ABTrainerAids": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "腹肌训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ABZones": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "腹部训练带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "AirBike": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "风阻单车"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BalanceBoard": {
     "l1": "Sports & Entertainment",
@@ -1949,14 +2096,16 @@
     "search_terms_zh": [
       "战绳"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BreatheTrainerLungCapacity": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "呼吸训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CatchTrainer": {
     "l1": "Sports & Entertainment",
@@ -1971,14 +2120,16 @@
       "登山机",
       "踏步机"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Dumbbells": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "哑铃"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "DumbbellsPartsAccessories": {
     "l1": "Sports & Entertainment",
@@ -1992,21 +2143,24 @@
     "search_terms_zh": [
       "椭圆机"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "EmsFitnessEquipment": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "EMS健身器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FitnessBalls": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "瑜伽球"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FitnessHammer": {
     "l1": "Sports & Entertainment",
@@ -2020,35 +2174,40 @@
     "search_terms_zh": [
       "健身踏板"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FitnessSlidingDisk": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "健身滑盘"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Flexibar": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "飞力仕棒"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FoldingExerciseBike": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "折叠健身车"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FootTrainer": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "足部训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HandGripperStrengths": {
     "l1": "Sports & Entertainment",
@@ -2072,21 +2231,24 @@
     "search_terms_zh": [
       "美臀训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HorizontalBars": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "单杠"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "HorseRidingMachines": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "骑马机"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "IndoorBicyclesPartsAccesso": {
     "l1": "Sports & Entertainment",
@@ -2100,14 +2262,16 @@
     "search_terms_zh": [
       "动感单车"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "IntegratedFitnessEquipment": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "综合训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "JumpRopes": {
     "l1": "Sports & Entertainment",
@@ -2122,42 +2286,48 @@
     "search_terms_zh": [
       "弹跳训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Kettlebells": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "壶铃"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "LegTrainer": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "腿部训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ParallelBars": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "双杠"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Pedometers": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "计步器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Pilatesbed": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "普拉提床"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PilatesBedPartsAccessories": {
     "l1": "Sports & Entertainment",
@@ -2172,28 +2342,32 @@
       "深蹲架",
       "家用龙门架"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PowerWrists": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "腕力球"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PullupBar": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "引体向上器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Racks": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "哑铃架"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ResistanceBands": {
     "l1": "Sports & Entertainment",
@@ -2216,28 +2390,32 @@
     "search_terms_zh": [
       "仰卧板"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SlidingMat": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "滑行垫"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SmartFitnessMirror": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "智能健身镜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SmithMachine": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "史密斯机"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SportHoops": {
     "l1": "Sports & Entertainment",
@@ -2252,7 +2430,8 @@
     "search_terms_zh": [
       "踏步机"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SteppersPartsAccessories": {
     "l1": "Sports & Entertainment",
@@ -2273,7 +2452,8 @@
     "search_terms_zh": [
       "蹦床"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "TreadmillPartsAccessories": {
     "l1": "Sports & Entertainment",
@@ -2295,7 +2475,8 @@
     "search_terms_zh": [
       "震动平台"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WeightbearingEquipment": {
     "l1": "Sports & Entertainment",
@@ -2303,28 +2484,32 @@
       "负重装备",
       "沙袋"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WeightBenches": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "卧推架"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "FacialMuscleTrainer": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "面部训练器"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Fasciotome": {
     "l1": "Sports & Entertainment",
     "search_terms_zh": [
       "筋膜枪"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PushUpsStands": {
     "l1": "Sports & Entertainment",
@@ -2346,21 +2531,24 @@
     "search_terms_zh": [
       "大码男士睡裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensPlusSizeSleepLoungeSet": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码男士睡衣套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MensPlusSizeSleepLoungeTop": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码男士睡衣上衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedMensSocks": {
     "l1": "Underwear",
@@ -2375,7 +2563,8 @@
       "男士内裤",
       "平角裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedBoxers": {
     "l1": "Underwear",
@@ -2398,42 +2587,48 @@
       "秋裤",
       "保暖裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "OnepieceUnderwear": {
     "l1": "Underwear",
     "search_terms_zh": [
       "连体内衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizeBoxers": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码内裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ThermalUnderwearBottoms": {
     "l1": "Underwear",
     "search_terms_zh": [
       "保暖内衣裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ThermalUnderwearSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "保暖内衣套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ThermalUnderwearTops": {
     "l1": "Underwear",
     "search_terms_zh": [
       "保暖内衣上衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Undershirts": {
     "l1": "Underwear",
@@ -2441,21 +2636,24 @@
       "男士背心",
       "打底衫"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ActiveBra": {
     "l1": "Underwear",
     "search_terms_zh": [
       "运动内衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BraBriefSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "文胸内裤套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BraExtenderStrap": {
     "l1": "Underwear",
@@ -2463,7 +2661,8 @@
       "文胸延长扣",
       "肩带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Bras": {
     "l1": "Underwear",
@@ -2471,21 +2670,24 @@
       "文胸",
       "内衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "BreastFeeding": {
     "l1": "Underwear",
     "search_terms_zh": [
       "哺乳内衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Briefs": {
     "l1": "Underwear",
     "search_terms_zh": [
       "三角内裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedPanties": {
     "l1": "Underwear",
@@ -2507,56 +2709,64 @@
     "search_terms_zh": [
       "丁字裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Garters": {
     "l1": "Underwear",
     "search_terms_zh": [
       "吊袜带"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "InvisibleBra": {
     "l1": "Underwear",
     "search_terms_zh": [
       "隐形胸贴"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MenstrualPanties": {
     "l1": "Underwear",
     "search_terms_zh": [
       "生理期内裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Panties": {
     "l1": "Underwear",
     "search_terms_zh": [
       "女士内裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizeBras": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码文胸"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizeBriefs": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码三角裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizePanties": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码内裤女"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Shapers": {
     "l1": "Underwear",
@@ -2564,7 +2774,8 @@
       "塑身衣",
       "束腰"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ShapewearLeggings": {
     "l1": "Underwear",
@@ -2572,14 +2783,16 @@
       "塑身裤",
       "收腹裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "UnderwearAccessories": {
     "l1": "Underwear",
     "search_terms_zh": [
       "内衣配件"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedWomensSleepLoung": {
     "l1": "Underwear",
@@ -2594,112 +2807,128 @@
       "睡裙",
       "家居服"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "NursingHomewearSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "月子服套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "NursingNightdress": {
     "l1": "Underwear",
     "search_terms_zh": [
       "哺乳睡裙"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Onesies": {
     "l1": "Underwear",
     "search_terms_zh": [
       "连体睡衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "OutdoorHomewearBottoms": {
     "l1": "Underwear",
     "search_terms_zh": [
       "家居裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "OutdoorHomewearSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "家居服套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "OutdoorHomewearTops": {
     "l1": "Underwear",
     "search_terms_zh": [
       "家居服上衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PajamaSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "睡衣套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizeNightgowns": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码睡裙"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizePajamasSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码睡衣套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizeRobes": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码浴袍"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizeSleepBottoms": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码睡裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PlusSizeSleepTops": {
     "l1": "Underwear",
     "search_terms_zh": [
       "大码睡衣上衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "RobeGown": {
     "l1": "Underwear",
     "search_terms_zh": [
       "浴袍睡袍"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "RobeGownSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "睡袍套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "RobeSets": {
     "l1": "Underwear",
     "search_terms_zh": [
       "浴袍套装"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Robes": {
     "l1": "Underwear",
@@ -2707,77 +2936,88 @@
       "浴袍",
       "晨袍"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SilkPajamas": {
     "l1": "Underwear",
     "search_terms_zh": [
       "真丝睡衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SleepBottoms": {
     "l1": "Underwear",
     "search_terms_zh": [
       "睡裤"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SleepTops": {
     "l1": "Underwear",
     "search_terms_zh": [
       "睡衣上衣"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Slips": {
     "l1": "Underwear",
     "search_terms_zh": [
       "吊带裙衬裙"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "KneeHigh": {
     "l1": "Underwear",
     "search_terms_zh": [
       "中筒袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MidCalf": {
     "l1": "Underwear",
     "search_terms_zh": [
       "小腿袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "OvertheKnee": {
     "l1": "Underwear",
     "search_terms_zh": [
       "过膝袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Socks": {
     "l1": "Underwear",
     "search_terms_zh": [
       "袜子"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SocksHosiery": {
     "l1": "Underwear",
     "search_terms_zh": [
       "丝袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Stockings": {
     "l1": "Underwear",
     "search_terms_zh": [
       "长筒丝袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "AnkleSocks": {
     "l1": "Underwear",
@@ -2785,14 +3025,16 @@
       "船袜",
       "隐形袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CrewSocks": {
     "l1": "Underwear",
     "search_terms_zh": [
       "中筒袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedWomensSocks": {
     "l1": "Underwear",
@@ -2814,28 +3056,32 @@
     "search_terms_zh": [
       "腿套保暖"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "LongSocks": {
     "l1": "Underwear",
     "search_terms_zh": [
       "长袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "LowCutSocks": {
     "l1": "Underwear",
     "search_terms_zh": [
       "低帮袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PedsLiners": {
     "l1": "Underwear",
     "search_terms_zh": [
       "隐形船袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "SockAccessories": {
     "l1": "Underwear",
@@ -2849,28 +3095,32 @@
     "search_terms_zh": [
       "连裤袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "Tights": {
     "l1": "Underwear",
     "search_terms_zh": [
       "打底裤袜"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "ChildrensWatches": {
     "l1": "Watches",
     "search_terms_zh": [
       "儿童手表"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CoupleWatches": {
     "l1": "Watches",
     "search_terms_zh": [
       "情侣手表"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "CustomizedWatches": {
     "l1": "Watches",
@@ -2884,7 +3134,8 @@
     "search_terms_zh": [
       "怀表"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "PocketWatchChains": {
     "l1": "Watches",
@@ -2908,7 +3159,8 @@
     "search_terms_zh": [
       "手表电池"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WatchBoxes": {
     "l1": "Watches",
@@ -3005,14 +3257,16 @@
       "数字运动手表",
       "电子表"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "MechanicalWristwatches": {
     "l1": "Watches",
     "search_terms_zh": [
       "机械手表"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "QuartzWristwatches": {
     "l1": "Watches",
@@ -3020,28 +3274,32 @@
       "石英手表",
       "石英表"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "QuartzWristwatches1": {
     "l1": "Watches",
     "search_terms_zh": [
       "时尚石英表"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WristwatchBlindBox": {
     "l1": "Watches",
     "search_terms_zh": [
       "手表盲盒"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "WristwatchGifts": {
     "l1": "Watches",
     "search_terms_zh": [
       "手表礼品"
     ],
-    "enabled": true
+    "enabled": false,
+    "disabled_reason": "Phase 1: brand-safe only"
   },
   "_amazon_3c_meta": {
     "l1": "_meta",

@@ -203,54 +203,54 @@ async function main(): Promise<void> {
 
 /**
  * Translate normalized variant structure (dimensions and values).
+ * Uses batch translation to minimize API calls.
  */
 async function translateNormalizedVariants(productId: number): Promise<void> {
-  const { translateText } = await import('../services/translator');
-  
+  const { translateBatchPublic } = await import('../services/translator');
+
   const variants = await getProductVariantsWithValues(productId);
   if (variants.length === 0) return;
 
-  for (const variant of variants) {
-    // Translate dimension name if not already translated
-    if (!variant.variantNameEn && variant.variantNameZh) {
-      try {
-        const translatedName = await translateText(variant.variantNameZh);
-        await updateVariantNameTranslation(variant.id!, translatedName);
-        logger.info('Translated variant dimension', {
-          productId,
-          zh: variant.variantNameZh,
-          en: translatedName,
-        });
-      } catch (error) {
-        logger.warn('Failed to translate variant dimension', {
-          productId,
-          dimension: variant.variantNameZh,
-          error: (error as Error).message,
-        });
-      }
-    }
+  // Collect all texts that need translation into one batch
+  const textsToTranslate: string[] = [];
+  const textMap: Array<{ type: 'dimension' | 'value'; variantId: number; valueId?: number; zh: string }> = [];
 
-    // Translate each value
+  for (const variant of variants) {
+    if (!variant.variantNameEn && variant.variantNameZh) {
+      textsToTranslate.push(variant.variantNameZh);
+      textMap.push({ type: 'dimension', variantId: variant.id!, zh: variant.variantNameZh });
+    }
     for (const value of variant.values) {
       if (!value.valueNameEn && value.valueNameZh) {
-        try {
-          const translatedValue = await translateText(value.valueNameZh);
-          const cleanValue = cleanVariantName(translatedValue);
-          await updateVariantValueTranslation(value.id!, cleanValue);
-          logger.info('Translated variant value', {
-            productId,
-            dimension: variant.variantNameZh,
-            zh: value.valueNameZh,
-            en: cleanValue,
-          });
-        } catch (error) {
-          logger.warn('Failed to translate variant value', {
-            productId,
-            value: value.valueNameZh,
-            error: (error as Error).message,
-          });
-        }
+        textsToTranslate.push(value.valueNameZh);
+        textMap.push({ type: 'value', variantId: variant.id!, valueId: value.id!, zh: value.valueNameZh });
       }
+    }
+  }
+
+  if (textsToTranslate.length === 0) return;
+
+  // Single batch call instead of N individual calls
+  const translated = await translateBatchPublic(textsToTranslate);
+
+  // Apply translations
+  for (let i = 0; i < textMap.length; i++) {
+    const entry = textMap[i];
+    const translatedText = translated[i] || entry.zh;
+
+    try {
+      if (entry.type === 'dimension') {
+        await updateVariantNameTranslation(entry.variantId, translatedText);
+        logger.info('Translated variant dimension', { productId, zh: entry.zh, en: translatedText });
+      } else {
+        const cleanValue = cleanVariantName(translatedText);
+        await updateVariantValueTranslation(entry.valueId!, cleanValue);
+        logger.info('Translated variant value', { productId, zh: entry.zh, en: cleanValue });
+      }
+    } catch (error) {
+      logger.warn('Failed to save variant translation', {
+        productId, type: entry.type, zh: entry.zh, error: (error as Error).message,
+      });
     }
   }
 }

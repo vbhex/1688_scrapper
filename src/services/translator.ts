@@ -280,6 +280,14 @@ export async function translateText(text: string): Promise<string> {
   return googleTranslateText(text);
 }
 
+/**
+ * Public batch translation — translates multiple texts in one API call.
+ * Much faster than calling translateText() N times.
+ */
+export async function translateBatchPublic(texts: string[]): Promise<string[]> {
+  return translateBatch(texts);
+}
+
 export async function translateTitle(title: string): Promise<string> {
   logger.info('Translating title', { title: title.substring(0, 50), provider: getProvider() });
   return translateText(title);
@@ -401,11 +409,20 @@ export async function translateProduct(
 ): Promise<TranslationResult> {
   logger.info('Starting product translation', { provider: getProvider() });
 
-  // For Baidu, translate sequentially (1 QPS limit on free tier)
   const provider = getProvider();
 
-  const titleEN = await translateTitle(title);
-  const descriptionEN = await translateDescription(description);
+  // Batch title + short descriptions together to reduce API calls
+  let titleEN: string;
+  let descriptionEN: string;
+  if (description.length <= 5000) {
+    // Batch title and description in one call
+    const batch = await translateBatch([title, description]);
+    titleEN = batch[0] || title;
+    descriptionEN = batch[1] || description;
+  } else {
+    titleEN = await translateTitle(title);
+    descriptionEN = await translateDescription(description);
+  }
   const specificationsEN = await translateSpecifications(specifications);
   let variantsEN: ProductVariants | undefined;
 

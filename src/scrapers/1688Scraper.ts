@@ -1377,6 +1377,61 @@ export class Scraper1688 {
             extractFromElement(container);
           }
         });
+
+        // Strategy D: wp_pc_common_offerlist widget format (new 1688 store page).
+        // Products render inside data-modulename="wp_pc_common_offerlist" as classless <div>
+        // children. Offer IDs are NOT in href links — extract from onclick or img src patterns.
+        if (items.length === 0) {
+          const widget = document.querySelector('[data-modulename="wp_pc_common_offerlist"]');
+          if (widget && widget.children.length > 0) {
+            // Walk all descendants looking for elements that carry an offer ID.
+            // Offer IDs appear as 10+ digit numbers in onclick strings or in image alt/data attrs.
+            const fullHtml = widget.innerHTML;
+            const idMatches = Array.from(fullHtml.matchAll(/offer[Ii][Dd][=_"](\d{10,})/g));
+            // Also try: class=".price" siblings — walk up to find onclick containers
+            const priceContainers = Array.from(widget.querySelectorAll('.price'));
+            priceContainers.forEach(priceEl => {
+              let node: Element | null = priceEl.parentElement;
+              for (let i = 0; i < 6 && node && node !== widget; i++) {
+                const onclickAttr = node.getAttribute('onclick') || '';
+                const idInOnclick = onclickAttr.match(/(\d{10,})/);
+                if (idInOnclick) {
+                  // Found an offer ID in onclick — extract product info from this container
+                  const id1688 = idInOnclick[1];
+                  if (seenIds.has(id1688)) break;
+                  seenIds.add(id1688);
+                  const titleEl = node.querySelector('[class*="title"], h4, h3');
+                  const title = titleEl?.textContent?.trim() || '';
+                  const priceText = priceEl.textContent || '0';
+                  const priceMatch = priceText.match(/[\d.]+/);
+                  const priceCNY = priceMatch ? parseFloat(priceMatch[0]) : 0;
+                  const imgEl = node.querySelector('img') as HTMLImageElement | null;
+                  const imageUrl = imgEl?.src || '';
+                  items.push({
+                    id1688,
+                    title,
+                    description: '',
+                    priceCNY,
+                    images: imageUrl ? [imageUrl] : [],
+                    specifications: [],
+                    seller: { name: '' },
+                    category: '',
+                    minOrderQty: 1,
+                    url: `https://detail.1688.com/offer/${id1688}.html`,
+                    scrapedAt: new Date().toISOString(),
+                  });
+                  break;
+                }
+                node = node.parentElement;
+              }
+            });
+            // If onclick IDs found, done. Otherwise log the widget child count for next diagnostic.
+            if (items.length === 0) {
+              // Store widget child count as a hint — not extractable yet
+              (window as any).__widgetChildCount = widget.children.length;
+            }
+          }
+        }
       }
 
       return items;
@@ -2012,7 +2067,19 @@ export class Scraper1688 {
           logger.info('Store page redirected', { from: url, to: actualUrl });
         }
 
-        await randomDelay(2000, 3000);
+        // The product list widget (data-modulename="wp_pc_common_offerlist") loads
+        // its product cards asynchronously AFTER networkidle2 resolves — wait for it.
+        // Also catches classic .sm-offer-item and offer link formats.
+        await this.page.waitForFunction(() => {
+          const widget = document.querySelector('[data-modulename="wp_pc_common_offerlist"]');
+          if (widget && widget.children.length > 0) return true;
+          if (document.querySelector('.sm-offer-item, .offer-item, a[href*="offerId="]')) return true;
+          return false;
+        }, { timeout: 20000 }).catch(() => {
+          // Widget didn't render — fall through to extractProductsFromPage anyway
+        });
+
+        await randomDelay(1500, 2500);
 
         const pageProducts = await this.extractProductsFromPage();
 

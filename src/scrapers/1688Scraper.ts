@@ -1983,19 +1983,69 @@ export class Scraper1688 {
 
     logger.info('Scraping verified provider store', { shopUrl, limit });
 
+    // Some 1688 stores serve products at /shop/offerlist.htm (classic);
+    // others redirect that path and serve the listing at the store root /.
+    // We try offerlist.htm first; if page 1 returns 0 products we fall back
+    // to the store root and try once more before giving up.
+    const urlPatterns: Array<(idx: number) => string> = [
+      (idx) => `${baseUrl}/shop/offerlist.htm?pageIndex=${idx}`,
+      (idx) => `${baseUrl}/?pageIndex=${idx}`,
+    ];
+    let patternIndex = 0;
+    let patternConfirmed = false; // true once a pattern yields ≥1 product
+
     while (pageIndex <= maxPages) {
-      const url = `${baseUrl}/shop/offerlist.htm?pageIndex=${pageIndex}`;
-      logger.info('Navigating to store page', { url, pageIndex });
+      const url = urlPatterns[patternIndex](pageIndex);
+      logger.info('Navigating to store page', { url, pageIndex, urlPattern: patternIndex });
 
       try {
         await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+
+        // Log actual URL after navigation — detects redirects (e.g. to login page)
+        const actualUrl = this.page.url();
+        if (actualUrl !== url) {
+          logger.info('Store page redirected', { from: url, to: actualUrl });
+        }
+
+        // Wait up to 8 s for any product card / offer link to appear in the DOM.
+        // This handles JS-rendered listings that aren't ready at domcontentloaded.
+        await this.page.waitForSelector(
+          '.sm-offer-item, .offer-item, [class*="offer-card"], [class*="CardContainer"], a[href*="offerId="], a[href*="detail.1688.com/offer/"]',
+          { timeout: 8000 }
+        ).catch(() => { /* page may be empty or use unknown selectors — that's fine */ });
+
         await randomDelay(2000, 3000);
 
         const pageProducts = await this.extractProductsFromPage();
+
         if (pageProducts.length === 0) {
+          // On the very first page of the first pattern, take a diagnostic screenshot
+          // and try the fallback URL pattern before declaring failure.
+          if (pageIndex === 1 && !patternConfirmed) {
+            const logsDir = path.resolve(__dirname, '../../logs');
+            ensureDirectoryExists(logsDir);
+            const screenshotPath = path.join(logsDir, `debug-store-${Date.now()}.png`);
+            await this.page.screenshot({ path: screenshotPath, fullPage: false });
+            const pageTitle = await this.page.title();
+            logger.warn('Store page returned 0 products — diagnostic screenshot saved', {
+              actualUrl,
+              pageTitle,
+              screenshotPath,
+              urlPattern: patternIndex,
+            });
+
+            if (patternIndex < urlPatterns.length - 1) {
+              patternIndex++;
+              logger.info('Trying fallback store URL pattern', { patternIndex });
+              continue; // retry with next URL pattern, same pageIndex (1)
+            }
+          }
+
           logger.info('No products on page — reached end of store', { pageIndex });
           break;
         }
+
+        patternConfirmed = true; // This URL pattern works — stick with it
 
         for (const p of pageProducts) {
           if (!products.find(existing => existing.id1688 === p.id1688)) {

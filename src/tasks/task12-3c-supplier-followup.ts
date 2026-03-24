@@ -74,7 +74,7 @@ function parseArgs(): CLIOptions {
  * Sent AFTER seller has verbally agreed to provide brand authorization.
  */
 function buildCompanyInfoMessage(): string {
-  return `好的，谢谢老板！以下是我们公司的信息，方便你出品牌授权书：
+  return `亲，太感谢啦！以下是我们公司信息，麻烦出授权书的时候用这个~
 
 公司名称（英文）: ${HK_COMPANY_INFO.nameEn}
 公司名称（中文）: ${HK_COMPANY_INFO.nameZh}
@@ -85,8 +85,7 @@ DUNS编号: ${HK_COMPANY_INFO.duns}
 联系人: ${HK_COMPANY_INFO.directorName}
 目标平台: 亚马逊 (Amazon)
 
-授权书上请写明：授权 ${HK_COMPANY_INFO.nameEn} 在亚马逊平台销售贵司品牌产品。
-如果有现成的模板最好，没有的话我们可以提供模板。麻烦了，谢谢！`;
+授权书上写明授权 ${HK_COMPANY_INFO.nameEn} 在亚马逊平台销售就好。你们有现成模板更好，没有的话我们也可以提供，不麻烦哈，谢谢亲！`;
 }
 
 async function actionList(): Promise<void> {

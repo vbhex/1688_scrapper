@@ -2143,6 +2143,39 @@ export class Scraper1688 {
         }
       }
 
+      // IMPORTANT: Click "找工厂" (Find Factory) tab BEFORE typing the search keyword.
+      // The 1688 homepage has tabs: "找货" (Find Goods) and "找工厂" (Find Factories).
+      // Clicking the factory tab changes the search mode so results go to factory page.
+      const clickedFactoryTab = await this.page.evaluate(() => {
+        // Look for tab elements near the search bar
+        const candidates = Array.from(document.querySelectorAll('a, span, div, li'));
+        for (const el of candidates) {
+          // Must be a small, visible element whose DIRECT text (not children) matches
+          const directText = Array.from(el.childNodes)
+            .filter(n => n.nodeType === Node.TEXT_NODE)
+            .map(n => n.textContent?.trim() || '')
+            .join('');
+          const fullText = el.textContent?.trim() || '';
+
+          // Match on direct text content to avoid clicking huge parent containers
+          if ((directText === '找工厂' || directText === 'Find Factories' || fullText === '找工厂')
+              && (el as HTMLElement).offsetHeight > 0
+              && (el as HTMLElement).offsetHeight < 100
+              && fullText.length < 20) {
+            (el as HTMLElement).click();
+            return true;
+          }
+        }
+        return false;
+      });
+
+      if (clickedFactoryTab) {
+        logger.info('Clicked "找工厂" (Find Factory) tab on homepage');
+        await randomDelay(1000, 2000);
+      } else {
+        logger.warn('Could not find "找工厂" tab — will search from product tab');
+      }
+
       // Find and type into search input
       const searchInputSelectors = [
         '#alisearch-input',
@@ -2151,6 +2184,7 @@ export class Scraper1688 {
         'input.search-input',
         'input[placeholder*="搜索"]',
         'input[placeholder*="找货"]',
+        'input[placeholder*="找工厂"]',
         '.home-search input',
       ];
 
@@ -2197,24 +2231,28 @@ export class Scraper1688 {
         await this.page.keyboard.press('Enter');
       }
 
+      // Wait for navigation to search results page
+      try {
+        await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 });
+      } catch {
+        // Navigation might already have completed
+      }
       await randomDelay(3000, 5000);
 
-      // Switch to factory/supplier search by modifying the URL.
-      // After product search, URL is: s.1688.com/selloffer/offer_search.htm?keywords=XXX
-      // Factory search URL is: s.1688.com/company/company_search.htm?keywords=XXX (same params)
+      // Verify we're on factory search — if not, try URL-based switch
       const currentUrl = this.page.url();
-      logger.info('Product search URL', { url: currentUrl.substring(0, 120) });
+      logger.info('Search result URL', { url: currentUrl.substring(0, 150) });
 
-      if (currentUrl.includes('s.1688.com')) {
-        // Replace the path to switch to company/factory search
+      if (currentUrl.includes('s.1688.com') && !currentUrl.includes('/company/')) {
+        // We're on product search — switch to company/factory search
         const factoryUrl = currentUrl
           .replace('/selloffer/offer_search.htm', '/company/company_search.htm')
           .replace('/offer/', '/company/');
-        logger.info('Navigating to factory search', { url: factoryUrl.substring(0, 120) });
+        logger.info('Switching to factory search URL', { url: factoryUrl.substring(0, 150) });
         await this.page.goto(factoryUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await randomDelay(3000, 5000);
-      } else {
-        logger.info('Not on s.1688.com — extracting suppliers from current page');
+      } else if (!currentUrl.includes('s.1688.com') && !currentUrl.includes('company')) {
+        logger.warn('Search did not navigate to s.1688.com — still on homepage. Will extract from current page.');
       }
 
       // Extract supplier info from search results

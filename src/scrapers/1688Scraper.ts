@@ -2029,11 +2029,14 @@ export class Scraper1688 {
             const screenshotPath = path.join(logsDir, `debug-store-${Date.now()}.png`);
             await this.page.screenshot({ path: screenshotPath, fullPage: false });
             const pageTitle = await this.page.title();
+            // Dump a sample of the page HTML — shows what CSS classes product cards use
+            const htmlSnippet = await this.page.evaluate(() => document.body.innerHTML.substring(0, 3000));
             logger.warn('Store page returned 0 products — diagnostic screenshot saved', {
               actualUrl,
               pageTitle,
               screenshotPath,
               urlPattern: patternIndex,
+              htmlSnippet,
             });
 
             if (patternIndex < urlPatterns.length - 1) {

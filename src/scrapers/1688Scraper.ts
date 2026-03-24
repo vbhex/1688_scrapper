@@ -2104,22 +2104,32 @@ export class Scraper1688 {
    * Uses 1688's company search (s.1688.com/company/...) instead of product search.
    * Chinese keywords are typed into the search bar (1688 uses GBK, not UTF-8 in URLs).
    */
-  async searchSuppliers(keyword: string, maxResults: number = 20): Promise<SupplierSearchResult[]> {
+  /**
+   * Search for suppliers/factories on 1688 using the dedicated company search pages.
+   * Factory search: s.1688.com/company/pc/factory_search.htm
+   * Supplier search: s.1688.com/company/company_search.htm
+   * Keywords should be plain product names only (e.g., "蓝牙耳机") — no 工厂/厂家 suffix needed.
+   */
+  async searchSuppliers(keyword: string, maxResults: number = 20, searchType: 'factory' | 'supplier' = 'factory'): Promise<SupplierSearchResult[]> {
     if (!this.page) throw new Error('Browser not initialized');
 
-    logger.info('Searching suppliers', { keyword, maxResults });
+    const searchUrl = searchType === 'factory'
+      ? 'https://s.1688.com/company/pc/factory_search.htm'
+      : 'https://s.1688.com/company/company_search.htm';
+
+    logger.info('Searching suppliers', { keyword, maxResults, searchType, searchUrl });
     const results: SupplierSearchResult[] = [];
     const seenIds = new Set<string>();
 
     try {
-      // Navigate to 1688 homepage and search (same as product search — type into search bar)
-      await this.page.goto('https://www.1688.com', {
+      // Navigate directly to the factory/supplier search page
+      await this.page.goto(searchUrl, {
         waitUntil: 'domcontentloaded',
         timeout: 60000,
       });
       await randomDelay(3000, 5000);
 
-      // Wait for page to be usable
+      // Check for CAPTCHA / block
       const pageIsUsable = async (): Promise<boolean> => {
         const url = this.page!.url();
         if (url.includes('punish') || url.includes('_____tmd_____')) return false;
@@ -2143,53 +2153,56 @@ export class Scraper1688 {
         }
       }
 
-      // Strategy: Use regular PRODUCT search, then extract unique suppliers from results.
-      // The product search results show seller names + shop links for each product.
-      // This is more reliable than trying to use the "找工厂" factory search,
-      // which redirects to a React SPA (mind.1688.com) with different DOM structure.
-      //
-      // Keywords already include "工厂" / "厂家" / "源头工厂" suffixes,
-      // which naturally filters to factory/manufacturer listings.
-
-      // Find and type into search input
+      // Find the search input on the factory/supplier search page
       const searchInputSelectors = [
-        '#alisearch-input',
         'input[name="keywords"]',
+        'input[name="keyword"]',
+        'input[name="q"]',
+        'input[type="search"]',
+        'input[placeholder*="搜索"]',
+        'input[placeholder*="企业名"]',
+        'input[placeholder*="工厂"]',
+        'input[placeholder*="供应商"]',
         '.search-input input',
         'input.search-input',
-        'input[placeholder*="搜索"]',
-        'input[placeholder*="找货"]',
-        'input[placeholder*="找工厂"]',
-        '.home-search input',
+        '.J_Keywords',
+        '#keywords',
       ];
 
       let searchInput = null;
       for (const selector of searchInputSelectors) {
         try {
           searchInput = await this.page.$(selector);
-          if (searchInput) break;
+          if (searchInput) {
+            logger.info('Found search input', { selector });
+            break;
+          }
         } catch { continue; }
       }
 
       if (!searchInput) {
-        logger.error('Could not find search input on 1688 homepage');
+        // Log the page HTML snippet to help debug selector issues
+        const snippet = await this.page.evaluate(() => document.body?.innerHTML?.substring(0, 500) || '');
+        logger.error('Could not find search input on factory/supplier search page', { snippet });
         return results;
       }
 
-      // Clear and type keyword
+      // Clear existing value and type the keyword
       await searchInput.click({ clickCount: 3 });
       await randomDelay(300, 500);
       await this.page.keyboard.press('Backspace');
       await randomDelay(200, 400);
-      await searchInput.type(keyword, { delay: 50 });
+      await searchInput.type(keyword, { delay: 60 });
       await randomDelay(500, 1000);
 
-      // Submit search
+      // Submit — try button first, then Enter
       const searchBtnSelectors = [
-        '#alisearch-submit',
-        'button.search-button',
-        '.search-btn',
         'button[type="submit"]',
+        '.search-btn',
+        '.btn-search',
+        '.J_SearchBtn',
+        'button.search-button',
+        'input[type="submit"]',
       ];
       let submitted = false;
       for (const sel of searchBtnSelectors) {
@@ -2198,27 +2211,28 @@ export class Scraper1688 {
           if (btn) {
             await btn.click();
             submitted = true;
+            logger.info('Submitted via button', { selector: sel });
             break;
           }
         } catch { continue; }
       }
       if (!submitted) {
         await this.page.keyboard.press('Enter');
+        logger.info('Submitted via Enter key');
       }
 
-      // Wait for navigation to search results page
+      // Wait for results to load
       try {
         await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 });
       } catch {
-        // Navigation might already have completed
+        // Navigation might already have completed or it's SPA
       }
       await randomDelay(3000, 5000);
 
       const currentUrl = this.page.url();
-      logger.info('Search result URL', { url: currentUrl.substring(0, 150) });
+      logger.info('Search result URL', { url: currentUrl.substring(0, 200) });
 
-      // Extract supplier info from search results
-      // Strategy: find all store links and deduplicate
+      // Paginate through results
       let pageNum = 1;
       const maxPages = Math.ceil(maxResults / 10);
 
@@ -2235,37 +2249,36 @@ export class Scraper1688 {
           }> = [];
           const seenInPage = new Set<string>();
 
-          // Find ALL links pointing to shop*.1688.com — most reliable approach
-          // Works on both factory search and product search results
-          const allLinks = Array.from(document.querySelectorAll('a[href*="shop"]'));
+          // Strategy 1: look for shop*.1688.com links (direct shop URLs)
+          const allLinks = Array.from(document.querySelectorAll('a[href*=".1688.com"]'));
           for (const link of allLinks) {
             const href = (link as HTMLAnchorElement).href;
-            const shopMatch = href.match(/https?:\/\/shop([^.]+)\.1688\.com/);
+            // Match shopXXXX.1688.com or XXXXX.1688.com/shop
+            const shopMatch = href.match(/https?:\/\/shop([^.]+)\.1688\.com/) ||
+                              href.match(/https?:\/\/([^.]+)\.1688\.com\/shop/);
             if (!shopMatch) continue;
             const sellerId = shopMatch[1];
             if (seenInPage.has(sellerId)) continue;
 
-            // Get the store name from: the link text, or nearest parent card text
+            // Get store name from link text or nearest named element
             let name = link.textContent?.trim() || '';
-            // Skip tiny text (single chars) or huge text (entire page)
-            if (name.length < 2 || name.length > 80) {
-              // Try to find a name from the parent container
-              const parent = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"]');
-              if (parent) {
-                const nameEl = parent.querySelector('[class*="name"], [class*="title"], h3, h4');
+            if (name.length < 2 || name.length > 100) {
+              const card = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"], [class*="factory"], li, .result');
+              if (card) {
+                const nameEl = card.querySelector('[class*="name"], [class*="title"], [class*="company"], h3, h4, h2');
                 if (nameEl) name = nameEl.textContent?.trim() || '';
               }
             }
-            if (!name || name.length < 2 || name.length > 80) continue;
+            if (!name || name.length < 2 || name.length > 100) continue;
 
-            // Try to get location + main products from parent card
+            // Get location + main products from parent card
             let mainProducts = '';
             let location = '';
-            const card = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"], [class*="factory"]');
+            const card = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"], [class*="factory"], li, .result');
             if (card) {
-              const locEl = card.querySelector('[class*="location"], [class*="area"], [class*="address"], [class*="region"]');
+              const locEl = card.querySelector('[class*="locat"], [class*="area"], [class*="address"], [class*="region"], [class*="city"], [class*="province"]');
               location = locEl?.textContent?.trim() || '';
-              const prodEl = card.querySelector('[class*="product"], [class*="main"], [class*="tag"]');
+              const prodEl = card.querySelector('[class*="product"], [class*="main"], [class*="tag"], [class*="goods"], [class*="keyword"]');
               mainProducts = prodEl?.textContent?.trim() || '';
             }
 
@@ -2282,6 +2295,8 @@ export class Scraper1688 {
           return suppliers;
         });
 
+        logger.info(`Page ${pageNum}: found ${pageSuppliers.length} raw results`);
+
         for (const s of pageSuppliers) {
           if (!seenIds.has(s.sellerId) && results.length < maxResults) {
             seenIds.add(s.sellerId);
@@ -2295,30 +2310,30 @@ export class Scraper1688 {
           }
         }
 
-        logger.info(`Page ${pageNum}: found ${pageSuppliers.length} suppliers (total unique: ${results.length})`);
+        logger.info(`Page ${pageNum}: ${pageSuppliers.length} raw → ${results.length} unique total`);
 
-        // Try to go to next page
-        if (results.length < maxResults) {
-          const hasNextPage = await this.page.evaluate(() => {
-            const nextBtns = Array.from(document.querySelectorAll('[class*="next"], a[class*="fui-next"]'));
-            for (const btn of nextBtns) {
-              if ((btn as HTMLElement).offsetHeight > 0 && !btn.classList.contains('disabled')) {
-                (btn as HTMLElement).click();
-                return true;
-              }
+        if (results.length >= maxResults) break;
+
+        // Click "next page" button
+        const hasNextPage = await this.page.evaluate(() => {
+          const nextBtns = Array.from(document.querySelectorAll(
+            '[class*="next"]:not(.disabled), a[class*="fui-next"]:not(.disabled), .pagination-next:not(.disabled)'
+          ));
+          for (const btn of nextBtns) {
+            if ((btn as HTMLElement).offsetHeight > 0) {
+              (btn as HTMLElement).click();
+              return true;
             }
-            return false;
-          });
+          }
+          return false;
+        });
 
-          if (!hasNextPage) break;
-          pageNum++;
-          await randomDelay(3000, 5000);
-        } else {
-          break;
-        }
+        if (!hasNextPage) break;
+        pageNum++;
+        await randomDelay(3000, 5000);
       }
 
-      logger.info(`Supplier search complete`, { keyword, totalFound: results.length });
+      logger.info('Supplier search complete', { keyword, searchType, totalFound: results.length });
       return results;
 
     } catch (error) {

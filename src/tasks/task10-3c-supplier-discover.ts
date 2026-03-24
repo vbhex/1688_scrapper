@@ -84,20 +84,23 @@ async function main(): Promise<void> {
       const seenIds = new Set<string>();
 
       for (const keyword of keywords) {
-        logger.info(`Searching: "${keyword}"`);
+        // Search both factory search and supplier/company search pages
+        for (const searchType of ['factory', 'supplier'] as const) {
+          logger.info(`Searching ${searchType}: "${keyword}"`);
 
-        const suppliers = await scraper.searchSuppliers(keyword, options.limit);
-        logger.info(`Found ${suppliers.length} suppliers for "${keyword}"`);
+          const suppliers = await scraper.searchSuppliers(keyword, options.limit, searchType);
+          logger.info(`Found ${suppliers.length} ${searchType} results for "${keyword}"`);
 
-        for (const s of suppliers) {
-          if (!seenIds.has(s.sellerId)) {
-            seenIds.add(s.sellerId);
-            allSuppliers.push(s);
+          for (const s of suppliers) {
+            if (!seenIds.has(s.sellerId)) {
+              seenIds.add(s.sellerId);
+              allSuppliers.push(s);
+            }
           }
-        }
 
-        // Delay between searches to avoid rate limiting
-        await randomDelay(5000, 8000);
+          // Delay between searches to avoid rate limiting
+          await randomDelay(5000, 8000);
+        }
       }
 
       logger.info(`Category "${category}": ${allSuppliers.length} unique suppliers found`);

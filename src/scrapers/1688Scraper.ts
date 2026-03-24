@@ -2025,45 +2025,36 @@ export class Scraper1688 {
             const screenshotPath = path.join(logsDir, `debug-store-${Date.now()}.png`);
             await this.page.screenshot({ path: screenshotPath, fullPage: false });
             const pageTitle = await this.page.title();
-            // Find product grid by tracing up from known product-class elements
+            // Dump #bd_1_container_0 and look for offer IDs in onclick / image src
             const domDiag = await this.page.evaluate(() => {
-              // Trace .price elements up to find the product card container
-              const priceEls = Array.from(document.querySelectorAll('.price, .priceButton, .main-picture'));
-              const priceParents = priceEls.slice(0, 3).map(el => {
-                // Walk up to find an ancestor that looks like a product card
-                let node: Element | null = el;
-                const ancestors: string[] = [];
-                for (let i = 0; i < 8 && node; i++) {
-                  ancestors.push(`<${node.tagName} class="${node.className}" data=${JSON.stringify(
-                    Array.from(node.attributes)
-                      .filter(a => a.name.startsWith('data-') || a.name === 'href' || a.name === 'id')
-                      .map(a => `${a.name}=${a.value}`)
-                  )}>`);
-                  node = node.parentElement;
-                }
-                return ancestors;
-              });
-              // Also check .groupWrapper and .offerlist direct children
-              const groupItems = Array.from(document.querySelectorAll('.groupWrapper > *, .offerlist > *'))
-                .slice(0, 3)
-                .map(el => ({
-                  tag: el.tagName,
-                  classes: el.className.substring(0, 100),
-                  dataAttrs: Array.from(el.attributes)
-                    .filter(a => a.name.startsWith('data-') || a.name === 'href' || a.name === 'id')
-                    .map(a => `${a.name}=${a.value}`),
-                  firstChildHtml: el.children[0]?.outerHTML.substring(0, 200) || '',
-                }));
-              return { priceElCount: priceEls.length, priceParents, groupItems };
+              // Get the product container HTML (may contain offer IDs in onclick or img src)
+              const container = document.getElementById('bd_1_container_0');
+              const containerHtml = container ? container.innerHTML.substring(0, 3000) : 'NOT FOUND';
+              // Extract all 12-digit+ numbers (candidate offer IDs) from the container
+              const containerText = container ? container.innerHTML : '';
+              const candidateIds = Array.from(containerText.matchAll(/\b(\d{10,})\b/g))
+                .map(m => m[1])
+                .filter((v, i, arr) => arr.indexOf(v) === i)
+                .slice(0, 20);
+              // Also look for onclick attributes anywhere
+              const onclickSamples = Array.from(document.querySelectorAll('[onclick]'))
+                .slice(0, 5)
+                .map(el => el.getAttribute('onclick'));
+              // Product image srcs (should contain CDN image IDs, maybe offer IDs)
+              const imageSrcs = Array.from(document.querySelectorAll('.main-picture img, [class*="main-picture"] img'))
+                .slice(0, 5)
+                .map(el => (el as HTMLImageElement).src);
+              return { containerHtml, candidateIds, onclickSamples, imageSrcs };
             });
-            logger.warn('Store page returned 0 products — price/groupWrapper diagnostic', {
+            logger.warn('Store page returned 0 products — container/onclick diagnostic', {
               actualUrl,
               pageTitle,
               screenshotPath,
               urlPattern: patternIndex,
-              priceElCount: domDiag.priceElCount,
-              priceParents: domDiag.priceParents,
-              groupItems: domDiag.groupItems,
+              candidateIds: domDiag.candidateIds,
+              onclickSamples: domDiag.onclickSamples,
+              imageSrcs: domDiag.imageSrcs,
+              containerHtml: domDiag.containerHtml,
             });
 
             if (patternIndex < urlPatterns.length - 1) {

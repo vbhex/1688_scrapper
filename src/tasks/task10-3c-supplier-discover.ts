@@ -142,10 +142,10 @@ async function main(): Promise<void> {
             }),
           });
 
-          // Update the new columns (source, target_platform, main_categories)
+          // Update source, target_platforms (JSON array), and main_categories
           const p = await getPool();
           await p.execute(
-            `UPDATE providers SET source = '3c_outreach', target_platform = 'amazon', main_categories = ? WHERE platform = '1688' AND platform_id = ?`,
+            `UPDATE providers SET source = '3c_outreach', target_platforms = '["amazon"]', main_categories = ? WHERE platform = '1688' AND platform_id = ?`,
             [JSON.stringify([category]), supplier.sellerId]
           );
 

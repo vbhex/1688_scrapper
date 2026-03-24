@@ -372,7 +372,6 @@ async function initializeSchema(): Promise<void> {
     // Add 3C outreach columns to providers (migration-safe)
     for (const col of [
       { name: 'source', def: "VARCHAR(50) DEFAULT 'pipeline' COMMENT 'pipeline|manual|3c_outreach'" },
-      { name: 'target_platform', def: "VARCHAR(50) COMMENT 'Primary target platform: amazon, aliexpress, etc.'" },
       { name: 'main_categories', def: "JSON COMMENT 'Array of 3C categories this supplier covers'" },
     ]) {
       try {

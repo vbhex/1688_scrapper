@@ -13,6 +13,8 @@ export async function discoverProduct(
   titleZh: string,
   category: string,
   thumbnailUrl: string,
+  sourceType: string = 'auto_discovery',
+  providerId: number | null = null,
 ): Promise<number | null> {
   const p = await getPool();
 
@@ -23,12 +25,12 @@ export async function discoverProduct(
   if (existing.length > 0) return null;
 
   const [result] = await p.execute<ResultSetHeader>(
-    `INSERT INTO products (id_1688, url, title_zh, category, thumbnail_url, status, raw_data)
-     VALUES (?, ?, ?, ?, ?, 'discovered', '{}')`,
-    [id1688, url, titleZh, category, thumbnailUrl]
+    `INSERT INTO products (id_1688, url, title_zh, category, thumbnail_url, status, source_type, provider_id, raw_data)
+     VALUES (?, ?, ?, ?, ?, 'discovered', ?, ?, '{}')`,
+    [id1688, url, titleZh, category, thumbnailUrl, sourceType, providerId]
   );
 
-  logger.info('Product discovered', { id1688, id: result.insertId });
+  logger.info('Product discovered', { id1688, id: result.insertId, sourceType, providerId });
   return result.insertId;
 }
 

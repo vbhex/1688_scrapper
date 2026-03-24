@@ -138,8 +138,9 @@ interface PendingProduct {
   price_cny: number;
   seller_id: string | null;
   created_at: Date;
-  specs_brand: string | null;  // from products_raw.specifications_zh -> 品牌 field
-  source_type: string | null;  // 'brand_safe_discovery' | 'auto_discovery' | 'manual_seller' | 'legacy_3c'
+  specs_brand: string | null;     // from products_raw.specifications_zh -> 品牌 field
+  source_type: string | null;     // 'brand_safe_discovery' | 'auto_discovery' | 'manual_seller' | 'legacy_3c'
+  target_platforms: string[];     // from providers.target_platforms if provider_id set, else derived from source_type
 }
 
 interface CLIOptions {
@@ -163,14 +164,26 @@ function parseArgs(): CLIOptions {
   return options;
 }
 
+/**
+ * Derive platforms from source_type — used as fallback when no provider_id is set.
+ *  brand_safe_discovery / auto_discovery → AliExpress + eBay + Etsy
+ *  manual_seller / legacy_3c            → Amazon (via verified provider stores)
+ */
+function derivePlatformsFromSourceType(sourceType: string | null): string[] {
+  if (sourceType === 'manual_seller' || sourceType === 'legacy_3c') return ['amazon'];
+  return ['aliexpress', 'ebay', 'etsy'];
+}
+
 async function getPendingProducts(limit: number, minAgeHours: number): Promise<PendingProduct[]> {
   const pool = await getPool();
   const query = `SELECT p.id, p.id_1688, p.title_zh, p.category, p.created_at,
-            p.source_type,
+            p.source_type, p.provider_id,
             pr.price_cny, pr.seller_name as seller_id,
-            pr.specifications_zh
+            pr.specifications_zh,
+            prov.target_platforms as provider_platforms
      FROM products p
      JOIN products_raw pr ON pr.product_id = p.id
+     LEFT JOIN providers prov ON prov.id = p.provider_id
      WHERE p.status = 'images_checked'
        AND p.id NOT IN (SELECT product_id FROM authorized_products)
        AND p.created_at <= DATE_SUB(NOW(), INTERVAL ${Number(minAgeHours)} HOUR)
@@ -186,6 +199,19 @@ async function getPendingProducts(limit: number, minAgeHours: number): Promise<P
         specsBrand = specs['品牌'] || specs['brand'] || null;
       }
     } catch { /* ignore parse errors */ }
+
+    // Resolve target platforms: provider's explicit list > source_type fallback
+    let targetPlatforms: string[];
+    if (r.provider_platforms) {
+      try {
+        const parsed = typeof r.provider_platforms === 'string'
+          ? JSON.parse(r.provider_platforms) : r.provider_platforms;
+        targetPlatforms = Array.isArray(parsed) ? parsed : derivePlatformsFromSourceType(r.source_type);
+      } catch { targetPlatforms = derivePlatformsFromSourceType(r.source_type); }
+    } else {
+      targetPlatforms = derivePlatformsFromSourceType(r.source_type);
+    }
+
     return {
       id: r.id,
       id_1688: r.id_1688,
@@ -196,6 +222,7 @@ async function getPendingProducts(limit: number, minAgeHours: number): Promise<P
       created_at: r.created_at,
       specs_brand: specsBrand,
       source_type: r.source_type || null,
+      target_platforms: targetPlatforms,
     };
   });
 }
@@ -272,7 +299,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId:            product.id,
           authorizationType:    'not_branded',
-          authorizedPlatforms:  ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
+          authorizedPlatforms:  product.target_platforms,
           confirmedBy:          'task8b-auto-verify',
           confirmedAt:          new Date(),
           active:               true,
@@ -315,7 +342,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId: product.id,
           authorizationType: 'not_branded',
-          authorizedPlatforms: ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
+          authorizedPlatforms: product.target_platforms,
           confirmedBy: 'task8b-auto-verify',
           confirmedAt: new Date(),
           active: true,
@@ -381,7 +408,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId: product.id,
           authorizationType: 'not_branded',
-          authorizedPlatforms: ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
+          authorizedPlatforms: product.target_platforms,
           confirmedBy: 'task8b-auto-verify',
           confirmedAt: new Date(),
           active: true,
@@ -404,7 +431,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId: product.id,
           authorizationType: 'not_branded',
-          authorizedPlatforms: ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
+          authorizedPlatforms: product.target_platforms,
           confirmedBy: 'task8b-auto-verify',
           confirmedAt: new Date(),
           active: true,

@@ -2,10 +2,12 @@
 # Alternating pipeline: Task 1 (batch) → Task 1B → Task 2 → Task 3 → Task 8B → Task 4 → Task 5 → repeat
 # This keeps products flowing continuously instead of waiting for all categories to finish first.
 #
-# PLATFORM SCOPE: AliExpress (2087779) + eBay + Etsy ONLY.
-#   Amazon is excluded — it uses manual seller sourcing, not this automated pipeline.
-#   Products are authorized for ['aliexpress', 'ebay', 'etsy'] in Task 8B.
-#   Amazon products enter at Task 2 with source_type='manual_seller' (separate flow).
+# PLATFORM SCOPE: AliExpress (2087779) + eBay + Etsy + Amazon — ALL active platforms.
+#   AliExpress / eBay / Etsy: automated brand-safe discovery (Task 1 → pipeline).
+#   Amazon: manually vetted sellers in providers table (trust_level='verified').
+#     → Products enter with source_type='manual_seller' and provider_id set.
+#     → Task 8B reads providers.target_platforms to authorize for the right platforms.
+#     → New verified providers are added via the 3c-outreach skill workflow.
 #
 # PHASE: 1 (brand-safe categories only — 108 of 335 blue-ocean categories).
 #   Task 8B fast-tracks brand_safe_discovery products instantly.

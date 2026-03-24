@@ -2025,36 +2025,45 @@ export class Scraper1688 {
             const screenshotPath = path.join(logsDir, `debug-store-${Date.now()}.png`);
             await this.page.screenshot({ path: screenshotPath, fullPage: false });
             const pageTitle = await this.page.title();
-            // Targeted dump — find the offerTag / newofferlist product format
+            // Find product grid by tracing up from known product-class elements
             const domDiag = await this.page.evaluate(() => {
-              // First .offerTag element full outer HTML (truncated)
-              const firstOfferTag = document.querySelector('.offerTag');
-              const offerTagHtml = firstOfferTag ? firstOfferTag.outerHTML.substring(0, 1500) : 'NOT FOUND';
-              // All data-* attributes on .offerTag elements
-              const offerTagAttrs = firstOfferTag
-                ? Array.from(firstOfferTag.attributes).map(a => `${a.name}="${a.value}"`)
-                : [];
-              // All data-* attributes on .newofferlist children
-              const newOfferListItems = Array.from(document.querySelectorAll('.newofferlist > *, .offerlist > *'))
+              // Trace .price elements up to find the product card container
+              const priceEls = Array.from(document.querySelectorAll('.price, .priceButton, .main-picture'));
+              const priceParents = priceEls.slice(0, 3).map(el => {
+                // Walk up to find an ancestor that looks like a product card
+                let node: Element | null = el;
+                const ancestors: string[] = [];
+                for (let i = 0; i < 8 && node; i++) {
+                  ancestors.push(`<${node.tagName} class="${node.className}" data=${JSON.stringify(
+                    Array.from(node.attributes)
+                      .filter(a => a.name.startsWith('data-') || a.name === 'href' || a.name === 'id')
+                      .map(a => `${a.name}=${a.value}`)
+                  )}>`);
+                  node = node.parentElement;
+                }
+                return ancestors;
+              });
+              // Also check .groupWrapper and .offerlist direct children
+              const groupItems = Array.from(document.querySelectorAll('.groupWrapper > *, .offerlist > *'))
                 .slice(0, 3)
                 .map(el => ({
                   tag: el.tagName,
-                  classes: el.className,
-                  attrs: Array.from(el.attributes).map(a => `${a.name}="${a.value}"`),
-                  childCount: el.children.length,
+                  classes: el.className.substring(0, 100),
+                  dataAttrs: Array.from(el.attributes)
+                    .filter(a => a.name.startsWith('data-') || a.name === 'href' || a.name === 'id')
+                    .map(a => `${a.name}=${a.value}`),
+                  firstChildHtml: el.children[0]?.outerHTML.substring(0, 200) || '',
                 }));
-              const offerTagCount = document.querySelectorAll('.offerTag').length;
-              return { offerTagHtml, offerTagAttrs, newOfferListItems, offerTagCount };
+              return { priceElCount: priceEls.length, priceParents, groupItems };
             });
-            logger.warn('Store page returned 0 products — offerTag diagnostic', {
+            logger.warn('Store page returned 0 products — price/groupWrapper diagnostic', {
               actualUrl,
               pageTitle,
               screenshotPath,
               urlPattern: patternIndex,
-              offerTagCount: domDiag.offerTagCount,
-              offerTagAttrs: domDiag.offerTagAttrs,
-              newOfferListItems: domDiag.newOfferListItems,
-              offerTagHtml: domDiag.offerTagHtml,
+              priceElCount: domDiag.priceElCount,
+              priceParents: domDiag.priceParents,
+              groupItems: domDiag.groupItems,
             });
 
             if (patternIndex < urlPatterns.length - 1) {

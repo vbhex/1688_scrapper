@@ -2143,38 +2143,13 @@ export class Scraper1688 {
         }
       }
 
-      // IMPORTANT: Click "找工厂" (Find Factory) tab BEFORE typing the search keyword.
-      // The 1688 homepage has tabs: "找货" (Find Goods) and "找工厂" (Find Factories).
-      // Clicking the factory tab changes the search mode so results go to factory page.
-      const clickedFactoryTab = await this.page.evaluate(() => {
-        // Look for tab elements near the search bar
-        const candidates = Array.from(document.querySelectorAll('a, span, div, li'));
-        for (const el of candidates) {
-          // Must be a small, visible element whose DIRECT text (not children) matches
-          const directText = Array.from(el.childNodes)
-            .filter(n => n.nodeType === Node.TEXT_NODE)
-            .map(n => n.textContent?.trim() || '')
-            .join('');
-          const fullText = el.textContent?.trim() || '';
-
-          // Match on direct text content to avoid clicking huge parent containers
-          if ((directText === '找工厂' || directText === 'Find Factories' || fullText === '找工厂')
-              && (el as HTMLElement).offsetHeight > 0
-              && (el as HTMLElement).offsetHeight < 100
-              && fullText.length < 20) {
-            (el as HTMLElement).click();
-            return true;
-          }
-        }
-        return false;
-      });
-
-      if (clickedFactoryTab) {
-        logger.info('Clicked "找工厂" (Find Factory) tab on homepage');
-        await randomDelay(1000, 2000);
-      } else {
-        logger.warn('Could not find "找工厂" tab — will search from product tab');
-      }
+      // Strategy: Use regular PRODUCT search, then extract unique suppliers from results.
+      // The product search results show seller names + shop links for each product.
+      // This is more reliable than trying to use the "找工厂" factory search,
+      // which redirects to a React SPA (mind.1688.com) with different DOM structure.
+      //
+      // Keywords already include "工厂" / "厂家" / "源头工厂" suffixes,
+      // which naturally filters to factory/manufacturer listings.
 
       // Find and type into search input
       const searchInputSelectors = [
@@ -2239,21 +2214,8 @@ export class Scraper1688 {
       }
       await randomDelay(3000, 5000);
 
-      // Verify we're on factory search — if not, try URL-based switch
       const currentUrl = this.page.url();
       logger.info('Search result URL', { url: currentUrl.substring(0, 150) });
-
-      if (currentUrl.includes('s.1688.com') && !currentUrl.includes('/company/')) {
-        // We're on product search — switch to company/factory search
-        const factoryUrl = currentUrl
-          .replace('/selloffer/offer_search.htm', '/company/company_search.htm')
-          .replace('/offer/', '/company/');
-        logger.info('Switching to factory search URL', { url: factoryUrl.substring(0, 150) });
-        await this.page.goto(factoryUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        await randomDelay(3000, 5000);
-      } else if (!currentUrl.includes('s.1688.com') && !currentUrl.includes('company')) {
-        logger.warn('Search did not navigate to s.1688.com — still on homepage. Will extract from current page.');
-      }
 
       // Extract supplier info from search results
       // Strategy: find all store links and deduplicate

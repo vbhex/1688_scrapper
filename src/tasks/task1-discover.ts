@@ -51,6 +51,7 @@ interface CLIOptions {
   batch: number;               // 0 = all, N = process N categories then exit
   resume: boolean;             // Skip categories that already have >= limit products in DB
   providerRescrapedays: number; // Re-scrape verified stores after this many days (default: 7)
+  providersOnly: boolean;      // Skip Mode A category search; only run Mode B (verified provider stores)
 }
 
 interface VerifiedProvider {
@@ -72,6 +73,7 @@ function parseArgs(): CLIOptions {
     batch: 0,
     resume: false,
     providerRescrapedays: 7,
+    providersOnly: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -91,6 +93,8 @@ function parseArgs(): CLIOptions {
       options.resume = true;
     } else if (args[i] === '--provider-rescrape-days' && args[i + 1]) {
       options.providerRescrapedays = parseInt(args[++i]) || 7;
+    } else if (args[i] === '--providers-only') {
+      options.providersOnly = true;
     }
   }
 
@@ -288,7 +292,7 @@ async function main(): Promise<void> {
       return;
     }
 
-    for (const cat of categories) {
+    for (const cat of options.providersOnly ? [] : categories) {
       try {
         categoriesProcessed++;
         logger.info(`[${categoriesProcessed}/${categories.length}] Processing: ${cat.label} (${cat.searchTerm})`, { l1: cat.l1 });

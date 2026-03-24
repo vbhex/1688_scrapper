@@ -2025,34 +2025,36 @@ export class Scraper1688 {
             const screenshotPath = path.join(logsDir, `debug-store-${Date.now()}.png`);
             await this.page.screenshot({ path: screenshotPath, fullPage: false });
             const pageTitle = await this.page.title();
-            // Exhaustive DOM inspection — find product-like elements and their classes/hrefs
+            // Targeted dump — find the offerTag / newofferlist product format
             const domDiag = await this.page.evaluate(() => {
-              // ALL anchor hrefs on the page (first 20)
-              const allLinks = Array.from(document.querySelectorAll('a[href]'))
-                .map(a => (a as HTMLAnchorElement).href)
-                .slice(0, 20);
-              // Offer-type links specifically
-              const offerLinks = allLinks.filter(h => /offer|detail|offerId|1688\.com\/\d/i.test(h));
-              // ALL unique class names anywhere in the document
-              const allClasses = Array.from(document.querySelectorAll('[class]'))
-                .flatMap(el => (el.className && typeof el.className === 'string') ? el.className.split(' ') : [])
-                .filter((c, i, arr) => c.length > 2 && arr.indexOf(c) === i)
-                .slice(0, 60);
-              // Total element counts
-              const totalLinks = document.querySelectorAll('a').length;
-              const totalImages = document.querySelectorAll('img').length;
-              return { allLinks, offerLinks, allClasses, totalLinks, totalImages };
+              // First .offerTag element full outer HTML (truncated)
+              const firstOfferTag = document.querySelector('.offerTag');
+              const offerTagHtml = firstOfferTag ? firstOfferTag.outerHTML.substring(0, 1500) : 'NOT FOUND';
+              // All data-* attributes on .offerTag elements
+              const offerTagAttrs = firstOfferTag
+                ? Array.from(firstOfferTag.attributes).map(a => `${a.name}="${a.value}"`)
+                : [];
+              // All data-* attributes on .newofferlist children
+              const newOfferListItems = Array.from(document.querySelectorAll('.newofferlist > *, .offerlist > *'))
+                .slice(0, 3)
+                .map(el => ({
+                  tag: el.tagName,
+                  classes: el.className,
+                  attrs: Array.from(el.attributes).map(a => `${a.name}="${a.value}"`),
+                  childCount: el.children.length,
+                }));
+              const offerTagCount = document.querySelectorAll('.offerTag').length;
+              return { offerTagHtml, offerTagAttrs, newOfferListItems, offerTagCount };
             });
-            logger.warn('Store page returned 0 products — DOM diagnostic', {
+            logger.warn('Store page returned 0 products — offerTag diagnostic', {
               actualUrl,
               pageTitle,
               screenshotPath,
               urlPattern: patternIndex,
-              totalLinks: domDiag.totalLinks,
-              totalImages: domDiag.totalImages,
-              allLinks: domDiag.allLinks,
-              offerLinks: domDiag.offerLinks,
-              allClasses: domDiag.allClasses,
+              offerTagCount: domDiag.offerTagCount,
+              offerTagAttrs: domDiag.offerTagAttrs,
+              newOfferListItems: domDiag.newOfferListItems,
+              offerTagHtml: domDiag.offerTagHtml,
             });
 
             if (patternIndex < urlPatterns.length - 1) {

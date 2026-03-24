@@ -1378,58 +1378,130 @@ export class Scraper1688 {
           }
         });
 
-        // Strategy D: wp_pc_common_offerlist widget format (new 1688 store page).
-        // Products render inside data-modulename="wp_pc_common_offerlist" as classless <div>
-        // children. Offer IDs are NOT in href links — extract from onclick or img src patterns.
+        // Strategy D: new 1688 store page format (/page/offerlist.html).
+        // Products render as classless <div> trees. No href links — offer IDs live in
+        // onclick attributes OR can be extracted from the page-level HTML that contains
+        // offerId patterns. Search the whole document for .price elements and walk ancestors.
         if (items.length === 0) {
-          const widget = document.querySelector('[data-modulename="wp_pc_common_offerlist"]');
-          if (widget && widget.children.length > 0) {
-            // Walk all descendants looking for elements that carry an offer ID.
-            // Offer IDs appear as 10+ digit numbers in onclick strings or in image alt/data attrs.
-            const fullHtml = widget.innerHTML;
-            const idMatches = Array.from(fullHtml.matchAll(/offer[Ii][Dd][=_"](\d{10,})/g));
-            // Also try: class=".price" siblings — walk up to find onclick containers
-            const priceContainers = Array.from(widget.querySelectorAll('.price'));
-            priceContainers.forEach(priceEl => {
-              let node: Element | null = priceEl.parentElement;
-              for (let i = 0; i < 6 && node && node !== widget; i++) {
-                const onclickAttr = node.getAttribute('onclick') || '';
-                const idInOnclick = onclickAttr.match(/(\d{10,})/);
-                if (idInOnclick) {
-                  // Found an offer ID in onclick — extract product info from this container
-                  const id1688 = idInOnclick[1];
-                  if (seenIds.has(id1688)) break;
-                  seenIds.add(id1688);
-                  const titleEl = node.querySelector('[class*="title"], h4, h3');
-                  const title = titleEl?.textContent?.trim() || '';
-                  const priceText = priceEl.textContent || '0';
-                  const priceMatch = priceText.match(/[\d.]+/);
-                  const priceCNY = priceMatch ? parseFloat(priceMatch[0]) : 0;
-                  const imgEl = node.querySelector('img') as HTMLImageElement | null;
-                  const imageUrl = imgEl?.src || '';
-                  items.push({
-                    id1688,
-                    title,
-                    description: '',
-                    priceCNY,
-                    images: imageUrl ? [imageUrl] : [],
-                    specifications: [],
-                    seller: { name: '' },
-                    category: '',
-                    minOrderQty: 1,
-                    url: `https://detail.1688.com/offer/${id1688}.html`,
-                    scrapedAt: new Date().toISOString(),
-                  });
-                  break;
-                }
-                node = node.parentElement;
+          const priceContainers = Array.from(document.querySelectorAll('.price'));
+          priceContainers.forEach(priceEl => {
+            let node: Element | null = priceEl.parentElement;
+            for (let i = 0; i < 8 && node; i++) {
+              // Check onclick for an offer ID (10+ digits)
+              const onclickAttr = node.getAttribute('onclick') || '';
+              const idInOnclick = onclickAttr.match(/(\d{10,})/);
+              if (idInOnclick) {
+                const id1688 = idInOnclick[1];
+                if (seenIds.has(id1688)) break;
+                seenIds.add(id1688);
+                const titleEl = node.querySelector('[class*="title"], h4, h3');
+                const title = titleEl?.textContent?.trim() || '';
+                const priceText = priceEl.textContent || '0';
+                const priceMatch = priceText.match(/[\d.]+/);
+                const priceCNY = priceMatch ? parseFloat(priceMatch[0]) : 0;
+                const imgEl = node.querySelector('img') as HTMLImageElement | null;
+                const imageUrl = (imgEl?.src || '').replace(/\.(jpg|jpeg|png)(_.*)$/i, '.$1');
+                items.push({
+                  id1688,
+                  title,
+                  description: '',
+                  priceCNY,
+                  images: imageUrl ? [imageUrl] : [],
+                  specifications: [],
+                  seller: { name: '' },
+                  category: '',
+                  minOrderQty: 1,
+                  url: `https://detail.1688.com/offer/${id1688}.html`,
+                  scrapedAt: new Date().toISOString(),
+                });
+                break;
               }
-            });
-            // If onclick IDs found, done. Otherwise log the widget child count for next diagnostic.
-            if (items.length === 0) {
-              // Store widget child count as a hint — not extractable yet
-              (window as any).__widgetChildCount = widget.children.length;
+              // Also check: data-offerid or data-id attributes
+              const dataOfferId = node.getAttribute('data-offerid') || node.getAttribute('data-offer-id') || node.getAttribute('data-id');
+              if (dataOfferId && /^\d{10,}$/.test(dataOfferId) && !seenIds.has(dataOfferId)) {
+                seenIds.add(dataOfferId);
+                const titleEl = node.querySelector('[class*="title"], h4, h3');
+                const title = titleEl?.textContent?.trim() || '';
+                const priceText = priceEl.textContent || '0';
+                const priceMatch = priceText.match(/[\d.]+/);
+                const priceCNY = priceMatch ? parseFloat(priceMatch[0]) : 0;
+                const imgEl = node.querySelector('img') as HTMLImageElement | null;
+                const imageUrl = (imgEl?.src || '').replace(/\.(jpg|jpeg|png)(_.*)$/i, '.$1');
+                items.push({
+                  id1688: dataOfferId,
+                  title,
+                  description: '',
+                  priceCNY,
+                  images: imageUrl ? [imageUrl] : [],
+                  specifications: [],
+                  seller: { name: '' },
+                  category: '',
+                  minOrderQty: 1,
+                  url: `https://detail.1688.com/offer/${dataOfferId}.html`,
+                  scrapedAt: new Date().toISOString(),
+                });
+                break;
+              }
+              node = node.parentElement;
             }
+          });
+        }
+      }
+
+      // Strategy E: Parse offer IDs from inline <script> tags.
+      // New 1688 React SPA pages embed product list data as JSON in a <script> tag
+      // (e.g. window.__INIT_DATA__ or a raw JSON blob). No onclick/data-attrs needed.
+      if (items.length === 0) {
+        const scriptTags = Array.from(document.querySelectorAll('script:not([src])'));
+        const offerIdSet = new Set<string>();
+        const subjectMap: Record<string, string> = {};
+        const priceMap: Record<string, number> = {};
+        const imageMap: Record<string, string> = {};
+
+        for (const script of scriptTags) {
+          const text = script.textContent || '';
+          if (!text.includes('offerId') && !text.includes('offerList') && !text.includes('offer_id')) continue;
+
+          // Extract offer IDs
+          Array.from(text.matchAll(/"offerId"\s*:\s*"?(\d{10,})"?/g)).forEach(m => offerIdSet.add(m[1]));
+          Array.from(text.matchAll(/offer_id["\s:]+(\d{10,})/g)).forEach(m => offerIdSet.add(m[1]));
+
+          // Extract subjects/titles (best-effort — same index as offerId in JSON array)
+          Array.from(text.matchAll(/"subject"\s*:\s*"([^"]+)"/g)).forEach((m, i) => {
+            const id = Array.from(offerIdSet)[i];
+            if (id && !subjectMap[id]) subjectMap[id] = m[1];
+          });
+
+          // Extract prices
+          Array.from(text.matchAll(/"price"\s*:\s*"?([\d.]+)"?/g)).forEach((m, i) => {
+            const id = Array.from(offerIdSet)[i];
+            if (id && !priceMap[id]) priceMap[id] = parseFloat(m[1]);
+          });
+
+          // Extract image URLs
+          Array.from(text.matchAll(/"(?:imgUrl|picUrl|imageUrl|img_url)"\s*:\s*"([^"]+)"/g)).forEach((m, i) => {
+            const id = Array.from(offerIdSet)[i];
+            if (id && !imageMap[id]) imageMap[id] = m[1];
+          });
+        }
+
+        for (const id1688 of offerIdSet) {
+          if (!seenIds.has(id1688)) {
+            seenIds.add(id1688);
+            const imageUrl = (imageMap[id1688] || '').replace(/\.(jpg|jpeg|png)(_.*)$/i, '.$1');
+            items.push({
+              id1688,
+              title: subjectMap[id1688] || '',
+              description: '',
+              priceCNY: priceMap[id1688] || 0,
+              images: imageUrl ? [imageUrl] : [],
+              specifications: [],
+              seller: { name: '' },
+              category: '',
+              minOrderQty: 1,
+              url: `https://detail.1688.com/offer/${id1688}.html`,
+              scrapedAt: new Date().toISOString(),
+            });
           }
         }
       }
@@ -2051,11 +2123,66 @@ export class Scraper1688 {
     let patternIndex = 0;
     let patternConfirmed = false; // true once a pattern yields ≥1 product
 
+    // XHR interception — captures the product list API that the React SPA calls.
+    // The new /page/offerlist.html format fetches data via an internal 1688 API;
+    // the product grid renders without onclick / href / data-offerid attributes,
+    // so DOM extraction strategies A-D cannot find offer IDs. We capture the raw
+    // JSON response instead, then fall back to DOM extraction if XHR yields nothing.
+    const xhrOffers: Array<{ id1688: string; title: string; priceCNY: number; imageUrl: string }> = [];
+    let xhrCapturing = false;
+
+    const xhrResponseListener = async (response: any) => {
+      if (!xhrCapturing) return;
+      if (response.status() !== 200) return;
+
+      const respUrl: string = response.url();
+      // Only inspect responses from 1688 / Alibaba domains
+      if (!respUrl.includes('1688.com') && !respUrl.includes('alibaba.com')) return;
+
+      try {
+        const ct: string = response.headers()['content-type'] || '';
+        if (!ct.includes('json') && !ct.includes('javascript') && !ct.includes('text/plain')) return;
+
+        const text: string = await response.text().catch(() => '');
+        if (!text || (!text.includes('offerId') && !text.includes('offer_id') && !text.includes('itemId'))) return;
+
+        logger.info('XHR: captured potential product-list response', { url: respUrl.substring(0, 120) });
+
+        // Extract offer IDs and associated fields from JSON text
+        // 1688 API typically uses: {"offerId":"12345", "subject":"...", "price":"10.5", "imgUrl":"..."}
+        const offerIds = Array.from(text.matchAll(/"offerId"\s*:\s*"?(\d{10,})"?/g)).map(m => m[1]);
+        const subjects = Array.from(text.matchAll(/"(?:subject|subjectTrans|title)"\s*:\s*"([^"]+)"/g)).map(m => m[1]);
+        const prices   = Array.from(text.matchAll(/"(?:price|priceInfo)"\s*:\s*"?([\d.]+)"?/g)).map(m => parseFloat(m[1]));
+        const images   = Array.from(text.matchAll(/"(?:imgUrl|picUrl|imageUrl|img_url)"\s*:\s*"([^"]+)"/g)).map(m => m[1]);
+
+        offerIds.forEach((id, i) => {
+          if (!xhrOffers.find(o => o.id1688 === id)) {
+            xhrOffers.push({
+              id1688: id,
+              title: subjects[i] || '',
+              priceCNY: prices[i] || 0,
+              imageUrl: (images[i] || '').replace(/\.(jpg|jpeg|png)(_.*)$/i, '.$1'),
+            });
+          }
+        });
+
+        logger.info('XHR: extracted offer IDs', { count: offerIds.length, totalSoFar: xhrOffers.length });
+      } catch (_e) {
+        // Ignore parse/network errors silently
+      }
+    };
+
+    this.page.on('response', xhrResponseListener);
+
     while (pageIndex <= maxPages) {
       const url = urlPatterns[patternIndex](pageIndex);
       logger.info('Navigating to store page', { url, pageIndex, urlPattern: patternIndex });
 
       try {
+        // Clear XHR captures for this page, then enable interception
+        xhrOffers.length = 0;
+        xhrCapturing = true;
+
         // Store pages (especially /page/offerlist.html) are React SPAs.
         // networkidle2 waits until React finishes fetching + rendering product data.
         // domcontentloaded fires too early — product grid is empty at that point.
@@ -2067,21 +2194,40 @@ export class Scraper1688 {
           logger.info('Store page redirected', { from: url, to: actualUrl });
         }
 
-        // The product list widget (data-modulename="wp_pc_common_offerlist") loads
-        // its product cards asynchronously AFTER networkidle2 resolves — wait for it.
-        // Also catches classic .sm-offer-item and offer link formats.
-        await this.page.waitForFunction(() => {
-          const widget = document.querySelector('[data-modulename="wp_pc_common_offerlist"]');
-          if (widget && widget.children.length > 0) return true;
-          if (document.querySelector('.sm-offer-item, .offer-item, a[href*="offerId="]')) return true;
-          return false;
-        }, { timeout: 20000 }).catch(() => {
-          // Widget didn't render — fall through to extractProductsFromPage anyway
+        // For store pages: scroll to viewport bottom to trigger lazy-loading,
+        // then wait for product price elements to appear in the DOM.
+        // The product grid renders asynchronously after networkidle2 in the new
+        // /page/offerlist.html React format — .price elements confirm products are ready.
+        await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+        await this.page.waitForSelector('.price, .sm-offer-item, .offer-item, a[href*="offerId="]', {
+          timeout: 20000,
+        }).catch(() => {
+          // Products didn't appear — fall through, extractProductsFromPage will try anyway
         });
 
+        // Extra settle time — some API calls arrive slightly after networkidle2
         await randomDelay(1500, 2500);
+        xhrCapturing = false;
 
-        const pageProducts = await this.extractProductsFromPage();
+        // Try DOM extraction first (Strategies A-E). If that fails, use XHR-captured data.
+        let pageProducts = await this.extractProductsFromPage();
+
+        if (pageProducts.length === 0 && xhrOffers.length > 0) {
+          logger.info('DOM extraction returned 0; using XHR-captured products', { count: xhrOffers.length });
+          pageProducts = xhrOffers.map(o => ({
+            id1688: o.id1688,
+            title: o.title,
+            description: '',
+            priceCNY: o.priceCNY,
+            images: o.imageUrl ? [o.imageUrl] : [],
+            specifications: [],
+            seller: { name: '' },
+            category: '',
+            minOrderQty: 1,
+            url: `https://detail.1688.com/offer/${o.id1688}.html`,
+            scrapedAt: new Date(),
+          })) as ScrapedProduct[];
+        }
 
         if (pageProducts.length === 0) {
           // On the very first page of the first pattern, take a diagnostic screenshot
@@ -2170,6 +2316,9 @@ export class Scraper1688 {
         break;
       }
     }
+
+    // Clean up XHR listener — must match the function reference passed to page.on()
+    this.page.off('response', xhrResponseListener);
 
     logger.info('Store scrape complete', { shopUrl, total: products.length });
     return limit > 0 ? products.slice(0, limit) : products;

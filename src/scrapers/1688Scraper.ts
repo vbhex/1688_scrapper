@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { createChildLogger } from '../utils/logger';
 import { config } from '../config';
-import { ScrapedProduct, ProductSpecification, SellerInfo, ProductVariants } from '../models/product';
+import { ScrapedProduct, ProductSpecification, SellerInfo, ProductVariants, SupplierSearchResult } from '../models/product';
 import { sleep, randomDelay, isAppleBrand, ensureDirectoryExists } from '../utils/helpers';
 
 // Apply stealth plugin to avoid bot detection
@@ -2095,6 +2095,238 @@ export class Scraper1688 {
       }
       return certs;
     }, certKeywords, productUrl);
+  }
+
+  /**
+   * Search for suppliers/stores on 1688 company search page.
+   * Returns supplier store info (name, URL, seller ID) for outreach.
+   *
+   * Uses 1688's company search (s.1688.com/company/...) instead of product search.
+   * Chinese keywords are typed into the search bar (1688 uses GBK, not UTF-8 in URLs).
+   */
+  async searchSuppliers(keyword: string, maxResults: number = 20): Promise<SupplierSearchResult[]> {
+    if (!this.page) throw new Error('Browser not initialized');
+
+    logger.info('Searching suppliers', { keyword, maxResults });
+    const results: SupplierSearchResult[] = [];
+    const seenIds = new Set<string>();
+
+    try {
+      // Navigate to 1688 homepage and search (same as product search — type into search bar)
+      await this.page.goto('https://www.1688.com', {
+        waitUntil: 'domcontentloaded',
+        timeout: 60000,
+      });
+      await randomDelay(3000, 5000);
+
+      // Wait for page to be usable
+      const pageIsUsable = async (): Promise<boolean> => {
+        const url = this.page!.url();
+        if (url.includes('punish') || url.includes('_____tmd_____')) return false;
+        const inputCount = await this.page!.evaluate(() => document.querySelectorAll('input').length);
+        return inputCount > 0;
+      };
+
+      if (!(await pageIsUsable())) {
+        logger.warn('Page blocked by anti-bot! Please solve CAPTCHA on China MacBook browser.');
+        logger.warn('Waiting up to 3 minutes...');
+        const maxWait = 180000;
+        let waited = 0;
+        while (waited < maxWait) {
+          await sleep(5000);
+          waited += 5000;
+          if (await pageIsUsable()) break;
+        }
+        if (!(await pageIsUsable())) {
+          logger.error('Page still not usable after waiting');
+          return results;
+        }
+      }
+
+      // Find and type into search input
+      const searchInputSelectors = [
+        '#alisearch-input',
+        'input[name="keywords"]',
+        '.search-input input',
+        'input.search-input',
+        'input[placeholder*="搜索"]',
+        'input[placeholder*="找货"]',
+        '.home-search input',
+      ];
+
+      let searchInput = null;
+      for (const selector of searchInputSelectors) {
+        try {
+          searchInput = await this.page.$(selector);
+          if (searchInput) break;
+        } catch { continue; }
+      }
+
+      if (!searchInput) {
+        logger.error('Could not find search input on 1688 homepage');
+        return results;
+      }
+
+      // Clear and type keyword
+      await searchInput.click({ clickCount: 3 });
+      await randomDelay(300, 500);
+      await this.page.keyboard.press('Backspace');
+      await randomDelay(200, 400);
+      await searchInput.type(keyword, { delay: 50 });
+      await randomDelay(500, 1000);
+
+      // Submit search
+      const searchBtnSelectors = [
+        '#alisearch-submit',
+        'button.search-button',
+        '.search-btn',
+        'button[type="submit"]',
+      ];
+      let submitted = false;
+      for (const sel of searchBtnSelectors) {
+        try {
+          const btn = await this.page.$(sel);
+          if (btn) {
+            await btn.click();
+            submitted = true;
+            break;
+          }
+        } catch { continue; }
+      }
+      if (!submitted) {
+        await this.page.keyboard.press('Enter');
+      }
+
+      await randomDelay(3000, 5000);
+
+      // Now switch to "找工厂" (Find Factory) or "找公司" (Find Company) tab if available
+      // 1688 search results have tabs: 找货 (products), 找工厂 (factories), 找公司 (companies)
+      const switchedToFactory = await this.page.evaluate(() => {
+        const tabs = Array.from(document.querySelectorAll('a, div, span, button'));
+        for (const tab of tabs) {
+          const text = (tab.textContent || '').trim();
+          if ((text === '找工厂' || text === '找公司' || text.includes('工厂') || text.includes('供应商'))
+              && (tab as HTMLElement).offsetHeight > 0) {
+            (tab as HTMLElement).click();
+            return text;
+          }
+        }
+        return null;
+      });
+
+      if (switchedToFactory) {
+        logger.info(`Switched to factory/supplier tab: ${switchedToFactory}`);
+        await randomDelay(3000, 5000);
+      } else {
+        logger.info('No factory tab found, extracting suppliers from product search results');
+      }
+
+      // Extract supplier info from search results
+      // Strategy: find all store links and deduplicate
+      let pageNum = 1;
+      const maxPages = Math.ceil(maxResults / 10);
+
+      while (results.length < maxResults && pageNum <= maxPages) {
+        logger.info(`Extracting suppliers from page ${pageNum}`);
+
+        const pageSuppliers = await this.page.evaluate(() => {
+          const suppliers: Array<{
+            storeName: string;
+            storeUrl: string;
+            sellerId: string;
+            mainProducts: string;
+            location: string;
+          }> = [];
+
+          // Strategy 1: Factory/company result cards
+          const companyCards = Array.from(document.querySelectorAll(
+            '[class*="company"], [class*="factory"], [class*="supplier"], [class*="CompanyCard"], [class*="shopCard"]'
+          ));
+          for (const card of companyCards) {
+            const nameEl = card.querySelector('a[href*="shop"], a[href*="1688.com"], [class*="name"], [class*="title"]');
+            const name = nameEl?.textContent?.trim() || '';
+            const href = (nameEl as HTMLAnchorElement)?.href || '';
+            const shopMatch = href.match(/https?:\/\/shop([^.]+)\.1688\.com/);
+            if (name && shopMatch) {
+              const mainProducts = card.querySelector('[class*="product"], [class*="main"]')?.textContent?.trim() || '';
+              const location = card.querySelector('[class*="location"], [class*="area"], [class*="address"]')?.textContent?.trim() || '';
+              suppliers.push({
+                storeName: name,
+                storeUrl: `https://shop${shopMatch[1]}.1688.com/`,
+                sellerId: shopMatch[1],
+                mainProducts,
+                location,
+              });
+            }
+          }
+
+          // Strategy 2: Extract from product cards (seller links)
+          if (suppliers.length === 0) {
+            const allLinks = Array.from(document.querySelectorAll('a[href*="shop"]'));
+            for (const link of allLinks) {
+              const href = (link as HTMLAnchorElement).href;
+              const shopMatch = href.match(/https?:\/\/shop([^.]+)\.1688\.com/);
+              if (shopMatch && (link as HTMLElement).offsetHeight > 0) {
+                const name = link.textContent?.trim() || '';
+                if (name && name.length > 1 && name.length < 100) {
+                  suppliers.push({
+                    storeName: name,
+                    storeUrl: `https://shop${shopMatch[1]}.1688.com/`,
+                    sellerId: shopMatch[1],
+                    mainProducts: '',
+                    location: '',
+                  });
+                }
+              }
+            }
+          }
+
+          return suppliers;
+        });
+
+        for (const s of pageSuppliers) {
+          if (!seenIds.has(s.sellerId) && results.length < maxResults) {
+            seenIds.add(s.sellerId);
+            results.push({
+              storeName: s.storeName,
+              storeUrl: s.storeUrl,
+              sellerId: s.sellerId,
+              mainProducts: s.mainProducts || undefined,
+              location: s.location || undefined,
+            });
+          }
+        }
+
+        logger.info(`Page ${pageNum}: found ${pageSuppliers.length} suppliers (total unique: ${results.length})`);
+
+        // Try to go to next page
+        if (results.length < maxResults) {
+          const hasNextPage = await this.page.evaluate(() => {
+            const nextBtns = Array.from(document.querySelectorAll('[class*="next"], a[class*="fui-next"]'));
+            for (const btn of nextBtns) {
+              if ((btn as HTMLElement).offsetHeight > 0 && !btn.classList.contains('disabled')) {
+                (btn as HTMLElement).click();
+                return true;
+              }
+            }
+            return false;
+          });
+
+          if (!hasNextPage) break;
+          pageNum++;
+          await randomDelay(3000, 5000);
+        } else {
+          break;
+        }
+      }
+
+      logger.info(`Supplier search complete`, { keyword, totalFound: results.length });
+      return results;
+
+    } catch (error) {
+      logger.error('Supplier search failed', { keyword, error: (error as Error).message });
+      return results;
+    }
   }
 
   /**

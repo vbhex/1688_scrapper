@@ -369,6 +369,26 @@ async function initializeSchema(): Promise<void> {
       if (!e.message?.includes('Duplicate column')) throw e;
     }
 
+    // Add 3C outreach columns to providers (migration-safe)
+    for (const col of [
+      { name: 'source', def: "VARCHAR(50) DEFAULT 'pipeline' COMMENT 'pipeline|manual|3c_outreach'" },
+      { name: 'target_platform', def: "VARCHAR(50) COMMENT 'Primary target platform: amazon, aliexpress, etc.'" },
+      { name: 'main_categories', def: "JSON COMMENT 'Array of 3C categories this supplier covers'" },
+    ]) {
+      try {
+        await connection.execute(`ALTER TABLE providers ADD COLUMN ${col.name} ${col.def}`);
+      } catch (e: any) {
+        if (!e.message?.includes('Duplicate column')) throw e;
+      }
+    }
+
+    // Add outreach_type to compliance_contacts for distinguishing 3C outreach from brand verify (migration-safe)
+    try {
+      await connection.execute(`ALTER TABLE compliance_contacts ADD COLUMN outreach_type VARCHAR(50) DEFAULT 'brand_verify' COMMENT 'brand_verify|3c_amazon_outreach'`);
+    } catch (e: any) {
+      if (!e.message?.includes('Duplicate column')) throw e;
+    }
+
     // Multi-platform sourcing: add source_platform to products (migration-safe)
     // Allows tracking products from taobao, pinduoduo, jd, wechat, etc.
     try {
@@ -1196,5 +1216,179 @@ export async function getDefaultCompanyInfo(): Promise<CompanyInfo | null> {
     companyNameZh: r.company_name_zh,
     companyNameEn: r.company_name_en || undefined,
     platforms: typeof r.platforms === 'string' ? JSON.parse(r.platforms) : (r.platforms || []),
+  };
+}
+
+/**
+ * Get a company by its ID (统一社会信用代码 or BR number).
+ */
+export async function getCompanyById(companyId: string): Promise<CompanyInfo | null> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT company_id, company_name_zh, company_name_en, platforms FROM company_info WHERE company_id = ? LIMIT 1`,
+    [companyId]
+  );
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    companyId: r.company_id,
+    companyNameZh: r.company_name_zh,
+    companyNameEn: r.company_name_en || undefined,
+    platforms: typeof r.platforms === 'string' ? JSON.parse(r.platforms) : (r.platforms || []),
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// 3C Supplier Outreach — query functions for Tasks 10/11/12
+// ──────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Get providers that were discovered via 3C outreach but not yet contacted.
+ */
+export async function getProvidersForOutreach(source: string, limit?: number): Promise<Provider[]> {
+  const p = await getPool();
+  const limitClause = limit ? `LIMIT ${limit}` : '';
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT prov.* FROM providers prov
+     LEFT JOIN compliance_contacts cc ON cc.seller_id = prov.platform_id
+     WHERE prov.source = ?
+       AND prov.trust_level = 'new'
+       AND (cc.id IS NULL OR cc.contact_status = 'pending')
+     ORDER BY prov.created_at ASC
+     ${limitClause}`,
+    [source]
+  );
+  return rows.map((r: any) => ({
+    id: r.id,
+    providerName: r.provider_name,
+    platform: r.platform,
+    platformId: r.platform_id || undefined,
+    wangwangId: r.wangwang_id || undefined,
+    wechatId: r.wechat_id || undefined,
+    email: r.email || undefined,
+    phone: r.phone || undefined,
+    shopUrl: r.shop_url || undefined,
+    trustLevel: r.trust_level,
+    totalProducts: r.total_products,
+    complianceScore: r.compliance_score ? parseFloat(r.compliance_score) : undefined,
+    notes: r.notes || undefined,
+  }));
+}
+
+/**
+ * Get providers that have been contacted and are awaiting response (for follow-up).
+ */
+export async function getProvidersPendingFollowup(): Promise<Array<{
+  providerId: number;
+  providerName: string;
+  sellerId: string;
+  shopUrl: string;
+  contactStatus: string;
+  messageSentAt: Date | null;
+  categories: string[];
+}>> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT prov.id AS providerId, prov.provider_name AS providerName,
+            prov.platform_id AS sellerId, prov.shop_url AS shopUrl,
+            prov.main_categories AS categories,
+            cc.contact_status AS contactStatus, cc.message_sent_at AS messageSentAt
+     FROM providers prov
+     JOIN compliance_contacts cc ON cc.seller_id = prov.platform_id
+     WHERE prov.source = '3c_outreach'
+       AND cc.contact_status IN ('contacted', 'responded')
+     ORDER BY cc.message_sent_at ASC`
+  );
+  return rows.map((r: any) => ({
+    providerId: r.providerId,
+    providerName: r.providerName,
+    sellerId: r.sellerId,
+    shopUrl: r.shopUrl || '',
+    contactStatus: r.contactStatus,
+    messageSentAt: r.messageSentAt || null,
+    categories: r.categories
+      ? (typeof r.categories === 'string' ? JSON.parse(r.categories) : r.categories)
+      : [],
+  }));
+}
+
+/**
+ * Mark a 3C outreach provider as authorized (verbal confirmation received).
+ * Updates both provider trust level and compliance contact status.
+ */
+export async function markProviderAuthorized(
+  sellerId: string,
+  docUrl?: string,
+  notes?: string
+): Promise<void> {
+  const p = await getPool();
+
+  // Update provider trust level
+  await p.execute(
+    `UPDATE providers SET trust_level = 'verified', notes = COALESCE(?, notes), updated_at = NOW()
+     WHERE platform = '1688' AND platform_id = ?`,
+    [notes || null, sellerId]
+  );
+
+  // Update compliance contact status
+  const newStatus = docUrl ? 'certs_received' : 'responded';
+  await p.execute(
+    `UPDATE compliance_contacts SET contact_status = ?, response_at = NOW(), notes = COALESCE(?, notes), updated_at = NOW()
+     WHERE seller_id = ?`,
+    [newStatus, notes || null, sellerId]
+  );
+
+  // If we have a doc URL, insert provider cert
+  if (docUrl) {
+    const [provRows] = await p.execute<RowDataPacket[]>(
+      `SELECT id FROM providers WHERE platform = '1688' AND platform_id = ?`,
+      [sellerId]
+    );
+    if (provRows.length > 0) {
+      await insertProviderCert({
+        providerId: provRows[0].id,
+        certType: 'brand_authorization',
+        docUrl,
+        coversPlatforms: ['amazon'],
+        verified: false,
+        notes: notes || 'Brand authorization doc received via Wangwang',
+      });
+    }
+  }
+}
+
+/**
+ * Get 3C outreach statistics.
+ */
+export async function get3COutreachStats(): Promise<{
+  totalDiscovered: number;
+  contacted: number;
+  responded: number;
+  authorized: number;
+  pending: number;
+}> {
+  const p = await getPool();
+  const [totalRows] = await p.execute<RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM providers WHERE source = '3c_outreach'`
+  );
+  const [contactedRows] = await p.execute<RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM providers prov
+     JOIN compliance_contacts cc ON cc.seller_id = prov.platform_id
+     WHERE prov.source = '3c_outreach' AND cc.contact_status = 'contacted'`
+  );
+  const [respondedRows] = await p.execute<RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM providers prov
+     JOIN compliance_contacts cc ON cc.seller_id = prov.platform_id
+     WHERE prov.source = '3c_outreach' AND cc.contact_status = 'responded'`
+  );
+  const [authorizedRows] = await p.execute<RowDataPacket[]>(
+    `SELECT COUNT(*) as count FROM providers WHERE source = '3c_outreach' AND trust_level IN ('verified', 'trusted', 'preferred')`
+  );
+  return {
+    totalDiscovered: totalRows[0].count,
+    contacted: contactedRows[0].count,
+    responded: respondedRows[0].count,
+    authorized: authorizedRows[0].count,
+    pending: totalRows[0].count - contactedRows[0].count - respondedRows[0].count - authorizedRows[0].count,
   };
 }

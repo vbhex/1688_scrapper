@@ -174,6 +174,40 @@ export interface BrandMatch {
   riskLevel?: BrandRiskLevel;
 }
 
+// ──────────────────────────────────────────────────────────────────
+// 3C Supplier Outreach Pipeline (Amazon)
+// ──────────────────────────────────────────────────────────────────
+
+export interface SupplierSearchResult {
+  storeName: string;
+  storeUrl: string;       // e.g., https://shop1234567890.1688.com/
+  sellerId: string;       // numeric shop ID
+  mainProducts?: string;  // brief description of what they sell
+  yearsInBusiness?: number;
+  location?: string;      // city/province
+}
+
+/**
+ * 3C supplier search keywords for 1688 company search.
+ * Appended with 工厂/厂家/源头工厂 to target manufacturers & authorized distributors.
+ * Used by Task 10 (3C Supplier Discovery).
+ */
+export const SUPPLIER_3C_KEYWORDS: Record<string, string[]> = {
+  'earphones':           ['蓝牙耳机工厂', '蓝牙耳机厂家', 'TWS耳机源头工厂'],
+  'smart watches':       ['智能手表工厂', '智能手表厂家', '智能手表源头工厂'],
+  'action cameras':      ['运动相机工厂', '运动相机厂家', '运动相机源头'],
+  'portable projector':  ['投影仪工厂', '便携投影仪厂家', '微型投影仪源头工厂'],
+  'vr glasses':          ['VR眼镜工厂', 'VR眼镜厂家', 'VR头显源头工厂'],
+  'power station':       ['户外电源工厂', '便携储能电源厂家', '户外电源源头工厂'],
+  'ip camera':           ['监控摄像头工厂', '网络摄像头厂家', '安防摄像头源头工厂'],
+  'smart doorbell':      ['智能门铃工厂', '可视门铃厂家', '智能门铃源头工厂'],
+  'soundbar':            ['回音壁工厂', '回音壁音响厂家', '蓝牙音响条源头工厂'],
+  'solar panel':         ['太阳能板工厂', '太阳能充电板厂家', '太阳能板源头工厂'],
+  'gimbal stabilizer':   ['手持稳定器工厂', '云台稳定器厂家', '手持云台源头工厂'],
+  'lavalier microphone': ['领夹麦克风工厂', '无线麦克风厂家', '领夹麦克风源头工厂'],
+  'smart ring':          ['智能戒指工厂', '智能戒指厂家', '智能穿戴源头工厂'],
+};
+
 export interface ProductRecord {
   id: number;
   id1688: string;

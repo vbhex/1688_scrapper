@@ -2260,13 +2260,20 @@ export class Scraper1688 {
             const sellerId = shopMatch[1];
             if (seenInPage.has(sellerId)) continue;
 
-            // Get store name from link text or nearest named element
-            let name = link.textContent?.trim() || '';
-            if (name.length < 2 || name.length > 100) {
-              const card = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"], [class*="factory"], li, .result');
-              if (card) {
-                const nameEl = card.querySelector('[class*="name"], [class*="title"], [class*="company"], h3, h4, h2');
-                if (nameEl) name = nameEl.textContent?.trim() || '';
+            // Get company name from parent card — do NOT use link text directly
+            // because link text is often the shop ID (e.g. "shop020w0k390l115")
+            let name = '';
+            const card2 = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"], [class*="factory"], li, .result');
+            if (card2) {
+              const nameEl = card2.querySelector('[class*="name"], [class*="title"], [class*="company"], h3, h4, h2');
+              if (nameEl) name = nameEl.textContent?.trim() || '';
+            }
+            // Fallback: use link text only if it looks like a real company name
+            // (not a shop ID like "shop020w0k390l115")
+            if (!name || name.length < 2) {
+              const linkText = link.textContent?.trim() || '';
+              if (linkText.length >= 2 && linkText.length <= 100 && !/^shop[a-z0-9]+$/i.test(linkText)) {
+                name = linkText;
               }
             }
             if (!name || name.length < 2 || name.length > 100) continue;

@@ -2025,43 +2025,34 @@ export class Scraper1688 {
             const screenshotPath = path.join(logsDir, `debug-store-${Date.now()}.png`);
             await this.page.screenshot({ path: screenshotPath, fullPage: false });
             const pageTitle = await this.page.title();
-            // Targeted DOM inspection — find product-like elements and their classes/hrefs
+            // Exhaustive DOM inspection — find product-like elements and their classes/hrefs
             const domDiag = await this.page.evaluate(() => {
-              // All links that contain offer IDs
-              const offerLinks = Array.from(document.querySelectorAll('a[href]'))
+              // ALL anchor hrefs on the page (first 20)
+              const allLinks = Array.from(document.querySelectorAll('a[href]'))
                 .map(a => (a as HTMLAnchorElement).href)
-                .filter(h => /offer|detail|offerId/i.test(h))
-                .slice(0, 10);
-              // Check candidate container selectors
-              const selectors = [
-                '.shop-offer-item', '.shopOffer-item', '.offer-item-wrap',
-                '[class*="offerItem"]', '[class*="OfferItem"]',
-                '[class*="product-item"]', '[class*="ProductItem"]',
-                '[class*="goodsItem"]', '[class*="GoodsItem"]',
-                '[class*="item-card"]', '[class*="ItemCard"]',
-                '[class*="galleryItem"]', '[class*="GalleryItem"]',
-                '.item-img', '[class*="itemImg"]',
-              ];
-              const counts: Record<string, number> = {};
-              for (const sel of selectors) {
-                counts[sel] = document.querySelectorAll(sel).length;
-              }
-              // First class on first few divs/li elements under main content
-              const sampleClasses = Array.from(document.querySelectorAll('main *, [class*="content"] *, [class*="list"] *'))
-                .filter(el => el.className && typeof el.className === 'string' && el.className.length > 0)
-                .map(el => el.className.split(' ')[0])
-                .filter((c, i, arr) => arr.indexOf(c) === i) // unique
-                .slice(0, 30);
-              return { offerLinks, selectorCounts: counts, sampleClasses };
+                .slice(0, 20);
+              // Offer-type links specifically
+              const offerLinks = allLinks.filter(h => /offer|detail|offerId|1688\.com\/\d/i.test(h));
+              // ALL unique class names anywhere in the document
+              const allClasses = Array.from(document.querySelectorAll('[class]'))
+                .flatMap(el => (el.className && typeof el.className === 'string') ? el.className.split(' ') : [])
+                .filter((c, i, arr) => c.length > 2 && arr.indexOf(c) === i)
+                .slice(0, 60);
+              // Total element counts
+              const totalLinks = document.querySelectorAll('a').length;
+              const totalImages = document.querySelectorAll('img').length;
+              return { allLinks, offerLinks, allClasses, totalLinks, totalImages };
             });
             logger.warn('Store page returned 0 products — DOM diagnostic', {
               actualUrl,
               pageTitle,
               screenshotPath,
               urlPattern: patternIndex,
+              totalLinks: domDiag.totalLinks,
+              totalImages: domDiag.totalImages,
+              allLinks: domDiag.allLinks,
               offerLinks: domDiag.offerLinks,
-              selectorCounts: domDiag.selectorCounts,
-              sampleClasses: domDiag.sampleClasses,
+              allClasses: domDiag.allClasses,
             });
 
             if (patternIndex < urlPatterns.length - 1) {

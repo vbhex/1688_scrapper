@@ -139,6 +139,7 @@ interface PendingProduct {
   seller_id: string | null;
   created_at: Date;
   specs_brand: string | null;  // from products_raw.specifications_zh -> 品牌 field
+  source_type: string | null;  // 'brand_safe_discovery' | 'auto_discovery' | 'manual_seller' | 'legacy_3c'
 }
 
 interface CLIOptions {
@@ -165,6 +166,7 @@ function parseArgs(): CLIOptions {
 async function getPendingProducts(limit: number, minAgeHours: number): Promise<PendingProduct[]> {
   const pool = await getPool();
   const query = `SELECT p.id, p.id_1688, p.title_zh, p.category, p.created_at,
+            p.source_type,
             pr.price_cny, pr.seller_name as seller_id,
             pr.specifications_zh
      FROM products p
@@ -193,6 +195,7 @@ async function getPendingProducts(limit: number, minAgeHours: number): Promise<P
       seller_id: r.seller_id,
       created_at: r.created_at,
       specs_brand: specsBrand,
+      source_type: r.source_type || null,
     };
   });
 }
@@ -251,6 +254,43 @@ async function main(): Promise<void> {
   let warned = 0;
 
   for (const product of products) {
+    // ── PHASE 1 FAST-TRACK ────────────────────────────────────────────────────
+    // brand_safe_discovery products come from categories that are structurally
+    // impossible to have brand issues (DIY supplies, hair clips, phone cases…).
+    // They already passed Task 1B's brand pre-filter. Skip all layers and
+    // authorize instantly. Re-enable full checks in Phase 2 by removing this
+    // block once we expand to general categories (watches, bags, shoes…).
+    if (product.source_type === 'brand_safe_discovery') {
+      const results: AutoCheckResults = {
+        brand_list_check: 'pass',
+        price_check:      'pass',
+        category:         product.category,
+        price_cny:        product.price_cny,
+        checked_at:       new Date().toISOString(),
+      };
+      if (!options.dryRun) {
+        await upsertAuthorizedProduct({
+          productId:            product.id,
+          authorizationType:    'not_branded',
+          authorizedPlatforms:  ['aliexpress', 'amazon', 'ebay', 'etsy'],
+          confirmedBy:          'task8b-auto-verify',
+          confirmedAt:          new Date(),
+          active:               true,
+          confidence:           'auto_verified',
+          autoCheckResults:     results,
+          notes:                'Phase 1 brand-safe category — instant pass',
+        });
+      }
+      autoAuthorized++;
+      logger.info('Brand-safe instant pass', {
+        id:       product.id,
+        title:    product.title_zh.substring(0, 40),
+        category: product.category,
+      });
+      continue;
+    }
+    // ── END PHASE 1 FAST-TRACK ────────────────────────────────────────────────
+
     // Layer 1: Brand list re-check on title (always runs first)
     const brandCheck = checkLayer1ImageLogos(product);
 

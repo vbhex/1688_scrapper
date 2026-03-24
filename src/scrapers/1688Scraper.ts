@@ -2199,26 +2199,22 @@ export class Scraper1688 {
 
       await randomDelay(3000, 5000);
 
-      // Now switch to "找工厂" (Find Factory) or "找公司" (Find Company) tab if available
-      // 1688 search results have tabs: 找货 (products), 找工厂 (factories), 找公司 (companies)
-      const switchedToFactory = await this.page.evaluate(() => {
-        const tabs = Array.from(document.querySelectorAll('a, div, span, button'));
-        for (const tab of tabs) {
-          const text = (tab.textContent || '').trim();
-          if ((text === '找工厂' || text === '找公司' || text.includes('工厂') || text.includes('供应商'))
-              && (tab as HTMLElement).offsetHeight > 0) {
-            (tab as HTMLElement).click();
-            return text;
-          }
-        }
-        return null;
-      });
+      // Switch to factory/supplier search by modifying the URL.
+      // After product search, URL is: s.1688.com/selloffer/offer_search.htm?keywords=XXX
+      // Factory search URL is: s.1688.com/company/company_search.htm?keywords=XXX (same params)
+      const currentUrl = this.page.url();
+      logger.info('Product search URL', { url: currentUrl.substring(0, 120) });
 
-      if (switchedToFactory) {
-        logger.info(`Switched to factory/supplier tab: ${switchedToFactory}`);
+      if (currentUrl.includes('s.1688.com')) {
+        // Replace the path to switch to company/factory search
+        const factoryUrl = currentUrl
+          .replace('/selloffer/offer_search.htm', '/company/company_search.htm')
+          .replace('/offer/', '/company/');
+        logger.info('Navigating to factory search', { url: factoryUrl.substring(0, 120) });
+        await this.page.goto(factoryUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await randomDelay(3000, 5000);
       } else {
-        logger.info('No factory tab found, extracting suppliers from product search results');
+        logger.info('Not on s.1688.com — extracting suppliers from current page');
       }
 
       // Extract supplier info from search results
@@ -2237,48 +2233,50 @@ export class Scraper1688 {
             mainProducts: string;
             location: string;
           }> = [];
+          const seenInPage = new Set<string>();
 
-          // Strategy 1: Factory/company result cards
-          const companyCards = Array.from(document.querySelectorAll(
-            '[class*="company"], [class*="factory"], [class*="supplier"], [class*="CompanyCard"], [class*="shopCard"]'
-          ));
-          for (const card of companyCards) {
-            const nameEl = card.querySelector('a[href*="shop"], a[href*="1688.com"], [class*="name"], [class*="title"]');
-            const name = nameEl?.textContent?.trim() || '';
-            const href = (nameEl as HTMLAnchorElement)?.href || '';
+          // Find ALL links pointing to shop*.1688.com — most reliable approach
+          // Works on both factory search and product search results
+          const allLinks = Array.from(document.querySelectorAll('a[href*="shop"]'));
+          for (const link of allLinks) {
+            const href = (link as HTMLAnchorElement).href;
             const shopMatch = href.match(/https?:\/\/shop([^.]+)\.1688\.com/);
-            if (name && shopMatch) {
-              const mainProducts = card.querySelector('[class*="product"], [class*="main"]')?.textContent?.trim() || '';
-              const location = card.querySelector('[class*="location"], [class*="area"], [class*="address"]')?.textContent?.trim() || '';
-              suppliers.push({
-                storeName: name,
-                storeUrl: `https://shop${shopMatch[1]}.1688.com/`,
-                sellerId: shopMatch[1],
-                mainProducts,
-                location,
-              });
-            }
-          }
+            if (!shopMatch) continue;
+            const sellerId = shopMatch[1];
+            if (seenInPage.has(sellerId)) continue;
 
-          // Strategy 2: Extract from product cards (seller links)
-          if (suppliers.length === 0) {
-            const allLinks = Array.from(document.querySelectorAll('a[href*="shop"]'));
-            for (const link of allLinks) {
-              const href = (link as HTMLAnchorElement).href;
-              const shopMatch = href.match(/https?:\/\/shop([^.]+)\.1688\.com/);
-              if (shopMatch && (link as HTMLElement).offsetHeight > 0) {
-                const name = link.textContent?.trim() || '';
-                if (name && name.length > 1 && name.length < 100) {
-                  suppliers.push({
-                    storeName: name,
-                    storeUrl: `https://shop${shopMatch[1]}.1688.com/`,
-                    sellerId: shopMatch[1],
-                    mainProducts: '',
-                    location: '',
-                  });
-                }
+            // Get the store name from: the link text, or nearest parent card text
+            let name = link.textContent?.trim() || '';
+            // Skip tiny text (single chars) or huge text (entire page)
+            if (name.length < 2 || name.length > 80) {
+              // Try to find a name from the parent container
+              const parent = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"]');
+              if (parent) {
+                const nameEl = parent.querySelector('[class*="name"], [class*="title"], h3, h4');
+                if (nameEl) name = nameEl.textContent?.trim() || '';
               }
             }
+            if (!name || name.length < 2 || name.length > 80) continue;
+
+            // Try to get location + main products from parent card
+            let mainProducts = '';
+            let location = '';
+            const card = link.closest('[class*="card"], [class*="item"], [class*="Card"], [class*="company"], [class*="factory"]');
+            if (card) {
+              const locEl = card.querySelector('[class*="location"], [class*="area"], [class*="address"], [class*="region"]');
+              location = locEl?.textContent?.trim() || '';
+              const prodEl = card.querySelector('[class*="product"], [class*="main"], [class*="tag"]');
+              mainProducts = prodEl?.textContent?.trim() || '';
+            }
+
+            seenInPage.add(sellerId);
+            suppliers.push({
+              storeName: name,
+              storeUrl: `https://shop${sellerId}.1688.com/`,
+              sellerId,
+              mainProducts: mainProducts.substring(0, 200),
+              location: location.substring(0, 100),
+            });
           }
 
           return suppliers;

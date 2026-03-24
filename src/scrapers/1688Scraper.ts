@@ -1963,6 +1963,69 @@ export class Scraper1688 {
     return detailedProducts;
   }
 
+  /**
+   * Scrape all products listed in a specific 1688 seller store.
+   * Used for verified providers (trust_level='verified') in the Amazon sourcing pipeline.
+   *
+   * Navigates to `{shopUrl}shop/offerlist.htm` and pages through results.
+   * Returns basic product info (same shape as searchProducts) — Task 2 fills in full details.
+   *
+   * @param shopUrl  Base shop URL, e.g. https://shop020w0k390l115.1688.com/
+   * @param limit    Max products to collect (0 = no limit, collect all)
+   */
+  async scrapeStoreProducts(shopUrl: string, limit: number = 0): Promise<ScrapedProduct[]> {
+    if (!this.page) throw new Error('Browser not initialized');
+
+    const baseUrl = shopUrl.replace(/\/$/, '');
+    const products: ScrapedProduct[] = [];
+    let pageIndex = 1;
+    const maxPages = 50; // safety cap — most stores have < 500 products
+
+    logger.info('Scraping verified provider store', { shopUrl, limit });
+
+    while (pageIndex <= maxPages) {
+      const url = `${baseUrl}/shop/offerlist.htm?pageIndex=${pageIndex}`;
+      logger.info('Navigating to store page', { url, pageIndex });
+
+      try {
+        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await randomDelay(2000, 3000);
+
+        const pageProducts = await this.extractProductsFromPage();
+        if (pageProducts.length === 0) {
+          logger.info('No products on page — reached end of store', { pageIndex });
+          break;
+        }
+
+        for (const p of pageProducts) {
+          if (!products.find(existing => existing.id1688 === p.id1688)) {
+            products.push(p);
+          }
+        }
+
+        logger.info('Store page scraped', { pageIndex, pageCount: pageProducts.length, totalSoFar: products.length });
+
+        if (limit > 0 && products.length >= limit) break;
+
+        // Check if there is a next page button
+        const hasNextPage = await this.page.evaluate(() => {
+          const next = document.querySelector('.next-pagination-item-next:not(.disabled), a[rel="next"], .next-btn-next:not(.disabled)');
+          return next !== null;
+        });
+        if (!hasNextPage) break;
+
+        pageIndex++;
+        await randomDelay(1500, 2500);
+      } catch (err) {
+        logger.warn('Store page failed, stopping', { pageIndex, error: (err as Error).message });
+        break;
+      }
+    }
+
+    logger.info('Store scrape complete', { shopUrl, total: products.length });
+    return limit > 0 ? products.slice(0, limit) : products;
+  }
+
   // ──────────────────────────────────────────────────────────────────────────
   // Compliance helpers — call AFTER navigating to a product page
   // ──────────────────────────────────────────────────────────────────────────

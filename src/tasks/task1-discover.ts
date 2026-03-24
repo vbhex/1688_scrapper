@@ -2,11 +2,23 @@
  * Task 1: Product Discovery
  * Searches 1688.com for products and saves basic info to the database.
  *
+ * TWO DISCOVERY MODES run every time:
+ *
+ *   1. Blue-ocean categories (AliExpress / eBay / Etsy)
+ *      Keyword search for brand-safe categories (Phase 1) or all blue-ocean (Phase 2).
+ *      source_type = 'brand_safe_discovery' | 'auto_discovery'
+ *
+ *   2. Verified provider stores (Amazon + any platform in providers.target_platforms)
+ *      Checks providers table for trust_level='verified' stores not yet scraped.
+ *      Scrapes ALL products from each store page.
+ *      source_type = 'manual_seller', provider_id = providers.id
+ *      Skips stores scraped within the last 7 days (configurable with --provider-rescrape-days).
+ *
  * Usage:
  *   node dist/tasks/task1-discover.js --category earphones --limit 20
- *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25     # loop ALL 335 enabled categories
- *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25 --l1 "Watches"  # filter by L1
- *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25 --batch 5 --resume  # 5 categories, skip completed
+ *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25
+ *   node dist/tasks/task1-discover.js --all-blue-ocean --limit 25 --batch 5 --resume
+ *   node dist/tasks/task1-discover.js --all-blue-ocean --provider-rescrape-days 3  # re-check stores every 3 days
  * Runs on: China MacBook
  */
 
@@ -36,8 +48,17 @@ interface CLIOptions {
   l1Filter: string;
   limit: number;
   headless: boolean;
-  batch: number;      // 0 = all, N = process N categories then exit (for alternating with Task 2)
-  resume: boolean;    // Skip categories that already have >= limit products in DB
+  batch: number;               // 0 = all, N = process N categories then exit
+  resume: boolean;             // Skip categories that already have >= limit products in DB
+  providerRescrapedays: number; // Re-scrape verified stores after this many days (default: 7)
+}
+
+interface VerifiedProvider {
+  id: number;
+  provider_name: string;
+  shop_url: string;
+  target_platforms: string[];
+  last_scraped_at: Date | null;
 }
 
 function parseArgs(): CLIOptions {
@@ -50,6 +71,7 @@ function parseArgs(): CLIOptions {
     headless: false,
     batch: 0,
     resume: false,
+    providerRescrapedays: 7,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -67,6 +89,8 @@ function parseArgs(): CLIOptions {
       options.batch = parseInt(args[++i]) || 0;
     } else if (args[i] === '--resume') {
       options.resume = true;
+    } else if (args[i] === '--provider-rescrape-days' && args[i + 1]) {
+      options.providerRescrapedays = parseInt(args[++i]) || 7;
     }
   }
 
@@ -149,6 +173,38 @@ async function discoverCategory(
   }
 
   return { discovered, skipped, duplicates };
+}
+
+async function getVerifiedProviders(reScrapeAfterDays: number): Promise<VerifiedProvider[]> {
+  const pool = await getPool();
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `SELECT id, provider_name, shop_url, target_platforms, last_scraped_at
+     FROM providers
+     WHERE trust_level = 'verified'
+       AND shop_url IS NOT NULL
+       AND (
+         last_scraped_at IS NULL
+         OR last_scraped_at < DATE_SUB(NOW(), INTERVAL ${Number(reScrapeAfterDays)} DAY)
+       )
+     ORDER BY last_scraped_at ASC`
+  );
+  return rows.map(r => ({
+    id: r.id,
+    provider_name: r.provider_name,
+    shop_url: r.shop_url,
+    target_platforms: (() => {
+      try {
+        const p = typeof r.target_platforms === 'string' ? JSON.parse(r.target_platforms) : r.target_platforms;
+        return Array.isArray(p) ? p : [];
+      } catch { return []; }
+    })(),
+    last_scraped_at: r.last_scraped_at || null,
+  }));
+}
+
+async function markProviderScraped(providerId: number): Promise<void> {
+  const pool = await getPool();
+  await pool.execute('UPDATE providers SET last_scraped_at = NOW() WHERE id = ?', [providerId]);
 }
 
 async function getCompletedCategories(limit: number): Promise<Set<string>> {
@@ -268,6 +324,79 @@ async function main(): Promise<void> {
       totalDuplicates,
     });
     logger.info('══════════════════════════════════════════');
+
+    // ── VERIFIED PROVIDER STORE SCRAPING ────────────────────────────────────
+    // Scrape all products from 1688 stores belonging to trust_level='verified'
+    // providers. Products are tagged source_type='manual_seller' and routed to
+    // the platforms listed in providers.target_platforms (e.g. ['amazon']).
+    // Stores are re-scraped every `providerRescrapedays` days.
+    const verifiedProviders = await getVerifiedProviders(options.providerRescrapedays);
+
+    if (verifiedProviders.length === 0) {
+      logger.info('No verified providers need scraping right now');
+    } else {
+      logger.info(`Found ${verifiedProviders.length} verified provider store(s) to scrape`);
+
+      for (const provider of verifiedProviders) {
+        logger.info('Scraping verified provider store', {
+          id: provider.id,
+          name: provider.provider_name,
+          shopUrl: provider.shop_url,
+          targetPlatforms: provider.target_platforms,
+        });
+
+        try {
+          const storeProducts = await scraper.scrapeStoreProducts(provider.shop_url, 0);
+          let providerDiscovered = 0;
+          let providerSkipped = 0;
+          let providerDuplicates = 0;
+
+          for (const product of storeProducts) {
+            if (isBannedBrand(product.title)) {
+              logger.info('Provider product: skipping banned brand', { title: product.title.substring(0, 60) });
+              providerSkipped++;
+              continue;
+            }
+
+            const thumbnailUrl = product.images.length > 0 ? product.images[0] : '';
+            const id = await discoverProduct(
+              product.id1688,
+              product.url,
+              product.title,
+              `provider_${provider.id}`,   // category label identifies the source provider
+              thumbnailUrl,
+              'manual_seller',
+              provider.id,
+            );
+
+            if (id) {
+              providerDiscovered++;
+              logger.info(`Provider product discovered: ${product.title.substring(0, 50)}`);
+            } else {
+              providerDuplicates++;
+            }
+          }
+
+          await markProviderScraped(provider.id);
+
+          logger.info('Provider store scrape done', {
+            provider: provider.provider_name,
+            discovered: providerDiscovered,
+            skipped: providerSkipped,
+            duplicates: providerDuplicates,
+          });
+
+          totalDiscovered += providerDiscovered;
+          totalSkipped += providerSkipped;
+        } catch (providerErr) {
+          logger.error('Provider store scrape failed', {
+            provider: provider.provider_name,
+            error: (providerErr as Error).message,
+          });
+        }
+      }
+    }
+    // ── END VERIFIED PROVIDER STORE SCRAPING ────────────────────────────────
   } catch (error) {
     logger.error('Task 1 failed', { error: (error as Error).message });
   } finally {

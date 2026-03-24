@@ -1,7 +1,15 @@
 #!/bin/bash
-# Alternating pipeline: Task 1 (batch) → Task 2 → Task 3 → repeat
-# This keeps products flowing to Task 8 continuously instead of waiting
-# for all 437 categories to be discovered first.
+# Alternating pipeline: Task 1 (batch) → Task 1B → Task 2 → Task 3 → Task 8B → Task 4 → Task 5 → repeat
+# This keeps products flowing continuously instead of waiting for all categories to finish first.
+#
+# PLATFORM SCOPE: AliExpress (2087779) + eBay + Etsy ONLY.
+#   Amazon is excluded — it uses manual seller sourcing, not this automated pipeline.
+#   Products are authorized for ['aliexpress', 'ebay', 'etsy'] in Task 8B.
+#   Amazon products enter at Task 2 with source_type='manual_seller' (separate flow).
+#
+# PHASE: 1 (brand-safe categories only — 108 of 335 blue-ocean categories).
+#   Task 8B fast-tracks brand_safe_discovery products instantly.
+#   Phase 2 (general categories) requires explicit user approval — see CLAUDE.md.
 #
 # Usage: bash run-alternating-pipeline.sh [batch_size] [limit_per_category]
 #   batch_size: categories per Task 1 batch (default: 5)

@@ -272,7 +272,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId:            product.id,
           authorizationType:    'not_branded',
-          authorizedPlatforms:  ['aliexpress', 'amazon', 'ebay', 'etsy'],
+          authorizedPlatforms:  ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
           confirmedBy:          'task8b-auto-verify',
           confirmedAt:          new Date(),
           active:               true,
@@ -315,7 +315,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId: product.id,
           authorizationType: 'not_branded',
-          authorizedPlatforms: ['aliexpress', 'amazon', 'ebay', 'etsy'],
+          authorizedPlatforms: ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
           confirmedBy: 'task8b-auto-verify',
           confirmedAt: new Date(),
           active: true,
@@ -381,7 +381,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId: product.id,
           authorizationType: 'not_branded',
-          authorizedPlatforms: ['aliexpress', 'amazon', 'ebay', 'etsy'],
+          authorizedPlatforms: ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
           confirmedBy: 'task8b-auto-verify',
           confirmedAt: new Date(),
           active: true,
@@ -404,7 +404,7 @@ async function main(): Promise<void> {
         await upsertAuthorizedProduct({
           productId: product.id,
           authorizationType: 'not_branded',
-          authorizedPlatforms: ['aliexpress', 'amazon', 'ebay', 'etsy'],
+          authorizedPlatforms: ['aliexpress', 'ebay', 'etsy'],  // Amazon uses manual sourcing — excluded from brand-safe pipeline
           confirmedBy: 'task8b-auto-verify',
           confirmedAt: new Date(),
           active: true,

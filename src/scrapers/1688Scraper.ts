@@ -1983,12 +1983,14 @@ export class Scraper1688 {
 
     logger.info('Scraping verified provider store', { shopUrl, limit });
 
-    // Some 1688 stores serve products at /shop/offerlist.htm (classic);
-    // others redirect that path and serve the listing at the store root /.
-    // We try offerlist.htm first; if page 1 returns 0 products we fall back
-    // to the store root and try once more before giving up.
+    // 1688 store product-list URL patterns — tried in order until one yields products.
+    // Pattern 0: classic offerlist.htm (older stores)
+    // Pattern 1: /page/offerlist.html (newer store format)
+    // Pattern 2: store root / (homepage, shows featured products; limited pagination)
+    // The first pattern that returns ≥1 product on page 1 is used for all subsequent pages.
     const urlPatterns: Array<(idx: number) => string> = [
       (idx) => `${baseUrl}/shop/offerlist.htm?pageIndex=${idx}`,
+      (idx) => `${baseUrl}/page/offerlist.html?pageIndex=${idx}`,
       (idx) => `${baseUrl}/?pageIndex=${idx}`,
     ];
     let patternIndex = 0;
@@ -2057,9 +2059,18 @@ export class Scraper1688 {
 
         if (limit > 0 && products.length >= limit) break;
 
-        // Check if there is a next page button
+        // Check if there is a next page button — try multiple selector patterns
+        // used by different 1688 store page layouts (offerlist vs. store root vs. new format)
         const hasNextPage = await this.page.evaluate(() => {
-          const next = document.querySelector('.next-pagination-item-next:not(.disabled), a[rel="next"], .next-btn-next:not(.disabled)');
+          const next = document.querySelector(
+            '.next-pagination-item-next:not(.disabled), ' +
+            'a[rel="next"], ' +
+            '.next-btn-next:not(.disabled), ' +
+            '[class*="pagination"] [class*="next"]:not([class*="disabled"]), ' +
+            '[class*="Pagination"] [class*="next"]:not([class*="disabled"]), ' +
+            'li.ant-pagination-next:not(.ant-pagination-disabled), ' +
+            '.pagination-next:not(.disabled)'
+          );
           return next !== null;
         });
         if (!hasNextPage) break;

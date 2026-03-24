@@ -22,6 +22,7 @@ import {
   getProviderByPlatformId,
   upsertProvider,
   closeDatabase,
+  getPool,
 } from '../database/db';
 import { createChildLogger } from '../utils/logger';
 import { randomDelay } from '../utils/helpers';
@@ -120,34 +121,36 @@ async function main(): Promise<void> {
         }
 
         // Insert into providers table
-        const providerId = await upsertProvider({
-          providerName: supplier.storeName,
-          platform: '1688',
-          platformId: supplier.sellerId,
-          shopUrl: supplier.storeUrl,
-          trustLevel: 'new',
-          totalProducts: 0,
-          notes: JSON.stringify({
-            source: '3c_outreach',
-            targetPlatform: 'amazon',
-            category,
-            mainProducts: supplier.mainProducts || '',
-            location: supplier.location || '',
-            discoveredAt: new Date().toISOString(),
-          }),
-        });
+        try {
+          const providerId = await upsertProvider({
+            providerName: supplier.storeName,
+            platform: '1688',
+            platformId: supplier.sellerId,
+            shopUrl: supplier.storeUrl,
+            trustLevel: 'new',
+            totalProducts: 0,
+            notes: JSON.stringify({
+              source: '3c_outreach',
+              targetPlatform: 'amazon',
+              category,
+              mainProducts: supplier.mainProducts || '',
+              location: supplier.location || '',
+              discoveredAt: new Date().toISOString(),
+            }),
+          });
 
-        // Update the new columns (source, target_platform, main_categories)
-        // These are set via direct SQL since upsertProvider doesn't include them yet
-        const pool = (await import('../database/db')).getPool;
-        const p = await pool();
-        await p.execute(
-          `UPDATE providers SET source = '3c_outreach', target_platform = 'amazon', main_categories = ? WHERE id = ?`,
-          [JSON.stringify([category]), providerId]
-        );
+          // Update the new columns (source, target_platform, main_categories)
+          const p = await getPool();
+          await p.execute(
+            `UPDATE providers SET source = '3c_outreach', target_platform = 'amazon', main_categories = ? WHERE platform = '1688' AND platform_id = ?`,
+            [JSON.stringify([category]), supplier.sellerId]
+          );
 
-        totalNew++;
-        logger.info(`Inserted: ${supplier.storeName} | ${supplier.storeUrl} | category: ${category}`);
+          totalNew++;
+          logger.info(`Inserted: ${supplier.storeName} | ${supplier.storeUrl} | category: ${category} | id: ${providerId}`);
+        } catch (err: any) {
+          logger.error(`Failed to insert supplier: ${supplier.storeName}`, { error: err.message });
+        }
       }
 
       // Delay between categories

@@ -2001,20 +2001,16 @@ export class Scraper1688 {
       logger.info('Navigating to store page', { url, pageIndex, urlPattern: patternIndex });
 
       try {
-        await this.page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        // Store pages (especially /page/offerlist.html) are React SPAs.
+        // networkidle2 waits until React finishes fetching + rendering product data.
+        // domcontentloaded fires too early — product grid is empty at that point.
+        await this.page.goto(url, { waitUntil: 'networkidle2', timeout: 45000 });
 
-        // Log actual URL after navigation — detects redirects (e.g. to login page)
+        // Log actual URL after navigation — detects redirects (e.g. captcha, login page)
         const actualUrl = this.page.url();
         if (actualUrl !== url) {
           logger.info('Store page redirected', { from: url, to: actualUrl });
         }
-
-        // Wait up to 8 s for any product card / offer link to appear in the DOM.
-        // This handles JS-rendered listings that aren't ready at domcontentloaded.
-        await this.page.waitForSelector(
-          '.sm-offer-item, .offer-item, [class*="offer-card"], [class*="CardContainer"], a[href*="offerId="], a[href*="detail.1688.com/offer/"]',
-          { timeout: 8000 }
-        ).catch(() => { /* page may be empty or use unknown selectors — that's fine */ });
 
         await randomDelay(2000, 3000);
 

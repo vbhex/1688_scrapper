@@ -27,6 +27,19 @@ import { findClosestColorFamily, cleanVariantName } from '../utils/helpers';
 
 const logger = createChildLogger('task4-translate');
 
+/**
+ * Returns true if text is already in English (< 10% CJK characters).
+ * 1688 displays in English on the China MacBook browser, so scraped content
+ * is already translated by 1688's own system — no API call needed.
+ */
+function isAlreadyEnglish(text: string | null | undefined): boolean {
+  if (!text) return true;
+  const cjkCount = (text.match(/[\u4e00-\u9fff\u3400-\u4dbf\uff00-\uffef\u3000-\u303f]/g) || []).length;
+  const totalChars = text.replace(/\s/g, '').length;
+  if (totalChars === 0) return true;
+  return cjkCount / totalChars < 0.1; // less than 10% CJK = already English
+}
+
 function parseArgs(): { limit: number; category?: string } {
   const args = process.argv.slice(2);
   let limit = 10;
@@ -113,13 +126,43 @@ async function main(): Promise<void> {
           variantsForTranslation = { options, skus };
         }
 
-        // Translate
-        const translation = await translateProduct(
-          raw.titleZh,
-          raw.descriptionZh,
-          raw.specificationsZh,
-          variantsForTranslation,
-        );
+        // Check if content is already in English (1688 browser set to English)
+        const alreadyEnglish = isAlreadyEnglish(raw.titleZh) && isAlreadyEnglish(raw.descriptionZh);
+
+        let translation: Awaited<ReturnType<typeof translateProduct>>;
+        if (alreadyEnglish) {
+          // Skip translation API — content already in English from 1688's own UI translation.
+          // Just pass the scraped text through as-is.
+          logger.info('Content already in English — skipping translation API', { id: prod.id1688 });
+          const specsEN = raw.specificationsZh
+            ? (typeof raw.specificationsZh === 'string' ? JSON.parse(raw.specificationsZh) : raw.specificationsZh)
+            : [];
+          translation = {
+            titleEN: raw.titleZh ?? '',
+            descriptionEN: raw.descriptionZh ?? '',
+            specificationsEN: specsEN,
+            variantsEN: variantsForTranslation
+              ? {
+                  options: variantsForTranslation.options.map(o => ({ name: o.name, values: o.values })),
+                  skus: variantsForTranslation.skus.map(s => ({
+                    optionValues: s.optionValues,
+                    priceCNY: s.priceCNY,
+                    stock: s.stock,
+                    image: s.image,
+                    available: s.available,
+                  })),
+                }
+              : undefined,
+          };
+        } else {
+          // Content is Chinese — call translation API as normal
+          translation = await translateProduct(
+            raw.titleZh,
+            raw.descriptionZh,
+            raw.specificationsZh,
+            variantsForTranslation,
+          );
+        }
 
         // Convert price
         const priceUsd = await convertPrice(Number(raw.priceCny));
@@ -221,13 +264,23 @@ async function translateNormalizedVariants(productId: number): Promise<void> {
 
   for (const variant of variants) {
     if (!variant.variantNameEn && variant.variantNameZh) {
-      textsToTranslate.push(variant.variantNameZh);
-      textMap.push({ type: 'dimension', variantId: variant.id!, zh: variant.variantNameZh });
+      if (isAlreadyEnglish(variant.variantNameZh)) {
+        // Already English — write directly without API call
+        await updateVariantNameTranslation(variant.id!, variant.variantNameZh);
+      } else {
+        textsToTranslate.push(variant.variantNameZh);
+        textMap.push({ type: 'dimension', variantId: variant.id!, zh: variant.variantNameZh });
+      }
     }
     for (const value of variant.values) {
       if (!value.valueNameEn && value.valueNameZh) {
-        textsToTranslate.push(value.valueNameZh);
-        textMap.push({ type: 'value', variantId: variant.id!, valueId: value.id!, zh: value.valueNameZh });
+        if (isAlreadyEnglish(value.valueNameZh)) {
+          // Already English — write directly without API call
+          await updateVariantValueTranslation(value.id!, cleanVariantName(value.valueNameZh));
+        } else {
+          textsToTranslate.push(value.valueNameZh);
+          textMap.push({ type: 'value', variantId: variant.id!, valueId: value.id!, zh: value.valueNameZh });
+        }
       }
     }
   }

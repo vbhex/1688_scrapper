@@ -501,6 +501,18 @@ async function initializeSchema(): Promise<void> {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Trademark API response cache — keyed on (term) with a 7-day TTL.
+    // Populated by trademarkChecker.ts when querying EUIPO / USPTO APIs.
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS trademark_cache (
+        id          INT AUTO_INCREMENT PRIMARY KEY,
+        term        VARCHAR(200) NOT NULL,
+        result_json JSON NOT NULL COMMENT 'Array of TrademarkHit objects',
+        checked_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY idx_term (term)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     logger.info('Database schema initialized');
   } finally {
     connection.release();

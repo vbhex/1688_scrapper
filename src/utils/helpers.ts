@@ -172,21 +172,71 @@ export function isAppleBrand(text: string): boolean {
   return isBannedBrand(text);
 }
 
+// ---------------------------------------------------------------------------
+// Brand matching strategy (2026-03-25 — fixed over-triggering on English spec text)
+//
+// Three tiers based on keyword type:
+//
+// 1. SHORT ASCII (≤3 chars, e.g. "CK", "UA", "MK", "Lee"):
+//    → \b word-boundary regex.  Prevents "stock"→CK, "guarantees"→UA.
+//
+// 2. LONG ASCII (4+ chars, e.g. "Marvel", "Canon", "Coach", "Omega", "Fossil"):
+//    → (?<![a-zA-Z])keyword(?![a-zA-Z]) — letter-continuation lookaheads.
+//    → Same as word-boundary for standalone matches ("Marvel bag" ✓).
+//    → Unlike word-boundary, also blocks cross-word continuation:
+//      "marvelous" ✗  "canonical" ✗  "coaching" ✗  "omega-3" ✗
+//    → Why not \b?  \b treats "-" as a boundary, so "omega-3" would STILL match
+//      with \b but NOT match with the letter-only lookahead — which is correct.
+//
+// 3. CHINESE / mixed (contains CJK chars, e.g. "耐克", "古驰"):
+//    → Plain substring match (.includes()).  Chinese has no word boundaries.
+//
+// exactMatch = true in DB overrides to \b regardless of length.
+// ---------------------------------------------------------------------------
+
+/**
+ * True if the keyword consists entirely of ASCII / Latin characters
+ * (letters, digits, spaces, and common punctuation — no CJK).
+ */
+function isAsciiKeyword(kw: string): boolean {
+  return !/[\u3000-\u9fff\uff00-\uffef\u4e00-\u9fff]/.test(kw);
+}
+
+/**
+ * Build the match regex for one brand keyword entry.
+ * Centralised so isBannedBrand() and getBannedBrandMatch() stay in sync.
+ */
+function buildBrandRegex(cached: CachedBrand): RegExp | null {
+  const ascii = isAsciiKeyword(cached.keyword);
+  const isShort = ascii && /^[a-z0-9&\-]{1,3}$/.test(cached.keyword);
+
+  if (cached.exactMatch || isShort) {
+    // Tier 1: \b word-boundary (short abbreviations + explicit exact-match brands)
+    return new RegExp(`\\b${escapeRegex(cached.keyword)}\\b`, 'i');
+  }
+
+  if (ascii) {
+    // Tier 2: letter-continuation lookaheads (long ASCII brand names)
+    // "marvel" matches "Marvel watch" but NOT "marvelous"
+    // "fossil" matches "Fossil bag" but NOT "fossil fuel"
+    // "coach"  matches "Coach purse" but NOT "coaching session"
+    const escaped = escapeRegex(cached.keyword);
+    return new RegExp(`(?<![a-zA-Z])${escaped}(?![a-zA-Z])`, 'i');
+  }
+
+  // Tier 3: Chinese — no regex, caller uses .includes()
+  return null;
+}
+
 // CRITICAL: Never scrape/list products from major brands — AliExpress will punish the store.
 // Uses DB-backed cache (loaded via initBrandCache) with JSON fallback.
 export function isBannedBrand(text: string | null | undefined): boolean {
   if (!text) return false;
   const lowerText = text.toLowerCase();
   return getBrandKeywords().some(cached => {
-    // Short ASCII abbreviations (≤3 chars, e.g. "CK", "UA", "MK") must always use
-    // word-boundary matching to prevent false positives on common words like
-    // "stock" (ck), "guarantees" (ua), "measurement" (ea), "sleeve" (lee), etc.
-    const forceExact = /^[a-z0-9&\-]{1,3}$/.test(cached.keyword);
-    if (cached.exactMatch || forceExact) {
-      const regex = new RegExp(`\\b${escapeRegex(cached.keyword)}\\b`, 'i');
-      return regex.test(text);
-    }
-    return lowerText.includes(cached.keyword);
+    const regex = buildBrandRegex(cached);
+    if (regex) return regex.test(text);
+    return lowerText.includes(cached.keyword); // Chinese substring
   });
 }
 
@@ -197,14 +247,8 @@ export function isBannedBrand(text: string | null | undefined): boolean {
 export function getBannedBrandMatch(text: string): BrandMatch {
   const lowerText = text.toLowerCase();
   for (const cached of getBrandKeywords()) {
-    let matched = false;
-    const forceExact = /^[a-z0-9&\-]{1,3}$/.test(cached.keyword);
-    if (cached.exactMatch || forceExact) {
-      const regex = new RegExp(`\\b${escapeRegex(cached.keyword)}\\b`, 'i');
-      matched = regex.test(text);
-    } else {
-      matched = lowerText.includes(cached.keyword);
-    }
+    const regex = buildBrandRegex(cached);
+    const matched = regex ? regex.test(text) : lowerText.includes(cached.keyword);
     if (matched) {
       return { matched: true, brandName: cached.brandName, riskLevel: cached.riskLevel };
     }

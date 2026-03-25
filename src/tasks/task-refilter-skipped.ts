@@ -75,7 +75,9 @@ async function getSkippedProducts(limit: number): Promise<SkippedProduct[]> {
     .map(() => `skip_reason LIKE ?`)
     .join(' OR ');
 
-  const [rows]: any = await pool.execute(
+  // pool.execute() (prepared statements) can choke on LIMIT ? in some mysql2 versions.
+  // Use pool.query() instead — same placeholder support, no prepared-statement caching issues.
+  const [rows]: any = await pool.query(
     `SELECT id, id_1688, title_zh, skip_reason
      FROM products
      WHERE status = 'skipped'
@@ -84,11 +86,10 @@ async function getSkippedProducts(limit: number): Promise<SkippedProduct[]> {
          OR ${brandVariantCondition}
        )
      ORDER BY id
-     LIMIT ?`,
+     LIMIT ${Math.max(1, Math.floor(limit))}`,
     [
       ...BRAND_SKIP_REASONS,
       ...BRAND_SKIP_REASON_PREFIX.map(p => `${p}%`),
-      limit,
     ]
   );
   return rows;

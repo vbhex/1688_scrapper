@@ -178,8 +178,11 @@ export function isBannedBrand(text: string | null | undefined): boolean {
   if (!text) return false;
   const lowerText = text.toLowerCase();
   return getBrandKeywords().some(cached => {
-    if (cached.exactMatch) {
-      // Word-boundary matching to avoid false positives (e.g., "cherry" in "cherry red")
+    // Short ASCII abbreviations (≤3 chars, e.g. "CK", "UA", "MK") must always use
+    // word-boundary matching to prevent false positives on common words like
+    // "stock" (ck), "guarantees" (ua), "measurement" (ea), "sleeve" (lee), etc.
+    const forceExact = /^[a-z0-9&\-]{1,3}$/.test(cached.keyword);
+    if (cached.exactMatch || forceExact) {
       const regex = new RegExp(`\\b${escapeRegex(cached.keyword)}\\b`, 'i');
       return regex.test(text);
     }
@@ -195,7 +198,8 @@ export function getBannedBrandMatch(text: string): BrandMatch {
   const lowerText = text.toLowerCase();
   for (const cached of getBrandKeywords()) {
     let matched = false;
-    if (cached.exactMatch) {
+    const forceExact = /^[a-z0-9&\-]{1,3}$/.test(cached.keyword);
+    if (cached.exactMatch || forceExact) {
       const regex = new RegExp(`\\b${escapeRegex(cached.keyword)}\\b`, 'i');
       matched = regex.test(text);
     } else {

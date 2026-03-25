@@ -35,13 +35,14 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 | **Main Computer** | localhost | Outside China firewall | Tasks 3-4 (using Google APIs) |
 
 **1688 English Mode (2026-03-25) — IMPORTANT:**
-The China MacBook browser session has 1688 set to display in English. This means:
+The Puppeteer browser is launched with `--lang=en-US` (already in the `1688Scraper.ts` launch args). 1688.com respects this flag and serves all content in English — titles, descriptions, specs, variant names. This means:
 - Task 1 scrapes English product titles directly into `title_zh` (field name is misleading — content IS English)
 - Task 2 scrapes English titles, descriptions, specs, and variant names into all `_zh` fields
 - **Task 4 detects this** via `isAlreadyEnglish()` (< 10% CJK characters = English) and **skips the translation API entirely** — it just copies `_zh` → `_en` and converts CNY→USD
 - Translation API (Baidu/Google) is **only called as fallback** if content is genuinely Chinese
 - This eliminates translation API costs for all normally-scraped products
 - The `_zh` field names are kept as-is in the DB schema (no migration needed)
+- **Full doc:** `documents/1688-source/ENGLISH_MODE.md`
 
 - SSH: see root `config/china-macbook.env`
 - SSH flags needed: `-o PreferredAuthentications=password -o PubkeyAuthentication=no`

@@ -147,6 +147,7 @@ interface CLIOptions {
   dryRun: boolean;
   limit: number;
   minAgeHours: number;  // only check products older than this (default: 0 for immediate)
+  category?: string;
 }
 
 function parseArgs(): CLIOptions {
@@ -159,6 +160,8 @@ function parseArgs(): CLIOptions {
       options.limit = parseInt(args[++i]) || options.limit;
     } else if (args[i] === '--min-age-hours' && args[i + 1]) {
       options.minAgeHours = parseInt(args[++i]) || 0;
+    } else if ((args[i] === '--category' || args[i] === '-c') && args[i + 1]) {
+      options.category = args[++i];
     }
   }
   return options;
@@ -174,8 +177,9 @@ function derivePlatformsFromSourceType(sourceType: string | null): string[] {
   return ['aliexpress', 'ebay', 'etsy'];
 }
 
-async function getPendingProducts(limit: number, minAgeHours: number): Promise<PendingProduct[]> {
+async function getPendingProducts(limit: number, minAgeHours: number, category?: string): Promise<PendingProduct[]> {
   const pool = await getPool();
+  const categoryClause = category ? ` AND p.category = ${pool.escape(category)}` : '';
   const query = `SELECT p.id, p.id_1688, p.title_zh, p.category, p.created_at,
             p.source_type, p.provider_id,
             pr.price_cny, pr.seller_name as seller_id,
@@ -187,6 +191,7 @@ async function getPendingProducts(limit: number, minAgeHours: number): Promise<P
      WHERE p.status = 'images_checked'
        AND p.id NOT IN (SELECT product_id FROM authorized_products)
        AND p.created_at <= DATE_SUB(NOW(), INTERVAL ${Number(minAgeHours)} HOUR)
+       ${categoryClause}
      ORDER BY p.created_at ASC
      LIMIT ${Number(limit)}`;
   const [rows] = await pool.query<RowDataPacket[]>(query);
@@ -267,7 +272,7 @@ async function main(): Promise<void> {
     minAgeHours: options.minAgeHours,
   });
 
-  const products = await getPendingProducts(options.limit, options.minAgeHours);
+  const products = await getPendingProducts(options.limit, options.minAgeHours, options.category);
   logger.info(`Found ${products.length} products pending verification`);
 
   if (products.length === 0) {
@@ -311,7 +316,7 @@ async function main(): Promise<void> {
       autoAuthorized++;
       logger.info('Brand-safe instant pass', {
         id:       product.id,
-        title:    product.title_zh.substring(0, 40),
+        title:    product.title_zh?.substring(0, 40) ?? product.id_1688,
         category: product.category,
       });
       continue;
@@ -354,7 +359,7 @@ async function main(): Promise<void> {
       autoAuthorized++;
       logger.info('Fast-track authorized', {
         id: product.id,
-        title: product.title_zh.substring(0, 40),
+        title: product.title_zh?.substring(0, 40) ?? product.id_1688,
         price: product.price_cny,
         reason,
       });
@@ -386,7 +391,7 @@ async function main(): Promise<void> {
       failed++;
       logger.info('FAILED auto-verify', {
         id: product.id,
-        title: product.title_zh.substring(0, 40),
+        title: product.title_zh?.substring(0, 40) ?? product.id_1688,
         brandCheck,
         priceCheck,
         specsCheck,
@@ -400,7 +405,7 @@ async function main(): Promise<void> {
         autoAuthorized++;
         logger.info('WOULD auto-authorize', {
           id: product.id,
-          title: product.title_zh.substring(0, 40),
+          title: product.title_zh?.substring(0, 40) ?? product.id_1688,
           price: product.price_cny,
           category: product.category,
         });
@@ -419,7 +424,7 @@ async function main(): Promise<void> {
         autoAuthorized++;
         logger.info('Auto-authorized', {
           id: product.id,
-          title: product.title_zh.substring(0, 40),
+          title: product.title_zh?.substring(0, 40) ?? product.id_1688,
           price: product.price_cny,
           category: product.category,
         });
@@ -442,7 +447,7 @@ async function main(): Promise<void> {
       }
       logger.info('Auto-authorized (with warnings)', {
         id: product.id,
-        title: product.title_zh.substring(0, 40),
+        title: product.title_zh?.substring(0, 40) ?? product.id_1688,
         price: product.price_cny,
         specsCheck,
         priceCheck,

@@ -77,7 +77,7 @@ async function main(): Promise<void> {
     }
 
     for (const prod of products) {
-      logger.info(`Scraping ${scraped + failed + 1}/${products.length}: ${prod.titleZh.substring(0, 50)}`);
+      logger.info(`Scraping ${scraped + failed + 1}/${products.length}: ${prod.titleZh?.substring(0, 50) ?? prod.id1688}`);
 
       try {
         // Create a minimal ScrapedProduct to pass to getProductDetails

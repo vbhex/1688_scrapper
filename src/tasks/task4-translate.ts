@@ -182,7 +182,7 @@ async function main(): Promise<void> {
         translated++;
         logger.info('Product translated', {
           id: prod.id1688,
-          titleEn: translation.titleEN.substring(0, 60),
+          titleEn: translation.titleEN?.substring(0, 60) ?? '(no title)',
           priceUsd,
           variants: rawVariants.length,
         });

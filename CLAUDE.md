@@ -19,9 +19,9 @@ Standalone pipeline that scrapes products from 1688.com (Chinese wholesale marke
 1. **Task 1**: Discovers products by category search
 2. **Task 2**: Scrapes full product details (images, variants, specs, prices)
 3. **Task 3**: Validates images (rejects Chinese text / watermarks via OCR)
-4. **Task 4**: Translates everything to English + converts CNY→USD prices
+4. **Task 4**: Populates `_en` fields + converts CNY→USD prices (see **1688 English Mode** below)
 
-Output is stored in the `1688_source` MySQL database, ready for consumption by any downstream store (AliExpress, Shopify, etc.).
+Output is stored in the `1688_source` MySQL database, ready for consumption by any downstream store (eBay, Etsy, Amazon, etc.).
 
 ---
 
@@ -34,6 +34,15 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 | **China MacBook** | `config/china-macbook.env` | Inside China firewall, primary scraping | Tasks 1-4 (using Baidu/Tesseract) |
 | **Main Computer** | localhost | Outside China firewall | Tasks 3-4 (using Google APIs) |
 
+**1688 English Mode (2026-03-25) — IMPORTANT:**
+The China MacBook browser session has 1688 set to display in English. This means:
+- Task 1 scrapes English product titles directly into `title_zh` (field name is misleading — content IS English)
+- Task 2 scrapes English titles, descriptions, specs, and variant names into all `_zh` fields
+- **Task 4 detects this** via `isAlreadyEnglish()` (< 10% CJK characters = English) and **skips the translation API entirely** — it just copies `_zh` → `_en` and converts CNY→USD
+- Translation API (Baidu/Google) is **only called as fallback** if content is genuinely Chinese
+- This eliminates translation API costs for all normally-scraped products
+- The `_zh` field names are kept as-is in the DB schema (no migration needed)
+
 - SSH: see root `config/china-macbook.env`
 - SSH flags needed: `-o PreferredAuthentications=password -o PubkeyAuthentication=no`
 - Remote commands need: `export PATH=/opt/homebrew/bin:$PATH && source ~/.nvm/nvm.sh`
@@ -41,10 +50,10 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 
 ### API Providers (auto-detected from .env)
 
-| Service | China MacBook | Main Computer |
-|---------|--------------|---------------|
-| **Translation** | Baidu Translate API | Google Translate |
-| **Image OCR** | Tesseract.js (local) | Google Vision |
+| Service | China MacBook | Main Computer | Notes |
+|---------|--------------|---------------|-------|
+| **Translation** | Baidu Translate API | Google Translate | **Rarely called** — skipped when content is already English (see above) |
+| **Image OCR** | Tesseract.js (local) | Google Vision | |
 
 ### Tech Stack
 
@@ -106,9 +115,10 @@ node dist/tasks/task2-scrape-details.js --limit 10
 node dist/tasks/task3-image-check.js --limit 10
 ```
 
-### Task 4: Translation (`src/tasks/task4-translate.ts`)
-- **Input**: Products with status `images_checked`
+### Task 4: Translation / Pass-through (`src/tasks/task4-translate.ts`)
+- **Input**: Products with status `images_checked` AND `authorized_products.active = TRUE`
 - **Output**: `products_en`, `products_variants_en` tables; status → `translated`
+- **English fast-path (2026-03-25):** If `isAlreadyEnglish(title) && isAlreadyEnglish(description)` (< 10% CJK chars), skips translation API entirely — copies `_zh` fields directly to `_en` fields. CNY→USD price conversion always runs. Falls back to Baidu/Google API only if content is genuinely Chinese.
 
 ```bash
 node dist/tasks/task4-translate.js --limit 10

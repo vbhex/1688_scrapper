@@ -69,8 +69,10 @@ function parseArgs() {
 
 async function getSkippedProducts(limit: number): Promise<SkippedProduct[]> {
   const pool = await getPool();
+  // LIKE requires the wildcard in the param value — CONCAT(?, '%') doesn't work
+  // with mysql2 prepared statements.
   const brandVariantCondition = BRAND_SKIP_REASON_PREFIX
-    .map(() => `skip_reason LIKE CONCAT(?, '%')`)
+    .map(() => `skip_reason LIKE ?`)
     .join(' OR ');
 
   const [rows]: any = await pool.execute(
@@ -85,7 +87,7 @@ async function getSkippedProducts(limit: number): Promise<SkippedProduct[]> {
      LIMIT ?`,
     [
       ...BRAND_SKIP_REASONS,
-      ...BRAND_SKIP_REASON_PREFIX,
+      ...BRAND_SKIP_REASON_PREFIX.map(p => `${p}%`),
       limit,
     ]
   );

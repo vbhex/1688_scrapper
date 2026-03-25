@@ -27,31 +27,35 @@ import { findClosestColorFamily, cleanVariantName } from '../utils/helpers';
 
 const logger = createChildLogger('task4-translate');
 
-function parseArgs(): { limit: number } {
+function parseArgs(): { limit: number; category?: string } {
   const args = process.argv.slice(2);
   let limit = 10;
+  let category: string | undefined;
   for (let i = 0; i < args.length; i++) {
     if ((args[i] === '--limit' || args[i] === '-l') && args[i + 1]) {
       limit = parseInt(args[++i]) || limit;
+    } else if ((args[i] === '--category' || args[i] === '-c') && args[i + 1]) {
+      category = args[++i];
     }
   }
-  return { limit };
+  return { limit, category };
 }
 
 async function main(): Promise<void> {
-  const { limit } = parseArgs();
-  logger.info('Task 4: Translation', { limit });
+  const { limit, category } = parseArgs();
+  logger.info('Task 4: Translation', { limit, ...(category && { category }) });
 
   // Only translate products that are brand-verified (in authorized_products).
   // This saves translation fees — unverified products don't get translated.
   // Pipeline: Task 1→2→3 → Task 8 (verify) → Task 4 (translate) → Task 5 → Excel
   const pool = await getPool();
   const safeLimit = Math.max(1, Math.floor(limit));
+  const categoryClause = category ? ` AND p.category = ${pool.escape(category)}` : '';
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT p.id, p.id_1688 AS id1688, p.status, p.url, p.title_zh AS titleZh, p.category, p.raw_data AS rawData
      FROM products p
      JOIN authorized_products ap ON ap.product_id = p.id AND ap.active = TRUE
-     WHERE p.status = 'images_checked'
+     WHERE p.status = 'images_checked'${categoryClause}
      ORDER BY p.id ASC
      LIMIT ${safeLimit}`
   );
@@ -69,7 +73,7 @@ async function main(): Promise<void> {
 
   try {
     for (const prod of products) {
-      logger.info(`Translating ${translated + failed + 1}/${products.length}: ${prod.titleZh.substring(0, 50)}`);
+      logger.info(`Translating ${translated + failed + 1}/${products.length}: ${prod.titleZh?.substring(0, 50) ?? prod.id1688}`);
 
       try {
         // Get raw data

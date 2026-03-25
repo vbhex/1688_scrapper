@@ -28,22 +28,25 @@ const logger = createChildLogger('task3-images');
 
 const MIN_PASSING_GALLERY_IMAGES = 3;
 
-function parseArgs(): { limit: number } {
+function parseArgs(): { limit: number; category?: string } {
   const args = process.argv.slice(2);
   let limit = 10;
+  let category: string | undefined;
   for (let i = 0; i < args.length; i++) {
     if ((args[i] === '--limit' || args[i] === '-l') && args[i + 1]) {
       limit = parseInt(args[++i]) || limit;
+    } else if ((args[i] === '--category' || args[i] === '-c') && args[i + 1]) {
+      category = args[++i];
     }
   }
-  return { limit };
+  return { limit, category };
 }
 
 async function main(): Promise<void> {
-  const { limit } = parseArgs();
-  logger.info('Task 3: Image Checking', { limit });
+  const { limit, category } = parseArgs();
+  logger.info('Task 3: Image Checking', { limit, ...(category && { category }) });
 
-  const products = await getProductsByStatusWithLimit('detail_scraped', limit);
+  const products = await getProductsByStatusWithLimit('detail_scraped', limit, category);
   if (products.length === 0) {
     logger.info('No products to check images for');
     closeDatabase();
@@ -58,7 +61,7 @@ async function main(): Promise<void> {
 
   try {
     for (const prod of products) {
-      logger.info(`Checking ${checked + 1}/${products.length}: ${prod.titleZh.substring(0, 50)}`);
+      logger.info(`Checking ${checked + 1}/${products.length}: ${prod.titleZh?.substring(0, 50) ?? prod.id1688}`);
 
       const rawImages = await getImagesRaw(prod.id);
       if (rawImages.length === 0) {

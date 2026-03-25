@@ -169,6 +169,11 @@ async function baiduTranslateText(text: string): Promise<string> {
       await sleep(1500);
       return baiduTranslateText(text);
     }
+    // Any other Baidu error (54004 = no credit, etc.) — fall back to Google if available
+    if (config.google.apiKey) {
+      logger.warn('Baidu error, falling back to Google', { error_code: response.data.error_code, error_msg: response.data.error_msg });
+      return googleTranslateText(text);
+    }
     throw new Error(`Baidu Translate error ${response.data.error_code}: ${response.data.error_msg}`);
   }
 
@@ -249,12 +254,19 @@ async function baiduTranslateBatch(texts: string[]): Promise<string[]> {
         continue;
       }
       logger.error('Baidu batch translation error', { error_code: response.data.error_code, error_msg: response.data.error_msg });
-      // Fall back to individual
-      for (const item of chunk) {
-        try {
-          result[item.index] = await baiduTranslateText(item.text);
-          await sleep(RATE_LIMIT_DELAY_MS);
-        } catch { result[item.index] = item.text; }
+      // Fall back to Google batch if available, otherwise individual Baidu
+      if (config.google.apiKey) {
+        logger.warn('Baidu batch error, falling back to Google for this chunk', { error_code: response.data.error_code });
+        const chunkTexts = chunk.map(c => c.text);
+        const googleResults = await googleTranslateBatch(chunkTexts);
+        chunk.forEach((item, i) => { result[item.index] = googleResults[i] || item.text; });
+      } else {
+        for (const item of chunk) {
+          try {
+            result[item.index] = await baiduTranslateText(item.text);
+            await sleep(RATE_LIMIT_DELAY_MS);
+          } catch { result[item.index] = item.text; }
+        }
       }
       continue;
     }

@@ -323,6 +323,49 @@ async function main(): Promise<void> {
     }
     // ── END PHASE 1 FAST-TRACK ────────────────────────────────────────────────
 
+    // ── MANUAL SELLER FAST-TRACK ──────────────────────────────────────────────
+    // manual_seller products come from stores the user has personally vetted.
+    // They are Amazon-bound and are typically 3C electronics with higher price
+    // ranges (¥100–500+) that would normally fail the clothing price ceiling.
+    // Skip the price ceiling — just check title for banned brands and authorize.
+    if (product.source_type === 'manual_seller') {
+      const brandCheck = checkLayer1ImageLogos(product);
+      if (brandCheck === 'fail') {
+        logger.info('FAILED auto-verify (manual seller — banned brand in title)', {
+          id: product.id, title: product.title_zh?.substring(0, 40) ?? product.id_1688,
+        });
+        failed++;
+        continue;
+      }
+      const results: AutoCheckResults = {
+        brand_list_check: 'pass',
+        price_check:      'pass',
+        category:         product.category,
+        price_cny:        product.price_cny,
+        checked_at:       new Date().toISOString(),
+      };
+      if (!options.dryRun) {
+        await upsertAuthorizedProduct({
+          productId:            product.id,
+          authorizationType:    'not_branded',
+          authorizedPlatforms:  product.target_platforms,
+          confirmedBy:          'task8b-auto-verify',
+          confirmedAt:          new Date(),
+          active:               true,
+          confidence:           'auto_verified',
+          autoCheckResults:     results,
+          notes:                `Manual seller product — price ceiling waived, title brand-clean`,
+        });
+      }
+      autoAuthorized++;
+      logger.info('Manual seller authorized', {
+        id: product.id, title: product.title_zh?.substring(0, 40) ?? product.id_1688,
+        price: product.price_cny.toFixed(2), platforms: product.target_platforms,
+      });
+      continue;
+    }
+    // ── END MANUAL SELLER FAST-TRACK ──────────────────────────────────────────
+
     // Layer 1: Brand list re-check on title (always runs first)
     const brandCheck = checkLayer1ImageLogos(product);
 

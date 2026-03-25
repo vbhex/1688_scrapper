@@ -1957,6 +1957,26 @@ export class Scraper1688 {
           });
         }
 
+        // Extract product title — try common 1688 product page selectors, fall back to document.title
+        let productTitle = '';
+        const titleSelectors = [
+          'h1.title-text',
+          'h1[class*="title"]',
+          '[class*="product-title"] h1',
+          '[class*="pdp-title"]',
+          '[class*="offer-title"]',
+          'h1',
+        ];
+        for (const sel of titleSelectors) {
+          const el = document.querySelector(sel);
+          const txt = el?.textContent?.trim();
+          if (txt && txt.length > 3) { productTitle = txt; break; }
+        }
+        // Last resort: strip site suffix from document.title ("Product Name - 1688.com")
+        if (!productTitle) {
+          productTitle = document.title.replace(/\s*[-|–]\s*1688(\.com)?.*$/i, '').trim();
+        }
+
         // Extract description from product description module
         const descModule = document.querySelector('.module-od-product-description, .html-description, [class*="core:description"]');
         const description = descModule?.textContent?.trim() || '';
@@ -1978,6 +1998,7 @@ export class Scraper1688 {
         const sellerName = sellerElement?.textContent?.trim() || '';
 
         return {
+          productTitle,
           description,
           images,
           specifications,
@@ -1995,6 +2016,10 @@ export class Scraper1688 {
       });
 
       // Merge details with existing product
+      if (details.productTitle && !product.title) {
+        product.title = details.productTitle;
+      }
+
       if (details.description) {
         product.description = details.description;
       }

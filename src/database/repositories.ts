@@ -36,14 +36,21 @@ export async function discoverProduct(
 
 export async function getProductsByStatusWithLimit(
   status: ProductStatus,
-  limit: number
+  limit: number,
+  category?: string
 ): Promise<Array<{ id: number; id1688: string; url: string; titleZh: string; category: string }>> {
   const p = await getPool();
   const safeLimit = Math.max(1, Math.floor(limit));
+  const params: any[] = [status];
+  let categoryClause = '';
+  if (category) {
+    categoryClause = ' AND category = ?';
+    params.push(category);
+  }
   const [rows] = await p.query<RowDataPacket[]>(
     `SELECT id, id_1688 AS id1688, url, title_zh AS titleZh, category
-     FROM products WHERE status = ? ORDER BY id ASC LIMIT ${safeLimit}`,
-    [status]
+     FROM products WHERE status = ?${categoryClause} ORDER BY id ASC LIMIT ${safeLimit}`,
+    params
   );
   return rows as any[];
 }

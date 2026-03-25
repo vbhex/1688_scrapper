@@ -174,7 +174,8 @@ export function isAppleBrand(text: string): boolean {
 
 // CRITICAL: Never scrape/list products from major brands — AliExpress will punish the store.
 // Uses DB-backed cache (loaded via initBrandCache) with JSON fallback.
-export function isBannedBrand(text: string): boolean {
+export function isBannedBrand(text: string | null | undefined): boolean {
+  if (!text) return false;
   const lowerText = text.toLowerCase();
   return getBrandKeywords().some(cached => {
     if (cached.exactMatch) {

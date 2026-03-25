@@ -33,29 +33,32 @@ import { ScrapedProduct } from '../models/product';
 
 const logger = createChildLogger('task2-scrape');
 
-function parseArgs(): { limit: number; headless: boolean } {
+function parseArgs(): { limit: number; headless: boolean; category?: string } {
   const args = process.argv.slice(2);
   let limit = 10;
   let headless = false;
+  let category: string | undefined;
   for (let i = 0; i < args.length; i++) {
     if ((args[i] === '--limit' || args[i] === '-l') && args[i + 1]) {
       limit = parseInt(args[++i]) || limit;
     } else if (args[i] === '--headless') {
       headless = true;
+    } else if ((args[i] === '--category' || args[i] === '-c') && args[i + 1]) {
+      category = args[++i];
     }
   }
-  return { limit, headless };
+  return { limit, headless, category };
 }
 
 async function main(): Promise<void> {
-  const { limit, headless } = parseArgs();
-  logger.info('Task 2: Detail Scraping', { limit, headless });
+  const { limit, headless, category } = parseArgs();
+  logger.info('Task 2: Detail Scraping', { limit, headless, ...(category && { category }) });
 
   // Load brand list from DB (falls back to JSON if DB unavailable)
   await initBrandCache();
 
   // Get discovered products
-  const products = await getProductsByStatusWithLimit('discovered', limit);
+  const products = await getProductsByStatusWithLimit('discovered', limit, category);
   if (products.length === 0) {
     logger.info('No discovered products to scrape');
     closeDatabase();

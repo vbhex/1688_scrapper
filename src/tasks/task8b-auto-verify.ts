@@ -360,7 +360,7 @@ async function main(): Promise<void> {
       autoAuthorized++;
       logger.info('Manual seller authorized', {
         id: product.id, title: product.title_zh?.substring(0, 40) ?? product.id_1688,
-        price: product.price_cny.toFixed(2), platforms: product.target_platforms,
+        price: Number(product.price_cny).toFixed(2), platforms: product.target_platforms,
       });
       continue;
     }

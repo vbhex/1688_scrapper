@@ -118,10 +118,22 @@ async function main(): Promise<void> {
           continue;
         }
 
-        // Brand check on product specifications (e.g., 品牌: Ralph Lauren inspired)
-        const specBannedEntry = detailed.specifications.find(
-          spec => isBannedBrand(spec.name) || isBannedBrand(spec.value)
-        );
+        // Brand check on product specifications.
+        // IMPORTANT: Only check spec VALUES when the spec KEY is a brand-declaration field
+        // (品牌 / 商标 / brand / trademark).  Checking ALL spec values caused 400+ false
+        // positives — common English words like "heat press", "oriental", "supreme quality",
+        // "champion grade" match brand keywords but are innocent material/design descriptors.
+        // Spec KEYS are always checked (catches "NIKE material:" type field labels).
+        const BRAND_SPEC_KEYS = ['品牌', '商标', 'brand', 'trademark'];
+        const specBannedEntry = detailed.specifications.find(spec => {
+          // Always check the spec key name
+          if (isBannedBrand(spec.name)) return true;
+          // Only check spec value when the key declares brand/trademark
+          const isBrandField = BRAND_SPEC_KEYS.some(k =>
+            spec.name.toLowerCase().includes(k.toLowerCase())
+          );
+          return isBrandField && isBannedBrand(spec.value);
+        });
         if (specBannedEntry) {
           logger.info('Banned brand detected in specifications, skipping', {
             id: prod.id1688, spec: `${specBannedEntry.name}: ${specBannedEntry.value}`.substring(0, 80),

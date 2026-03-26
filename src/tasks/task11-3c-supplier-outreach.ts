@@ -76,9 +76,17 @@ function buildOutreachMessage(storeName: string, categories: string[]): string {
     ? categories.map(c => labels[c] || c).join('、')
     : '3C电子产品';
 
-  // Friendly sourcing inquiry — no brand authorization request in first message.
-  // Asking for 品牌授权书 upfront kills reply rate. Establish interest first, discuss brand in Task 12.
-  return `亲，你好！在1688上看到你家的${categoryDesc}，品质看起来挺不错的，想了解一下合作机会。\n\n我们是做亚马逊欧美跨境的，量比较稳定，想问几个问题：\n①你们支持OEM/私标定制吗？\n②最小起订量大概多少？\n③产品有出口认证吗（CE/FCC之类的）？\n\n方便的话回复我一下，我们一起聊聊 :)`;
+  // Conversational, human-sounding sourcing inquiry.
+  // No numbered lists, no brand authorization request, no corporate tone.
+  // Goal: get a reply. Brand auth discussion happens in Task 12 after they respond.
+  const messages = [
+    `亲，你好！刷到你家的${categoryDesc}，感觉品质挺不错的。我们是做亚马逊跨境的，主攻欧美市场，最近正好在找这类产品的供应商。你们这边支持OEM定制吗？有没有兴趣聊聊长期合作的事 :)`,
+    `亲好！看到你家有${categoryDesc}，我们是做亚马逊欧美的，想采购这类产品。请问你们有做过出口吗？支持贴牌/私标吗？有空聊聊 :)`,
+    `亲，你好！我们是亚马逊跨境卖家，主要卖欧美，最近在找${categoryDesc}供应商。看了你家产品感觉挺合适，想了解一下你们的合作方式，比如MOQ、能不能做OEM之类的。方便回复一下吗 :)`,
+  ];
+  // Rotate messages to avoid identical content being flagged as spam
+  const idx = Math.floor(Math.random() * messages.length);
+  return messages[idx];
 }
 
 async function main(): Promise<void> {

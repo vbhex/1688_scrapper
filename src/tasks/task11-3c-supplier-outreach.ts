@@ -56,28 +56,29 @@ function parseArgs(): CLIOptions {
  * NEVER mention email — off-platform communication violates 1688 rules.
  */
 function buildOutreachMessage(storeName: string, categories: string[]): string {
+  const labels: Record<string, string> = {
+    'earphones': '蓝牙耳机',
+    'smart watches': '智能手表',
+    'action cameras': '运动相机',
+    'portable projector': '投影仪',
+    'vr glasses': 'VR眼镜',
+    'power station': '户外储能电源',
+    'ip camera': '监控摄像头',
+    'smart doorbell': '智能门铃',
+    'soundbar': '蓝牙音响',
+    'solar panel': '太阳能充电板',
+    'gimbal stabilizer': '手持稳定器',
+    'lavalier microphone': '无线领夹麦克风',
+    'smart ring': '智能戒指',
+  };
+
   const categoryDesc = categories.length > 0
-    ? categories.map(c => {
-        const labels: Record<string, string> = {
-          'earphones': '蓝牙耳机',
-          'smart watches': '智能手表',
-          'action cameras': '运动相机',
-          'portable projector': '投影仪',
-          'vr glasses': 'VR眼镜',
-          'power station': '户外电源',
-          'ip camera': '摄像头',
-          'smart doorbell': '智能门铃',
-          'soundbar': '音响',
-          'solar panel': '太阳能板',
-          'gimbal stabilizer': '稳定器',
-          'lavalier microphone': '麦克风',
-          'smart ring': '智能戒指',
-        };
-        return labels[c] || c;
-      }).join('、')
+    ? categories.map(c => labels[c] || c).join('、')
     : '3C电子产品';
 
-  return `亲，你好！我们是做亚马逊跨境的，最近在找${categoryDesc}的工厂合作。看了你家产品感觉挺合适的，想长期拿货。\n想问下你们有自己的品牌吗？有的话能给我们出个品牌授权书吗？亚马逊上架需要这个，没有的话没法卖。\n方便的话回复我一下，我们一起聊聊合作细节 :)`;
+  // Friendly sourcing inquiry — no brand authorization request in first message.
+  // Asking for 品牌授权书 upfront kills reply rate. Establish interest first, discuss brand in Task 12.
+  return `亲，你好！在1688上看到你家的${categoryDesc}，品质看起来挺不错的，想了解一下合作机会。\n\n我们是做亚马逊欧美跨境的，量比较稳定，想问几个问题：\n①你们支持OEM/私标定制吗？\n②最小起订量大概多少？\n③产品有出口认证吗（CE/FCC之类的）？\n\n方便的话回复我一下，我们一起聊聊 :)`;
 }
 
 async function main(): Promise<void> {

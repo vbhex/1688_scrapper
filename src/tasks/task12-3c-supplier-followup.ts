@@ -103,9 +103,20 @@ DUNS编号: ${HK_COMPANY_INFO.duns}
  */
 async function actionScanInbox(headless: boolean): Promise<void> {
   logger.info('Opening Wangwang inbox to scan for replies...');
+
+  // Get any seller from contacts to use as seed URL (needed to open Wangwang)
+  const pool = await getPool();
+  const [seedRows] = await pool.execute<RowDataPacket[]>(
+    `SELECT COALESCE(p.shop_url, CONCAT('https://shop', cc.seller_id, '.1688.com/')) as shop_url
+     FROM compliance_contacts cc
+     LEFT JOIN providers p ON p.platform_id = cc.seller_id AND p.platform = '1688'
+     WHERE cc.outreach_type = '3c_amazon_outreach' LIMIT 1`
+  );
+  const seedUrl = seedRows.length > 0 ? seedRows[0].shop_url : undefined;
+
   const scraper = await create1688Scraper(headless);
   try {
-    const result = await scraper.scanWangwangInbox();
+    const result = await scraper.scanWangwangInbox(seedUrl);
     const unread = result.conversations.filter(c => c.hasUnread);
 
     logger.info(`\n${'='.repeat(60)}`);

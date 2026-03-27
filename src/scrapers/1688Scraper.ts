@@ -2940,12 +2940,25 @@ export class Scraper1688 {
    * that have unread messages or recent replies from the other party.
    * Much faster than opening 275 individual chats.
    */
-  async scanWangwangInbox(): Promise<{ conversations: Array<{ id: string; name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> {
+  /**
+   * Scan the Wangwang inbox for unread conversations.
+   * seedSellerUrl is required — we use any seller's amos URL to open Wangwang,
+   * then the left panel shows the full inbox regardless of which seller we picked.
+   */
+  async scanWangwangInbox(seedSellerUrl?: string): Promise<{ conversations: Array<{ id: string; name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> {
     if (!this.page) throw new Error('Browser not initialized');
 
-    // Use domcontentloaded — the amos URL immediately opens a new Wangwang tab,
-    // so networkidle2 on the amos page itself hangs forever.
-    const inboxUrl = 'https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&site=cnalichn';
+    // Build amos URL — use a seed seller to open Wangwang (without uid it never navigates)
+    let seedLoginId = '';
+    if (seedSellerUrl) {
+      const m = seedSellerUrl.match(/https?:\/\/shop([^.]+)\.1688\.com/);
+      if (m) seedLoginId = m[1];
+    }
+    const inboxUrl = seedLoginId
+      ? `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(seedLoginId)}&site=cnalichn`
+      : 'https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&site=cnalichn';
+
+    // Use domcontentloaded — the amos URL opens a new Wangwang tab and may not reach networkidle2
     await this.page.goto(inboxUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
     await sleep(3000);
 

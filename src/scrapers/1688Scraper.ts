@@ -3052,6 +3052,16 @@ export class Scraper1688 {
     const wangwangUrl = `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(sellerLoginId)}&site=cnalichn`;
 
     try {
+      // Close any stale Wangwang tabs from previous calls to avoid iframe detachment
+      // and stale page references on subsequent sellers.
+      const prePages = await this.browser!.pages();
+      for (const p of prePages) {
+        const url = p.url();
+        if (p !== this.page && (url.includes('air.1688.com') || url.includes('def_cbu_web_im') || url.includes('wwwebim.1688.com'))) {
+          await p.close().catch(() => {});
+        }
+      }
+
       await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 });
       await randomDelay(3000, 5000);
 
@@ -3064,30 +3074,33 @@ export class Scraper1688 {
             return;
           }
         }
-      });
+      }).catch(() => {});
       await sleep(3000);
 
-      // Find web IM tab
+      // Find the Wangwang web IM tab — use a local variable, do NOT reassign this.page.
+      // Reassigning this.page causes the NEXT call to navigate the air.1688.com tab,
+      // which destroys its iframes and causes "detached Frame" errors.
+      let wwPage = this.page;
       const allPages = await this.browser!.pages();
       for (const p of allPages) {
         if (p.url().includes('air.1688.com') || p.url().includes('def_cbu_web_im')) {
-          this.page = p;
+          wwPage = p;
           await p.bringToFront();
           break;
         }
       }
       await sleep(4000);
 
-      // Find the core IM iframe
+      // Find the core IM iframe (def_cbu_web_im_CORE, not the parent wrapper)
       let chatFrame: any = null;
-      for (const frame of this.page.frames()) {
+      for (const frame of wwPage.frames()) {
         if (frame.url().includes('def_cbu_web_im_core') || frame.url().includes('web_im_core')) {
           chatFrame = frame;
           break;
         }
       }
 
-      const ctx = chatFrame || this.page;
+      const ctx = chatFrame || wwPage;
 
       // Use the conversation list to detect replies — much more reliable than
       // trying to parse individual message bubbles.

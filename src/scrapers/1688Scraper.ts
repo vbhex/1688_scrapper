@@ -3079,19 +3079,24 @@ export class Scraper1688 {
       }).catch(() => {});
       await sleep(3000);
 
-      // Find the Wangwang web IM tab — use a local variable, do NOT reassign this.page.
-      // Reassigning this.page causes the NEXT call to navigate the air.1688.com tab,
-      // which destroys its iframes and causes "detached Frame" errors.
-      let wwPage = this.page;
+      // Find the Wangwang web IM tab and wait for it to fully load.
+      // The air.1688.com tab loads and may do internal SPA navigation after opening.
+      // We reassign this.page so the NEXT call's "close stale tabs" step can clean it up.
       const allPages = await this.browser!.pages();
       for (const p of allPages) {
         if (p.url().includes('air.1688.com') || p.url().includes('def_cbu_web_im')) {
-          wwPage = p;
+          this.page = p;
           await p.bringToFront();
           break;
         }
       }
-      await sleep(4000);
+      // Wait for the page to fully stabilize (SPA loads, conversation list renders)
+      try {
+        await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 8000 });
+      } catch { /* may not navigate again — that's fine */ }
+      await sleep(3000);
+
+      const wwPage = this.page;
 
       // Use the conversation list to detect replies.
       // Conversation item IDs: "BUYER_ID.1-SELLER_ID.1#CHANNEL@cntaobao"

@@ -2784,6 +2784,19 @@ export class Scraper1688 {
     logger.info('Opening Wangwang web chat', { sellerLoginId, wangwangUrl: wangwangUrl.substring(0, 100) });
 
     try {
+      // Close stale Wangwang tabs so this.page is always a usable non-WW page
+      const prePages = await this.browser!.pages();
+      for (const p of prePages) {
+        const pUrl = p.url();
+        if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im') || pUrl.includes('wwwebim.1688.com')) {
+          await p.close().catch(() => {});
+        }
+      }
+      // After closing WW tabs, find a healthy page to use as anchor
+      const remainingPages = await this.browser!.pages();
+      const healthyPage = remainingPages.find(p => !p.isClosed()) || remainingPages[0];
+      if (healthyPage) this.page = healthyPage;
+
       await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 });
       await randomDelay(3000, 5000);
 

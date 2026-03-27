@@ -2797,7 +2797,8 @@ export class Scraper1688 {
       const healthyPage = remainingPages.find(p => !p.isClosed()) || remainingPages[0];
       if (healthyPage) this.page = healthyPage;
 
-      await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      // .catch() because amos→wwwebim redirect can temporarily detach the main frame
+      await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
       await randomDelay(3000, 5000);
 
       // Step 1: Click "优先使用网页版" (Prefer web version) if shown

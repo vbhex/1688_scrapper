@@ -174,6 +174,20 @@ export class Scraper1688 {
     const userDataDir = path.resolve(__dirname, '../../data/chrome-profile-1688');
     ensureDirectoryExists(userDataDir);
 
+    // Always clear stale Chrome lock files before launch — these accumulate after
+    // crashes/kill -9 and cause puppeteer.launch() to hang or throw "already running"
+    const lockFiles = [
+      path.join(userDataDir, 'SingletonLock'),
+      path.join(userDataDir, 'SingletonCookie'),
+      path.join(userDataDir, 'SingletonSocket'),
+      path.join(userDataDir, 'DevToolsActivePort'),
+      path.join(userDataDir, 'Default', 'LOCK'),
+      path.join(userDataDir, 'Default', '.parentlock'),
+    ];
+    for (const f of lockFiles) {
+      try { fs.unlinkSync(f); } catch { /* file doesn't exist — fine */ }
+    }
+
     const args = [
       '--no-sandbox',
       '--disable-setuid-sandbox',

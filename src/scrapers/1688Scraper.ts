@@ -2921,6 +2921,96 @@ export class Scraper1688 {
     }
   }
 
+  /**
+   * Open a Wangwang chat with a seller and check if they have replied to our outreach.
+   * Returns the reply text if found, or empty string if no reply.
+   */
+  async checkWangwangReply(sellerUrl: string): Promise<{ hasReply: boolean; replyText: string }> {
+    if (!this.page) throw new Error('Browser not initialized');
+
+    let sellerLoginId = sellerUrl;
+    const shopMatch = sellerUrl.match(/https?:\/\/shop([^.]+)\.1688\.com/);
+    if (shopMatch) sellerLoginId = shopMatch[1];
+
+    const wangwangUrl = `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(sellerLoginId)}&site=cnalichn`;
+
+    try {
+      await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      await randomDelay(3000, 5000);
+
+      // Prefer web version button
+      await this.page.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        for (const btn of buttons) {
+          if ((btn.textContent || '').includes('优先使用网页版') && (btn as HTMLElement).offsetHeight > 0) {
+            btn.click();
+            return;
+          }
+        }
+      });
+      await sleep(3000);
+
+      // Find web IM tab
+      const allPages = await this.browser!.pages();
+      for (const p of allPages) {
+        if (p.url().includes('air.1688.com') || p.url().includes('def_cbu_web_im')) {
+          this.page = p;
+          await p.bringToFront();
+          break;
+        }
+      }
+      await sleep(4000);
+
+      // Find the core IM iframe
+      let chatFrame: any = null;
+      for (const frame of this.page.frames()) {
+        if (frame.url().includes('def_cbu_web_im_core') || frame.url().includes('web_im_core')) {
+          chatFrame = frame;
+          break;
+        }
+      }
+
+      const ctx = chatFrame || this.page;
+
+      // Extract messages from chat — look for received (seller) messages
+      const result = await ctx.evaluate(() => {
+        const receivedSelectors = [
+          '[class*="receive"]',
+          '[class*="Receive"]',
+          '[class*="incoming"]',
+          '[class*="Incoming"]',
+          '[class*="left"]',
+          '[class*="other"]',
+          '[class*="Other"]',
+          '.message-item:not([class*="self"]):not([class*="send"]):not([class*="Send"])',
+        ];
+
+        let receivedMsgs: string[] = [];
+        for (const sel of receivedSelectors) {
+          const els = Array.from(document.querySelectorAll(sel));
+          if (els.length > 0) {
+            receivedMsgs = els
+              .map(el => (el.textContent || '').trim())
+              .filter(t => t.length > 2 && t.length < 500);
+            if (receivedMsgs.length > 0) break;
+          }
+        }
+
+        return receivedMsgs;
+      });
+
+      if (result && result.length > 0) {
+        const replyText = result[result.length - 1]; // most recent reply
+        return { hasReply: true, replyText };
+      }
+
+      return { hasReply: false, replyText: '' };
+    } catch (error) {
+      logger.warn('checkWangwangReply failed', { sellerLoginId, error: (error as Error).message });
+      return { hasReply: false, replyText: '' };
+    }
+  }
+
   async close(): Promise<void> {
     if (this.browser) {
       await this.browser.close();

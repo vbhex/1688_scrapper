@@ -4,6 +4,7 @@
  * Semi-manual task for handling seller responses to Task 11 outreach.
  * Actions:
  *   --action list              Show all contacted 3C suppliers and their status
+ *   --action check-replies     Open each seller's Wangwang chat and detect replies (auto-updates DB)
  *   --action share-company-info --seller-id XXXXX   Send HK company info to a seller who agreed
  *   --action mark-authorized --seller-id XXXXX [--doc-url URL]   Mark seller as authorized (with optional doc)
  *   --action mark-no-response --seller-id XXXXX     Mark seller as non-responsive
@@ -14,10 +15,11 @@
  *
  * Usage:
  *   node dist/tasks/task12-3c-supplier-followup.js --action list
+ *   node dist/tasks/task12-3c-supplier-followup.js --action check-replies [--limit 50]
  *   node dist/tasks/task12-3c-supplier-followup.js --action share-company-info --seller-id 12345
  *   node dist/tasks/task12-3c-supplier-followup.js --action mark-authorized --seller-id 12345 --doc-url https://...
  *
- * Runs on: China MacBook (Wangwang required for share-company-info action)
+ * Runs on: China MacBook (Wangwang required for share-company-info and check-replies actions)
  */
 
 import { create1688Scraper } from '../scrapers/1688Scraper';
@@ -32,6 +34,7 @@ import {
   getPool,
 } from '../database/db';
 import { createChildLogger } from '../utils/logger';
+import { randomDelay } from '../utils/helpers';
 import { RowDataPacket } from 'mysql2/promise';
 
 const logger = createChildLogger('task12-3c-followup');
@@ -54,17 +57,19 @@ interface CLIOptions {
   sellerId: string | null;
   docUrl: string | null;
   headless: boolean;
+  limit: number;
 }
 
 function parseArgs(): CLIOptions {
   const args = process.argv.slice(2);
-  const options: CLIOptions = { action: 'list', sellerId: null, docUrl: null, headless: false };
+  const options: CLIOptions = { action: 'list', sellerId: null, docUrl: null, headless: false, limit: 50 };
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--action' && args[i + 1]) options.action = args[++i];
     else if (args[i] === '--seller-id' && args[i + 1]) options.sellerId = args[++i];
     else if (args[i] === '--doc-url' && args[i + 1]) options.docUrl = args[++i];
     else if (args[i] === '--headless') options.headless = true;
+    else if ((args[i] === '--limit' || args[i] === '-l') && args[i + 1]) options.limit = parseInt(args[++i]) || 50;
   }
   return options;
 }
@@ -86,6 +91,69 @@ DUNS编号: ${HK_COMPANY_INFO.duns}
 目标平台: 亚马逊 (Amazon)
 
 授权书上写明授权 ${HK_COMPANY_INFO.nameEn} 在亚马逊平台销售就好。你们有现成模板更好，没有的话我们也可以提供，不麻烦哈，谢谢亲！`;
+}
+
+async function actionCheckReplies(headless: boolean, limit: number): Promise<void> {
+  const pool = await getPool();
+
+  // Get sellers contacted at least 1 hour ago that still have 'contacted' status
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT cc.seller_login_id, p.provider_name, p.shop_url, cc.contacted_at
+     FROM compliance_contacts cc
+     JOIN providers p ON cc.provider_id = p.id
+     WHERE cc.outreach_type = '3c_amazon_outreach'
+       AND cc.contact_status = 'contacted'
+       AND cc.contacted_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)
+     ORDER BY cc.contacted_at ASC
+     LIMIT ?`,
+    [limit]
+  );
+
+  if (rows.length === 0) {
+    logger.info('No sellers to check (none contacted > 1 hour ago, or all already replied).');
+    return;
+  }
+
+  logger.info(`Checking ${rows.length} sellers for replies via Wangwang...`);
+
+  const scraper = await create1688Scraper(headless);
+  let repliedCount = 0;
+  let checkedCount = 0;
+
+  try {
+    for (const row of rows) {
+      const shopUrl = row.shop_url || `https://shop${row.seller_login_id}.1688.com/`;
+      logger.info(`Checking: ${row.provider_name} (${row.seller_login_id})`);
+
+      try {
+        const result = await scraper.checkWangwangReply(shopUrl);
+        checkedCount++;
+
+        if (result.hasReply) {
+          await updateContactStatus(
+            row.seller_login_id,
+            'replied',
+            `Reply detected: ${result.replyText.substring(0, 200)}`
+          );
+          repliedCount++;
+          logger.info(`  ✓ REPLIED: ${result.replyText.substring(0, 100)}`);
+        } else {
+          logger.info(`  — No reply yet`);
+        }
+      } catch (err) {
+        logger.warn(`  ✗ Error checking ${row.provider_name}: ${(err as Error).message}`);
+      }
+
+      await randomDelay(3000, 6000);
+    }
+  } finally {
+    await scraper.close();
+  }
+
+  logger.info(`\nCheck-replies summary: checked=${checkedCount}, replied=${repliedCount}`);
+  if (repliedCount > 0) {
+    logger.info(`Run --action list to see replied sellers, then --action share-company-info --seller-id XXX for each.`);
+  }
 }
 
 async function actionList(): Promise<void> {
@@ -206,6 +274,10 @@ async function main(): Promise<void> {
         await actionList();
         break;
 
+      case 'check-replies':
+        await actionCheckReplies(options.headless, options.limit);
+        break;
+
       case 'share-company-info':
         if (!options.sellerId) {
           logger.error('--seller-id is required for share-company-info action');
@@ -236,7 +308,7 @@ async function main(): Promise<void> {
 
       default:
         logger.error(`Unknown action: ${options.action}`);
-        logger.info('Available actions: list, share-company-info, mark-authorized, mark-no-response, stats');
+        logger.info('Available actions: list, check-replies, share-company-info, mark-authorized, mark-no-response, stats');
         process.exit(1);
     }
   } finally {

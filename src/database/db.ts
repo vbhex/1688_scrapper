@@ -679,7 +679,7 @@ export async function getPendingContacts(): Promise<SellerContact[]> {
  */
 export async function updateContactStatus(
   sellerId: string,
-  status: 'contacted' | 'responded' | 'certs_received' | 'no_certs',
+  status: 'contacted' | 'replied' | 'responded' | 'certs_received' | 'no_certs',
   notes?: string
 ): Promise<void> {
   const p = await getPool();

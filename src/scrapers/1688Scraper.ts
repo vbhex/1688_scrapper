@@ -2964,6 +2964,8 @@ export class Scraper1688 {
     await this.page.goto(inboxUrl, { waitUntil, timeout: 30000 }).catch(() => {});
     await sleep(3000);
 
+    logger.info('scanWangwangInbox: page url after goto', { url: this.page.url() });
+
     // Prefer web version
     await this.page.evaluate(() => {
       const buttons = Array.from(document.querySelectorAll('button'));
@@ -2978,6 +2980,8 @@ export class Scraper1688 {
 
     // Find web IM tab (amos opens a new tab with Wangwang)
     const allPages = await this.browser!.pages();
+    const allUrls = allPages.map(p => p.url());
+    logger.info('scanWangwangInbox: all page urls', { urls: allUrls });
     for (const p of allPages) {
       if (p.url().includes('air.1688.com') || p.url().includes('def_cbu_web_im')) {
         this.page = p;
@@ -2986,6 +2990,10 @@ export class Scraper1688 {
       }
     }
     await sleep(5000);
+
+    logger.info('scanWangwangInbox: final page url', { url: this.page.url() });
+    const frameUrls = this.page.frames().map(f => f.url());
+    logger.info('scanWangwangInbox: frames', { frameUrls });
 
     // Find iframe
     let chatFrame: any = null;

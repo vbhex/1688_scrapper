@@ -19,11 +19,19 @@ let baiduRateLimitResetTime = 0;
 const BAIDU_RATE_LIMIT_THRESHOLD = 5;  // After 5 rate limits, switch to Google
 const BAIDU_COOLDOWN_MS = 60 * 1000;   // Try Baidu again after 60s
 
+// 54004 = no credit — permanent failure for this session, no point retrying
+let baiduNoCredit = false;
+
 function getProvider(): TranslateProvider {
   const hasBaidu = !!(config.baidu.translateAppId && config.baidu.translateSecret);
   const hasGoogle = !!config.google.apiKey;
 
   if (hasBaidu) {
+    // No credit — skip Baidu entirely, no retries
+    if (baiduNoCredit) {
+      if (hasGoogle) return 'google';
+      throw new Error('Baidu account has no credit (54004). Recharge at fanyi.baidu.com. No Google fallback configured.');
+    }
     // Check if Baidu is rate-limited and Google is available as fallback
     if (baiduRateLimitCount >= BAIDU_RATE_LIMIT_THRESHOLD && hasGoogle) {
       if (Date.now() < baiduRateLimitResetTime) {
@@ -159,6 +167,12 @@ async function baiduTranslateText(text: string): Promise<string> {
   );
 
   if (response.data.error_code) {
+    // Error code 54004 = no credit — fail fast, no retries
+    if (response.data.error_code === '54004') {
+      baiduNoCredit = true;
+      logger.error('Baidu account has no credit (54004) — set baiduNoCredit flag, returning original text');
+      return text; // Return original text — callers handle fallback
+    }
     // Error code 54003 = rate limit
     if (response.data.error_code === '54003') {
       reportBaiduRateLimit();
@@ -169,7 +183,7 @@ async function baiduTranslateText(text: string): Promise<string> {
       await sleep(1500);
       return baiduTranslateText(text);
     }
-    // Any other Baidu error (54004 = no credit, etc.) — fall back to Google if available
+    // Any other Baidu error — fall back to Google if available
     if (config.google.apiKey) {
       logger.warn('Baidu error, falling back to Google', { error_code: response.data.error_code, error_msg: response.data.error_msg });
       return googleTranslateText(text);
@@ -234,6 +248,13 @@ async function baiduTranslateBatch(texts: string[]): Promise<string[]> {
     );
 
     if (response.data.error_code) {
+      // 54004 = no credit — fail fast, return original texts for entire chunk
+      if (response.data.error_code === '54004') {
+        baiduNoCredit = true;
+        logger.error('Baidu batch: no credit (54004) — returning original texts for this chunk');
+        chunk.forEach(item => { result[item.index] = item.text; });
+        continue;
+      }
       if (response.data.error_code === '54003') {
         reportBaiduRateLimit();
         // If Google is available, fallback to Google batch for this chunk
@@ -254,19 +275,14 @@ async function baiduTranslateBatch(texts: string[]): Promise<string[]> {
         continue;
       }
       logger.error('Baidu batch translation error', { error_code: response.data.error_code, error_msg: response.data.error_msg });
-      // Fall back to Google batch if available, otherwise individual Baidu
+      // Fall back to Google batch if available, otherwise return original texts
       if (config.google.apiKey) {
         logger.warn('Baidu batch error, falling back to Google for this chunk', { error_code: response.data.error_code });
         const chunkTexts = chunk.map(c => c.text);
         const googleResults = await googleTranslateBatch(chunkTexts);
         chunk.forEach((item, i) => { result[item.index] = googleResults[i] || item.text; });
       } else {
-        for (const item of chunk) {
-          try {
-            result[item.index] = await baiduTranslateText(item.text);
-            await sleep(RATE_LIMIT_DELAY_MS);
-          } catch { result[item.index] = item.text; }
-        }
+        chunk.forEach(item => { result[item.index] = item.text; });
       }
       continue;
     }

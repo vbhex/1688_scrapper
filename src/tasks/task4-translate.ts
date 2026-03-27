@@ -126,8 +126,10 @@ async function main(): Promise<void> {
           variantsForTranslation = { options, skus };
         }
 
-        // Check if content is already in English (1688 browser set to English)
-        const alreadyEnglish = isAlreadyEnglish(raw.titleZh) && isAlreadyEnglish(raw.descriptionZh);
+        // Check if content is already in English (1688 browser set to English via --lang=en-US).
+        // Title check is sufficient — description may have minor Chinese seller notes/signatures
+        // even when 1688 is in English mode. If the title is English, the product IS English.
+        const alreadyEnglish = isAlreadyEnglish(raw.titleZh);
 
         let translation: Awaited<ReturnType<typeof translateProduct>>;
         if (alreadyEnglish) {

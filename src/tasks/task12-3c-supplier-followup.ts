@@ -97,6 +97,7 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
   const pool = await getPool();
 
   // Get sellers contacted at least 1 hour ago that still have 'contacted' status
+  const safeLimit = Math.min(Math.max(1, Math.floor(Number(limit))), 500);
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT cc.seller_id, p.provider_name, p.shop_url, cc.message_sent_at as contacted_at
      FROM compliance_contacts cc
@@ -105,8 +106,7 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
        AND cc.contact_status = 'contacted'
        AND cc.message_sent_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)
      ORDER BY cc.message_sent_at ASC
-     LIMIT ?`,
-    [limit]
+     LIMIT ${safeLimit}`
   );
 
   if (rows.length === 0) {

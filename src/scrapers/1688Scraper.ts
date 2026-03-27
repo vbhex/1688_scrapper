@@ -2958,8 +2958,10 @@ export class Scraper1688 {
       ? `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(seedLoginId)}&site=cnalichn`
       : 'https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&site=cnalichn';
 
-    // Use domcontentloaded — the amos URL opens a new Wangwang tab and may not reach networkidle2
-    await this.page.goto(inboxUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+    // With a uid, the amos URL navigates to Wangwang and networkidle2 works fine.
+    // Without uid, it never navigates — so domcontentloaded is the fallback.
+    const waitUntil = seedLoginId ? 'networkidle2' : 'domcontentloaded';
+    await this.page.goto(inboxUrl, { waitUntil, timeout: 30000 }).catch(() => {});
     await sleep(3000);
 
     // Prefer web version

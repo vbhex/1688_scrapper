@@ -4,6 +4,8 @@
  * Semi-manual task for handling seller responses to Task 11 outreach.
  * Actions:
  *   --action list              Show all contacted 3C suppliers and their status
+ *   --action scan-inbox        Open Wangwang inbox and scan for ANY unread conversations (fast overview)
+ *   --action debug-reply --seller-id XXXXX   Dump DOM of one seller's chat to diagnose reply detection
  *   --action check-replies     Open each seller's Wangwang chat and detect replies (auto-updates DB)
  *   --action share-company-info --seller-id XXXXX   Send HK company info to a seller who agreed
  *   --action mark-authorized --seller-id XXXXX [--doc-url URL]   Mark seller as authorized (with optional doc)
@@ -15,6 +17,8 @@
  *
  * Usage:
  *   node dist/tasks/task12-3c-supplier-followup.js --action list
+ *   node dist/tasks/task12-3c-supplier-followup.js --action scan-inbox
+ *   node dist/tasks/task12-3c-supplier-followup.js --action debug-reply --seller-id 4597814480s45
  *   node dist/tasks/task12-3c-supplier-followup.js --action check-replies [--limit 50]
  *   node dist/tasks/task12-3c-supplier-followup.js --action share-company-info --seller-id 12345
  *   node dist/tasks/task12-3c-supplier-followup.js --action mark-authorized --seller-id 12345 --doc-url https://...
@@ -91,6 +95,73 @@ DUNS编号: ${HK_COMPANY_INFO.duns}
 目标平台: 亚马逊 (Amazon)
 
 授权书上写明授权 ${HK_COMPANY_INFO.nameEn} 在亚马逊平台销售就好。你们有现成模板更好，没有的话我们也可以提供，不麻烦哈，谢谢亲！`;
+}
+
+/**
+ * Open Wangwang inbox and scan for unread/replied conversations.
+ * Much faster than checking 275 individual chats — gives a quick overview.
+ */
+async function actionScanInbox(headless: boolean): Promise<void> {
+  logger.info('Opening Wangwang inbox to scan for replies...');
+  const scraper = await create1688Scraper(headless);
+  try {
+    const result = await scraper.scanWangwangInbox();
+    const unread = result.conversations.filter(c => c.hasUnread);
+
+    logger.info(`\n${'='.repeat(60)}`);
+    logger.info(`Wangwang Inbox: ${result.conversations.length} conversations found`);
+    logger.info(`Unread/new messages: ${unread.length}`);
+    logger.info('='.repeat(60));
+
+    if (unread.length > 0) {
+      logger.info('\n  CONVERSATIONS WITH NEW MESSAGES:');
+      for (const c of unread) {
+        logger.info(`  [UNREAD] ${c.name}`);
+        logger.info(`    Last: ${c.lastMsg}`);
+      }
+    } else {
+      logger.info('  No unread conversations detected.');
+    }
+
+    if (result.conversations.length > 0) {
+      logger.info('\n  ALL RECENT CONVERSATIONS (first 10):');
+      for (const c of result.conversations.slice(0, 10)) {
+        logger.info(`  ${c.hasUnread ? '[UNREAD]' : '[READ]  '} ${c.lastMsg.substring(0, 80)}`);
+      }
+    }
+
+    // Save DOM sample for debugging
+    if (result.domSample) {
+      const fs = require('fs');
+      fs.writeFileSync('/tmp/wangwang-inbox-dom.txt', result.domSample);
+      logger.info('\n  DOM sample saved to /tmp/wangwang-inbox-dom.txt for selector debugging');
+    }
+  } finally {
+    await scraper.close();
+  }
+}
+
+/**
+ * Open ONE seller's chat in debug mode and dump the DOM to identify correct selectors.
+ * Use this when check-replies returns 0 but you suspect replies exist.
+ */
+async function actionDebugReply(sellerId: string, headless: boolean): Promise<void> {
+  logger.info(`Debug mode: checking chat with seller ${sellerId}`);
+  const shopUrl = `https://shop${sellerId}.1688.com/`;
+  const scraper = await create1688Scraper(headless);
+  try {
+    const result = await (scraper as any).checkWangwangReply(shopUrl, true);
+    logger.info(`hasReply: ${result.hasReply}`);
+    if (result.replyText) logger.info(`replyText: ${result.replyText}`);
+
+    if (result.domSample) {
+      const fs = require('fs');
+      fs.writeFileSync('/tmp/wangwang-chat-dom.txt', result.domSample);
+      logger.info('DOM saved to /tmp/wangwang-chat-dom.txt — inspect to find correct message selectors');
+    }
+  } finally {
+    await scraper.close();
+  }
 }
 
 async function actionCheckReplies(headless: boolean, limit: number): Promise<void> {
@@ -277,6 +348,18 @@ async function main(): Promise<void> {
         await actionList();
         break;
 
+      case 'scan-inbox':
+        await actionScanInbox(options.headless);
+        break;
+
+      case 'debug-reply':
+        if (!options.sellerId) {
+          logger.error('--seller-id is required for debug-reply action');
+          process.exit(1);
+        }
+        await actionDebugReply(options.sellerId, options.headless);
+        break;
+
       case 'check-replies':
         await actionCheckReplies(options.headless, options.limit);
         break;
@@ -311,7 +394,7 @@ async function main(): Promise<void> {
 
       default:
         logger.error(`Unknown action: ${options.action}`);
-        logger.info('Available actions: list, check-replies, share-company-info, mark-authorized, mark-no-response, stats');
+        logger.info('Available actions: list, scan-inbox, debug-reply, check-replies, share-company-info, mark-authorized, mark-no-response, stats');
         process.exit(1);
     }
   } finally {

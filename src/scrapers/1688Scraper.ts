@@ -2922,10 +2922,103 @@ export class Scraper1688 {
   }
 
   /**
-   * Open a Wangwang chat with a seller and check if they have replied to our outreach.
-   * Returns the reply text if found, or empty string if no reply.
+   * Navigate to the main Wangwang conversation list (inbox) and return all conversations
+   * that have unread messages or recent replies from the other party.
+   * Much faster than opening 275 individual chats.
    */
-  async checkWangwangReply(sellerUrl: string): Promise<{ hasReply: boolean; replyText: string }> {
+  async scanWangwangInbox(): Promise<{ conversations: Array<{ name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> {
+    if (!this.page) throw new Error('Browser not initialized');
+
+    // Open main Wangwang inbox (no specific seller)
+    const inboxUrl = 'https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&site=cnalichn';
+    await this.page.goto(inboxUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+    await randomDelay(3000, 5000);
+
+    // Prefer web version
+    await this.page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('button'));
+      for (const btn of buttons) {
+        if ((btn.textContent || '').includes('优先使用网页版') && (btn as HTMLElement).offsetHeight > 0) {
+          btn.click();
+          return;
+        }
+      }
+    });
+    await sleep(4000);
+
+    // Find web IM tab
+    const allPages = await this.browser!.pages();
+    for (const p of allPages) {
+      if (p.url().includes('air.1688.com') || p.url().includes('def_cbu_web_im')) {
+        this.page = p;
+        await p.bringToFront();
+        break;
+      }
+    }
+    await sleep(5000);
+
+    // Find iframe
+    let chatFrame: any = null;
+    for (const frame of this.page.frames()) {
+      const fUrl = frame.url();
+      if (fUrl.includes('def_cbu_web_im_core') || fUrl.includes('web_im_core') || fUrl.includes('def_cbu_web_im/')) {
+        chatFrame = frame;
+        break;
+      }
+    }
+
+    const ctx = chatFrame || this.page;
+
+    const result = await ctx.evaluate(() => {
+      // Dump DOM sample to discover actual class names
+      const domSample = document.body.innerHTML.substring(0, 5000);
+
+      // Try multiple strategies to find conversation list items
+      const conversationSelectors = [
+        '[class*="session"]', '[class*="Session"]',
+        '[class*="contact"]', '[class*="Contact"]',
+        '[class*="conv"]', '[class*="Conv"]',
+        '[class*="chat-list"]', '[class*="chatList"]',
+        '[class*="item"]',
+        'li',
+      ];
+
+      let conversations: Array<{ name: string; lastMsg: string; hasUnread: boolean }> = [];
+
+      for (const sel of conversationSelectors) {
+        const els = Array.from(document.querySelectorAll(sel));
+        if (els.length >= 2) {
+          const candidates = els.map(el => {
+            const text = (el.textContent || '').trim();
+            const classList = el.className || '';
+            const hasUnread = /unread|Unread|badge|Badge|dot|Dot|new|New/i.test(classList) ||
+              el.querySelector('[class*="unread"], [class*="badge"], [class*="dot"]') !== null;
+            return { name: classList.substring(0, 50), lastMsg: text.substring(0, 100), hasUnread };
+          }).filter(c => c.lastMsg.length > 3 && c.lastMsg.length < 200);
+
+          if (candidates.length > 0) {
+            conversations = candidates.slice(0, 30);
+            break;
+          }
+        }
+      }
+
+      return { conversations, domSample };
+    });
+
+    logger.info('Wangwang inbox scanned', {
+      conversationCount: result.conversations.length,
+      unreadCount: result.conversations.filter(c => c.hasUnread).length,
+    });
+
+    return result;
+  }
+
+  /**
+   * Open a Wangwang chat with a seller and check if they have replied to our outreach.
+   * Uses comprehensive DOM inspection to find actual class names used by Wangwang.
+   */
+  async checkWangwangReply(sellerUrl: string, debug = false): Promise<{ hasReply: boolean; replyText: string; domSample?: string }> {
     if (!this.page) throw new Error('Browser not initialized');
 
     let sellerLoginId = sellerUrl;
@@ -2972,39 +3065,83 @@ export class Scraper1688 {
 
       const ctx = chatFrame || this.page;
 
-      // Extract messages from chat — look for received (seller) messages
-      const result = await ctx.evaluate(() => {
-        const receivedSelectors = [
-          '[class*="receive"]',
-          '[class*="Receive"]',
-          '[class*="incoming"]',
-          '[class*="Incoming"]',
-          '[class*="left"]',
-          '[class*="other"]',
-          '[class*="Other"]',
-          '.message-item:not([class*="self"]):not([class*="send"]):not([class*="Send"])',
-        ];
+      // Extract messages with comprehensive DOM inspection
+      const result = await ctx.evaluate((isDebug: boolean) => {
+        const domSample = isDebug ? document.body.innerHTML.substring(0, 8000) : '';
 
-        let receivedMsgs: string[] = [];
-        for (const sel of receivedSelectors) {
-          const els = Array.from(document.querySelectorAll(sel));
-          if (els.length > 0) {
-            receivedMsgs = els
-              .map(el => (el.textContent || '').trim())
-              .filter(t => t.length > 2 && t.length < 500);
-            if (receivedMsgs.length > 0) break;
+        // Collect ALL elements that look like message bubbles
+        // Strategy: find elements that contain text content typical of chat messages
+        // and distinguish sent (right-aligned / self) from received (left-aligned / other)
+        const allTextEls = Array.from(document.querySelectorAll('*')).filter(el => {
+          const el2 = el as HTMLElement;
+          const text = (el.textContent || '').trim();
+          const tag = el.tagName.toLowerCase();
+          if (['script', 'style', 'head', 'html', 'body'].includes(tag)) return false;
+          if (text.length < 5 || text.length > 300) return false;
+          // Must be a leaf-ish element (not a container with many children)
+          return el.children.length <= 3;
+        });
+
+        // Classify each element as sent or received based on position and class names
+        const sentKeywords = /self|send|Send|right|Right|out|Out|mine|mine|sender|Sender|from-self|fromSelf|my-msg|myMsg/;
+        const receivedKeywords = /receive|Receive|incoming|other|Other|left|Left|from-other|fromOther|peer|Peer|remote|Remote|opposite|Opposite/;
+
+        const receivedMessages: string[] = [];
+        const sentMessages: string[] = [];
+        const allMessages: string[] = [];
+
+        for (const el of allTextEls) {
+          const classList = (el.className || '') as string;
+          const text = (el.textContent || '').trim();
+          if (!text) continue;
+
+          // Walk up parent chain to check class names
+          let node: Element | null = el;
+          let isSent = false;
+          let isReceived = false;
+          for (let depth = 0; depth < 6 && node; depth++) {
+            const cls = (node.className || '') as string;
+            if (sentKeywords.test(cls)) { isSent = true; break; }
+            if (receivedKeywords.test(cls)) { isReceived = true; break; }
+            node = node.parentElement;
+          }
+
+          allMessages.push(text);
+          if (isReceived && !isSent) receivedMessages.push(text);
+          else if (!isReceived && !isSent) {
+            // Unknown — check element position (left side = received, right side = sent)
+            const rect = (el as HTMLElement).getBoundingClientRect();
+            const parentRect = (el as HTMLElement).offsetParent?.getBoundingClientRect();
+            if (parentRect && rect.left < parentRect.width / 2) {
+              receivedMessages.push(text); // left side = received
+            }
+          } else if (isSent) {
+            sentMessages.push(text);
           }
         }
 
-        return receivedMsgs;
+        // Deduplicate
+        const uniqueReceived = [...new Set(receivedMessages)];
+        // Filter out our own sent messages appearing in received (dedup by content)
+        const sentSet = new Set(sentMessages);
+        const trueReceived = uniqueReceived.filter(m => !sentSet.has(m));
+
+        return { receivedMessages: trueReceived, sentCount: sentMessages.length, totalElements: allMessages.length, domSample };
+      }, debug);
+
+      logger.debug('checkWangwangReply result', {
+        sellerLoginId,
+        receivedCount: result.receivedMessages.length,
+        sentCount: result.sentCount,
+        totalElements: result.totalElements,
       });
 
-      if (result && result.length > 0) {
-        const replyText = result[result.length - 1]; // most recent reply
-        return { hasReply: true, replyText };
+      if (result.receivedMessages.length > 0) {
+        const replyText = result.receivedMessages[result.receivedMessages.length - 1];
+        return { hasReply: true, replyText, domSample: result.domSample };
       }
 
-      return { hasReply: false, replyText: '' };
+      return { hasReply: false, replyText: '', domSample: result.domSample };
     } catch (error) {
       logger.warn('checkWangwangReply failed', { sellerLoginId, error: (error as Error).message });
       return { hasReply: false, replyText: '' };

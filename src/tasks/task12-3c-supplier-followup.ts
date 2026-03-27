@@ -116,7 +116,10 @@ async function actionScanInbox(headless: boolean): Promise<void> {
     if (unread.length > 0) {
       logger.info('\n  CONVERSATIONS WITH NEW MESSAGES:');
       for (const c of unread) {
-        logger.info(`  [UNREAD] ${c.name}`);
+        // Extract seller ID from conversation ID: "BUYER.1-SELLER_ID.1#..."
+        const idMatch = (c.id || '').match(/\d+\.1-([^.#]+)\./);
+        const sellerId = idMatch ? idMatch[1] : '?';
+        logger.info(`  [UNREAD] ${c.name} (seller: ${sellerId})`);
         logger.info(`    Last: ${c.lastMsg}`);
       }
     } else {
@@ -126,7 +129,7 @@ async function actionScanInbox(headless: boolean): Promise<void> {
     if (result.conversations.length > 0) {
       logger.info('\n  ALL RECENT CONVERSATIONS (first 10):');
       for (const c of result.conversations.slice(0, 10)) {
-        logger.info(`  ${c.hasUnread ? '[UNREAD]' : '[READ]  '} ${c.lastMsg.substring(0, 80)}`);
+        logger.info(`  ${c.hasUnread ? '[UNREAD]' : '[READ]  '} ${c.name}: ${c.lastMsg.substring(0, 60)}`);
       }
     }
 

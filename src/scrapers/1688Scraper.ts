@@ -2940,13 +2940,14 @@ export class Scraper1688 {
    * that have unread messages or recent replies from the other party.
    * Much faster than opening 275 individual chats.
    */
-  async scanWangwangInbox(): Promise<{ conversations: Array<{ name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> {
+  async scanWangwangInbox(): Promise<{ conversations: Array<{ id: string; name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> {
     if (!this.page) throw new Error('Browser not initialized');
 
-    // Open main Wangwang inbox (no specific seller)
+    // Use domcontentloaded — the amos URL immediately opens a new Wangwang tab,
+    // so networkidle2 on the amos page itself hangs forever.
     const inboxUrl = 'https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&site=cnalichn';
-    await this.page.goto(inboxUrl, { waitUntil: 'networkidle2', timeout: 30000 });
-    await randomDelay(3000, 5000);
+    await this.page.goto(inboxUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+    await sleep(3000);
 
     // Prefer web version
     await this.page.evaluate(() => {
@@ -2957,10 +2958,10 @@ export class Scraper1688 {
           return;
         }
       }
-    });
+    }).catch(() => {});
     await sleep(4000);
 
-    // Find web IM tab
+    // Find web IM tab (amos opens a new tab with Wangwang)
     const allPages = await this.browser!.pages();
     for (const p of allPages) {
       if (p.url().includes('air.1688.com') || p.url().includes('def_cbu_web_im')) {
@@ -2984,45 +2985,29 @@ export class Scraper1688 {
     const ctx = chatFrame || this.page;
 
     const result = await ctx.evaluate(() => {
-      // Dump DOM sample to discover actual class names
       const domSample = document.body.innerHTML.substring(0, 5000);
 
-      // Try multiple strategies to find conversation list items
-      const conversationSelectors = [
-        '[class*="session"]', '[class*="Session"]',
-        '[class*="contact"]', '[class*="Contact"]',
-        '[class*="conv"]', '[class*="Conv"]',
-        '[class*="chat-list"]', '[class*="chatList"]',
-        '[class*="item"]',
-        'li',
-      ];
-
-      let conversations: Array<{ name: string; lastMsg: string; hasUnread: boolean }> = [];
-
-      for (const sel of conversationSelectors) {
-        const els = Array.from(document.querySelectorAll(sel));
-        if (els.length >= 2) {
-          const candidates = els.map(el => {
-            const text = (el.textContent || '').trim();
-            const classList = el.className || '';
-            const hasUnread = /unread|Unread|badge|Badge|dot|Dot|new|New/i.test(classList) ||
-              el.querySelector('[class*="unread"], [class*="badge"], [class*="dot"]') !== null;
-            return { name: classList.substring(0, 50), lastMsg: text.substring(0, 100), hasUnread };
-          }).filter(c => c.lastMsg.length > 3 && c.lastMsg.length < 200);
-
-          if (candidates.length > 0) {
-            conversations = candidates.slice(0, 30);
-            break;
-          }
-        }
-      }
+      // Use known class names from Wangwang DOM structure
+      const convItems = Array.from(document.querySelectorAll('.conversation-item'));
+      const conversations = convItems.map(item => {
+        const nameEl = item.querySelector('.name');
+        const descEl = item.querySelector('.desc');
+        const badge = item.querySelector('.unread-badge');
+        const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
+        return {
+          id: item.id || '',
+          name: nameEl ? (nameEl.textContent || '').trim() : '',
+          lastMsg: descEl ? (descEl.textContent || '').trim() : '',
+          hasUnread,
+        };
+      });
 
       return { conversations, domSample };
     });
 
     logger.info('Wangwang inbox scanned', {
       conversationCount: result.conversations.length,
-      unreadCount: result.conversations.filter(c => c.hasUnread).length,
+      unreadCount: result.conversations.filter((c: any) => c.hasUnread).length,
     });
 
     return result;
@@ -3079,79 +3064,68 @@ export class Scraper1688 {
 
       const ctx = chatFrame || this.page;
 
-      // Extract messages with comprehensive DOM inspection
-      const result = await ctx.evaluate((isDebug: boolean) => {
-        const domSample = isDebug ? document.body.innerHTML.substring(0, 8000) : '';
+      // Use the conversation list to detect replies — much more reliable than
+      // trying to parse individual message bubbles.
+      // Conversation item IDs: "BUYER_ID.1-SELLER_ID.1#CHANNEL@cntaobao"
+      // Unread replies show as <div class="unread-badge">N</div> inside the item.
+      const numericId = sellerLoginId.replace(/[^0-9]/g, '');
 
-        // Collect ALL elements that look like message bubbles
-        // Strategy: find elements that contain text content typical of chat messages
-        // and distinguish sent (right-aligned / self) from received (left-aligned / other)
-        const allTextEls = Array.from(document.querySelectorAll('*')).filter(el => {
-          const el2 = el as HTMLElement;
-          const text = (el.textContent || '').trim();
-          const tag = el.tagName.toLowerCase();
-          if (['script', 'style', 'head', 'html', 'body'].includes(tag)) return false;
-          if (text.length < 5 || text.length > 300) return false;
-          // Must be a leaf-ish element (not a container with many children)
-          return el.children.length <= 3;
-        });
+      const result = await ctx.evaluate((params: { loginId: string; numericId: string; isDebug: boolean }) => {
+        const { loginId, numericId, isDebug } = params;
+        const domSample = isDebug ? document.body.innerHTML.substring(0, 10000) : '';
 
-        // Classify each element as sent or received based on position and class names
-        const sentKeywords = /self|send|Send|right|Right|out|Out|mine|mine|sender|Sender|from-self|fromSelf|my-msg|myMsg/;
-        const receivedKeywords = /receive|Receive|incoming|other|Other|left|Left|from-other|fromOther|peer|Peer|remote|Remote|opposite|Opposite/;
+        const convItems = Array.from(document.querySelectorAll('.conversation-item'));
 
-        const receivedMessages: string[] = [];
-        const sentMessages: string[] = [];
-        const allMessages: string[] = [];
+        // Find the conversation item matching this seller
+        let targetHasUnread = false;
+        let targetDesc = '';
+        let targetFound = false;
 
-        for (const el of allTextEls) {
-          const classList = (el.className || '') as string;
-          const text = (el.textContent || '').trim();
-          if (!text) continue;
+        for (const item of convItems) {
+          const itemId = item.id || '';
+          // Match "-SELLER_ID." pattern in conversation ID
+          const isMatch = (loginId && itemId.includes('-' + loginId + '.')) ||
+                          (numericId && numericId.length >= 6 && itemId.includes('-' + numericId + '.'));
+          if (!isMatch) continue;
 
-          // Walk up parent chain to check class names
-          let node: Element | null = el;
-          let isSent = false;
-          let isReceived = false;
-          for (let depth = 0; depth < 6 && node; depth++) {
-            const cls = (node.className || '') as string;
-            if (sentKeywords.test(cls)) { isSent = true; break; }
-            if (receivedKeywords.test(cls)) { isReceived = true; break; }
-            node = node.parentElement;
+          targetFound = true;
+          const badge = item.querySelector('.unread-badge');
+          const descEl = item.querySelector('.desc');
+          targetDesc = descEl ? (descEl.textContent || '').trim() : '';
+          if (badge && (badge.textContent || '').trim() !== '') {
+            targetHasUnread = true;
           }
+          break;
+        }
 
-          allMessages.push(text);
-          if (isReceived && !isSent) receivedMessages.push(text);
-          else if (!isReceived && !isSent) {
-            // Unknown — check element position (left side = received, right side = sent)
-            const rect = (el as HTMLElement).getBoundingClientRect();
-            const parentRect = (el as HTMLElement).offsetParent?.getBoundingClientRect();
-            if (parentRect && rect.left < parentRect.width / 2) {
-              receivedMessages.push(text); // left side = received
-            }
-          } else if (isSent) {
-            sentMessages.push(text);
+        // Collect all unread conversations (for logging/debug)
+        const unreadConvs: Array<{ id: string; name: string; desc: string }> = [];
+        for (const item of convItems) {
+          const badge = item.querySelector('.unread-badge');
+          if (badge && (badge.textContent || '').trim() !== '') {
+            const nameEl = item.querySelector('.name');
+            const descEl = item.querySelector('.desc');
+            unreadConvs.push({
+              id: item.id || '',
+              name: nameEl ? (nameEl.textContent || '').trim() : '',
+              desc: descEl ? (descEl.textContent || '').trim() : '',
+            });
           }
         }
 
-        // Deduplicate
-        const uniqueReceived = [...new Set(receivedMessages)];
-        // Filter out our own sent messages appearing in received (dedup by content)
-        const sentSet = new Set(sentMessages);
-        const trueReceived = uniqueReceived.filter(m => !sentSet.has(m));
-
-        return { receivedMessages: trueReceived, sentCount: sentMessages.length, totalElements: allMessages.length, domSample };
-      }, debug);
+        return { targetFound, targetHasUnread, targetDesc, unreadConvs, convCount: convItems.length, domSample };
+      }, { loginId: sellerLoginId, numericId, isDebug: debug });
 
       logger.debug('checkWangwangReply result', {
         sellerLoginId,
-        receivedCount: result.receivedMessages.length,
-        sentCount: result.sentCount,
-        totalElements: result.totalElements,
+        targetFound: result.targetFound,
+        targetHasUnread: result.targetHasUnread,
+        convCount: result.convCount,
+        unreadConvCount: result.unreadConvs.length,
       });
 
-      if (result.receivedMessages.length > 0) {
-        const replyText = result.receivedMessages[result.receivedMessages.length - 1];
+      if (result.targetHasUnread) {
+        const replyText = result.targetDesc || 'Unread message detected';
         return { hasReply: true, replyText, domSample: result.domSample };
       }
 

@@ -98,13 +98,13 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
 
   // Get sellers contacted at least 1 hour ago that still have 'contacted' status
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT cc.seller_login_id, p.provider_name, p.shop_url, cc.contacted_at
+    `SELECT cc.seller_id, p.provider_name, p.shop_url, cc.message_sent_at as contacted_at
      FROM compliance_contacts cc
      JOIN providers p ON cc.provider_id = p.id
      WHERE cc.outreach_type = '3c_amazon_outreach'
        AND cc.contact_status = 'contacted'
-       AND cc.contacted_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)
-     ORDER BY cc.contacted_at ASC
+       AND cc.message_sent_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)
+     ORDER BY cc.message_sent_at ASC
      LIMIT ?`,
     [limit]
   );
@@ -122,8 +122,8 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
 
   try {
     for (const row of rows) {
-      const shopUrl = row.shop_url || `https://shop${row.seller_login_id}.1688.com/`;
-      logger.info(`Checking: ${row.provider_name} (${row.seller_login_id})`);
+      const shopUrl = row.shop_url || `https://shop${row.seller_id}.1688.com/`;
+      logger.info(`Checking: ${row.provider_name} (${row.seller_id})`);
 
       try {
         const result = await scraper.checkWangwangReply(shopUrl);
@@ -131,7 +131,7 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
 
         if (result.hasReply) {
           await updateContactStatus(
-            row.seller_login_id,
+            row.seller_id,
             'replied',
             `Reply detected: ${result.replyText.substring(0, 200)}`
           );

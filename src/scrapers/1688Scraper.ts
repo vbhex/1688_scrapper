@@ -2836,13 +2836,10 @@ export class Scraper1688 {
       logger.info('Chat page loaded', { title: await this.page.title(), url: this.page.url().substring(0, 100) });
 
       // Step 2: Check ALL tabs for the web IM (it might be in a different tab)
-      // Also check this page — wwwebim.1688.com may auto-redirect to web IM
-      const allPages = await this.browser!.pages();
-      let imPage = this.page;
-      for (const p of allPages) {
+      const allPages2 = await this.browser!.pages();
+      for (const p of allPages2) {
         const pUrl = p.url();
         if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im')) {
-          imPage = p;
           this.page = p;
           await p.bringToFront();
           logger.info('Found web IM in tab', { url: pUrl.substring(0, 100) });
@@ -2850,71 +2847,64 @@ export class Scraper1688 {
         }
       }
 
-      // Wait for page content to fully load
-      await sleep(3000);
+      // Wait for page content and inner iframe to fully load
+      await sleep(5000);
 
-      // The web IM chat is inside an iframe (def_cbu_web_im_core)
-      let chatFrame: any = null;
-      const frames = imPage.frames();
-      logger.info('Frames in chat page', { count: frames.length, urls: frames.map((f: any) => f.url().substring(0, 80)) });
-      for (const frame of frames) {
-        const frameUrl = frame.url();
-        if (frameUrl.includes('def_cbu_web_im_core') || frameUrl.includes('web_im_core')) {
-          chatFrame = frame;
-          logger.info('Found web IM iframe', { url: frameUrl.substring(0, 100) });
-          break;
+      const wwPage = this.page;
+
+      // Step 3: Focus the chat input via contentDocument (avoids detached Frame errors)
+      const focusResult = await wwPage.evaluate(() => {
+        let doc: Document = document;
+        const iframes = Array.from(document.querySelectorAll('iframe'));
+        for (const iframe of iframes) {
+          const src = (iframe as HTMLIFrameElement).src || '';
+          if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+          try {
+            const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
+                              ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+            if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
+          } catch { continue; }
         }
-      }
-
-      // Search context: iframe if found, otherwise main page
-      const searchCtx = chatFrame || this.page;
-
-      const inputSelectors = [
-        'textarea',
-        '[contenteditable="true"]',
-        'div[role="textbox"]',
-        '[class*="editor"]',
-        '[class*="Editor"]',
-        '[class*="chatInput"]',
-        '[class*="message-input"]',
-        '.im-input',
-      ];
-
-      let inputEl: any = null;
-      for (const sel of inputSelectors) {
-        try {
-          await searchCtx.waitForSelector(sel, { timeout: 5000 });
-          inputEl = await searchCtx.$(sel);
-          if (inputEl) {
-            logger.debug('Found chat input', { selector: sel, inIframe: !!chatFrame });
-            break;
+        const selectors = ['textarea', '[contenteditable="true"]', 'div[role="textbox"]',
+                           '[class*="editor"]', '[class*="Editor"]', '[class*="chatInput"]',
+                           '[class*="message-input"]', '.im-input'];
+        for (const sel of selectors) {
+          const el = doc.querySelector(sel) as HTMLElement;
+          if (el && el.offsetHeight > 0) {
+            el.focus();
+            el.click();
+            return { found: true, selector: sel };
           }
-        } catch {
-          continue;
         }
-      }
+        return { found: false, selector: '' };
+      });
 
-      if (!inputEl) {
-        logger.warn('Could not find chat input field', { url: this.page.url().substring(0, 100), hasIframe: !!chatFrame });
+      if (!focusResult.found) {
+        logger.warn('Could not find chat input field', { url: wwPage.url().substring(0, 100) });
         return false;
       }
 
-      // Type the message
-      await inputEl.click();
+      logger.debug('Found chat input', { selector: focusResult.selector });
       await randomDelay(500, 1000);
 
-      // For contenteditable divs inside iframes, type via keyboard
-      // (humanType may not work across frame boundaries)
-      if (chatFrame) {
-        await inputEl.type(message, { delay: 10 });
-      } else {
-        await this.humanType(this.page, message);
-      }
+      // Type the message via keyboard (works after focus via contentDocument)
+      await wwPage.keyboard.type(message, { delay: 20 });
       await randomDelay(800, 1500);
 
-      // Send: try Enter key, also look for a send button
-      const sendClicked = await searchCtx.evaluate(() => {
-        const btns = Array.from(document.querySelectorAll('button, [class*="send"], [class*="Send"]'));
+      // Step 4: Click send button via contentDocument
+      const sendClicked = await wwPage.evaluate(() => {
+        let doc: Document = document;
+        const iframes = Array.from(document.querySelectorAll('iframe'));
+        for (const iframe of iframes) {
+          const src = (iframe as HTMLIFrameElement).src || '';
+          if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+          try {
+            const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
+                              ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+            if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
+          } catch { continue; }
+        }
+        const btns = Array.from(doc.querySelectorAll('button, [class*="send"], [class*="Send"]'));
         for (const btn of btns) {
           const text = (btn.textContent || '').trim();
           if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
@@ -2926,8 +2916,7 @@ export class Scraper1688 {
       });
 
       if (!sendClicked) {
-        // Fallback: press Enter
-        await this.page.keyboard.press('Enter');
+        await wwPage.keyboard.press('Enter');
       }
       await randomDelay(1000, 2000);
 

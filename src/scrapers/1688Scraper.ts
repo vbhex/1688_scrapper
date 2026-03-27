@@ -2995,11 +2995,13 @@ export class Scraper1688 {
     const frameUrls = this.page.frames().map(f => f.url());
     logger.info('scanWangwangInbox: frames', { frameUrls });
 
-    // Find iframe
+    // Find the core IM iframe — must match def_cbu_web_im_CORE, NOT the parent wrapper
+    // Parent wrapper URL: def_cbu_web_im/index.html (wrong, no conversation items)
+    // Core iframe URL:    def_cbu_web_im_core/index.html (correct)
     let chatFrame: any = null;
     for (const frame of this.page.frames()) {
       const fUrl = frame.url();
-      if (fUrl.includes('def_cbu_web_im_core') || fUrl.includes('web_im_core') || fUrl.includes('def_cbu_web_im/')) {
+      if (fUrl.includes('def_cbu_web_im_core') || fUrl.includes('web_im_core')) {
         chatFrame = frame;
         break;
       }

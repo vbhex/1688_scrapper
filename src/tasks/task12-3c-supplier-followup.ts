@@ -99,9 +99,12 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
   // Get sellers contacted at least 1 hour ago that still have 'contacted' status
   const safeLimit = Math.min(Math.max(1, Math.floor(Number(limit))), 500);
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT cc.seller_id, p.provider_name, p.shop_url, cc.message_sent_at as contacted_at
+    `SELECT cc.seller_id,
+            COALESCE(p.provider_name, cc.seller_name, cc.seller_id) as provider_name,
+            COALESCE(p.shop_url, cc.seller_url, CONCAT('https://shop', cc.seller_id, '.1688.com/')) as shop_url,
+            cc.message_sent_at as contacted_at
      FROM compliance_contacts cc
-     JOIN providers p ON cc.provider_id = p.id
+     LEFT JOIN providers p ON p.platform_id = cc.seller_id AND p.platform = '1688'
      WHERE cc.outreach_type = '3c_amazon_outreach'
        AND cc.contact_status = 'contacted'
        AND cc.message_sent_at < DATE_SUB(NOW(), INTERVAL 1 HOUR)

@@ -174,8 +174,16 @@ export class Scraper1688 {
     const userDataDir = path.resolve(__dirname, '../../data/chrome-profile-1688');
     ensureDirectoryExists(userDataDir);
 
-    // Always clear stale Chrome lock files before launch — these accumulate after
-    // crashes/kill -9 and cause puppeteer.launch() to hang or throw "already running"
+    // Kill any stale Chrome processes that are using this profile before launch.
+    // Deleting lock files alone is insufficient if a Chrome process is still running —
+    // it either holds the file handle or re-creates the files immediately.
+    try {
+      const { execSync } = require('child_process');
+      execSync('pkill -9 -f "chrome-profile-1688" 2>/dev/null || true', { stdio: 'ignore' });
+      await sleep(1500); // brief wait for processes to fully die
+    } catch { /* ignore */ }
+
+    // Clear stale Chrome lock files — needed after crashes/kill -9
     const lockFiles = [
       path.join(userDataDir, 'SingletonLock'),
       path.join(userDataDir, 'SingletonCookie'),

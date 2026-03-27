@@ -181,7 +181,7 @@ async function actionDebugReply(sellerId: string, headless: boolean): Promise<vo
 async function actionCheckReplies(headless: boolean, limit: number): Promise<void> {
   const pool = await getPool();
 
-  // Get sellers contacted at least 1 hour ago that still have 'contacted' status
+  // Get all sellers with 'contacted' status (contacted > 1 hour ago)
   const safeLimit = Math.min(Math.max(1, Math.floor(Number(limit))), 500);
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT cc.seller_id,
@@ -202,45 +202,86 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
     return;
   }
 
-  logger.info(`Checking ${rows.length} sellers for replies via Wangwang...`);
+  logger.info(`Checking inbox for replies from ${rows.length} contacted sellers...`);
+
+  // Build lookup: seller_id (and numeric variant) → row
+  const sellerById: Record<string, RowDataPacket> = {};
+  for (const row of rows) {
+    const sid = String(row.seller_id);
+    sellerById[sid] = row;
+    // Also index by numeric-only ID for matching alphanumeric seller IDs like "4597814480s45"
+    const numeric = sid.replace(/[^0-9]/g, '');
+    if (numeric && numeric !== sid) sellerById[numeric] = row;
+  }
+
+  // Use first seller's shop URL as seed to open Wangwang inbox
+  const seedUrl = rows[0].shop_url || `https://shop${rows[0].seller_id}.1688.com/`;
 
   const scraper = await create1688Scraper(headless);
   let repliedCount = 0;
-  let checkedCount = 0;
 
   try {
-    for (const row of rows) {
-      const shopUrl = row.shop_url || `https://shop${row.seller_id}.1688.com/`;
-      logger.info(`Checking: ${row.provider_name} (${row.seller_id})`);
+    // Single bulk scan — far more reliable than 275 individual checkWangwangReply calls.
+    // When a seller replies, their conversation bubbles to the top of the inbox list.
+    // scanWangwangInbox reads up to ~20 visible conversations in the virtual scroll list.
+    logger.info('Opening Wangwang inbox for bulk scan...');
+    const inbox = await scraper.scanWangwangInbox(seedUrl);
+    const unread = inbox.conversations.filter(c => c.hasUnread);
 
-      try {
-        const result = await scraper.checkWangwangReply(shopUrl);
-        checkedCount++;
+    logger.info(`Inbox: ${inbox.conversations.length} conversations visible, ${unread.length} unread`);
 
-        if (result.hasReply) {
-          await updateContactStatus(
-            row.seller_id,
-            'replied',
-            `Reply detected: ${result.replyText.substring(0, 200)}`
-          );
-          repliedCount++;
-          logger.info(`  ✓ REPLIED: ${result.replyText.substring(0, 100)}`);
-        } else {
-          logger.info(`  — No reply yet`);
-        }
-      } catch (err) {
-        logger.warn(`  ✗ Error checking ${row.provider_name}: ${(err as Error).message}`);
+    for (const conv of inbox.conversations) {
+      if (!conv.hasUnread) continue;
+
+      // Extract seller ID from conversation ID: "BUYER.1-SELLER_ID.1#CHANNEL@cntaobao"
+      const idMatch = (conv.id || '').match(/\.1-([^.]+)\.1#/);
+      if (!idMatch) {
+        logger.debug(`Could not extract seller ID from conv id: ${conv.id}`);
+        continue;
+      }
+      const convSellerId = idMatch[1];
+      const convSellerNumeric = convSellerId.replace(/[^0-9]/g, '');
+
+      // Cross-reference against our contacted sellers
+      const row = sellerById[convSellerId] || (convSellerNumeric ? sellerById[convSellerNumeric] : undefined);
+      if (!row) {
+        logger.debug(`Unread from non-outreach seller: ${conv.name} (${convSellerId})`);
+        continue;
       }
 
-      await randomDelay(3000, 6000);
+      // This is one of our 3C outreach sellers — they replied!
+      await updateContactStatus(
+        String(row.seller_id),
+        'replied',
+        `Wangwang inbox reply detected: ${conv.lastMsg.substring(0, 200)}`
+      );
+      repliedCount++;
+      logger.info(`  ✓ REPLIED: ${conv.name} (${row.seller_id}): ${conv.lastMsg.substring(0, 100)}`);
+    }
+
+    // Report any unread conversations that didn't match our seller list (for info)
+    const otherUnread = unread.filter(conv => {
+      const idMatch = (conv.id || '').match(/\.1-([^.]+)\.1#/);
+      if (!idMatch) return true;
+      const sid = idMatch[1];
+      return !sellerById[sid] && !sellerById[sid.replace(/[^0-9]/g, '')];
+    });
+    if (otherUnread.length > 0) {
+      logger.info(`  (${otherUnread.length} unread from non-outreach sellers — check Wangwang manually)`);
+      for (const c of otherUnread) {
+        logger.info(`    [OTHER UNREAD] ${c.name}: ${c.lastMsg.substring(0, 60)}`);
+      }
+    }
+
+    logger.info(`\nCheck-replies summary: ${inbox.conversations.length} inbox items scanned, ${repliedCount} matched our sellers`);
+    if (repliedCount > 0) {
+      logger.info(`Run --action list to see replied sellers, then --action share-company-info --seller-id XXX for each.`);
+    } else {
+      logger.info(`No replies yet from ${rows.length} contacted sellers (only top ~${inbox.conversations.length} inbox items are visible).`);
+      logger.info(`Note: Sellers who reply bubble to the top of the inbox — run --action scan-inbox for a detailed view.`);
     }
   } finally {
     await scraper.close();
-  }
-
-  logger.info(`\nCheck-replies summary: checked=${checkedCount}, replied=${repliedCount}`);
-  if (repliedCount > 0) {
-    logger.info(`Run --action list to see replied sellers, then --action share-company-info --seller-id XXX for each.`);
   }
 }
 

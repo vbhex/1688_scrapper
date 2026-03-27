@@ -2995,25 +2995,27 @@ export class Scraper1688 {
     }
     await sleep(5000);
 
-    // Find the core IM iframe — must match def_cbu_web_im_CORE, NOT the parent wrapper
-    // Parent wrapper URL: def_cbu_web_im/index.html (wrong, no conversation items)
-    // Core iframe URL:    def_cbu_web_im_core/index.html (correct)
-    let chatFrame: any = null;
-    for (const frame of this.page.frames()) {
-      const fUrl = frame.url();
-      if (fUrl.includes('def_cbu_web_im_core') || fUrl.includes('web_im_core')) {
-        chatFrame = frame;
-        break;
+    // Access the core iframe's DOM via contentDocument (avoids detached Frame errors).
+    // Parent frame URL:  def_cbu_web_im/index.html    (wrapper, no conversation items)
+    // Core iframe URL:   def_cbu_web_im_core/index.html (has .conversation-item elements)
+    const result = await this.page.evaluate(() => {
+      let doc: Document = document;
+      const iframes = Array.from(document.querySelectorAll('iframe'));
+      for (const iframe of iframes) {
+        const src = (iframe as HTMLIFrameElement).src || '';
+        if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+        try {
+          const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
+                            ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+          if (iframeDoc && iframeDoc.querySelectorAll('.conversation-item').length > 0) {
+            doc = iframeDoc;
+            break;
+          }
+        } catch { continue; }
       }
-    }
 
-    const ctx = chatFrame || this.page;
-
-    const result = await ctx.evaluate(() => {
-      const domSample = document.body.innerHTML.substring(0, 5000);
-
-      // Use known class names from Wangwang DOM structure
-      const convItems = Array.from(document.querySelectorAll('.conversation-item'));
+      const domSample = doc.body.innerHTML.substring(0, 5000);
+      const convItems = Array.from(doc.querySelectorAll('.conversation-item'));
       const conversations = convItems.map(item => {
         const nameEl = item.querySelector('.name');
         const descEl = item.querySelector('.desc');
@@ -3091,28 +3093,37 @@ export class Scraper1688 {
       }
       await sleep(4000);
 
-      // Find the core IM iframe (def_cbu_web_im_CORE, not the parent wrapper)
-      let chatFrame: any = null;
-      for (const frame of wwPage.frames()) {
-        if (frame.url().includes('def_cbu_web_im_core') || frame.url().includes('web_im_core')) {
-          chatFrame = frame;
-          break;
-        }
-      }
-
-      const ctx = chatFrame || wwPage;
-
-      // Use the conversation list to detect replies — much more reliable than
-      // trying to parse individual message bubbles.
+      // Use the conversation list to detect replies.
       // Conversation item IDs: "BUYER_ID.1-SELLER_ID.1#CHANNEL@cntaobao"
       // Unread replies show as <div class="unread-badge">N</div> inside the item.
+      //
+      // We evaluate in the PARENT PAGE (wwPage) and access the core iframe's DOM
+      // via iframe.contentDocument — this avoids "detached Frame" errors that occur
+      // when using Puppeteer frame references (the iframe gets recreated by SPA navigation).
       const numericId = sellerLoginId.replace(/[^0-9]/g, '');
 
-      const result = await ctx.evaluate((params: { loginId: string; numericId: string; isDebug: boolean }) => {
+      const result = await wwPage.evaluate((params: { loginId: string; numericId: string; isDebug: boolean }) => {
         const { loginId, numericId, isDebug } = params;
-        const domSample = isDebug ? document.body.innerHTML.substring(0, 10000) : '';
 
-        const convItems = Array.from(document.querySelectorAll('.conversation-item'));
+        // Find the def_cbu_web_im_core iframe and get its document
+        // (same-origin: air.1688.com parent + air.1688.com iframe → contentDocument works)
+        let doc: Document = document; // fallback to main page
+        const iframes = Array.from(document.querySelectorAll('iframe'));
+        for (const iframe of iframes) {
+          const src = (iframe as HTMLIFrameElement).src || '';
+          if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+          try {
+            const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
+                              ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+            if (iframeDoc && iframeDoc.querySelectorAll('.conversation-item').length > 0) {
+              doc = iframeDoc;
+              break;
+            }
+          } catch { continue; }
+        }
+
+        const domSample = isDebug ? doc.body.innerHTML.substring(0, 10000) : '';
+        const convItems = Array.from(doc.querySelectorAll('.conversation-item'));
 
         // Find the conversation item matching this seller
         let targetHasUnread = false;

@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "generated": "2026-03-22",
-    "total": 404,
+    "generated": "2026-03-28",
+    "total": 426,
     "description": "1688 search terms for all blue ocean AliExpress categories. Task 1 uses these to discover products."
   },
   "Accessories": {
@@ -677,6 +677,39 @@
     "enabled": true,
     "brand_safe": true
   },
+  "RetroHairClips": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "复古发夹",
+      "复古发卡",
+      "复古边夹"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro-style hair clips — structurally brand-safe, high Etsy demand"
+  },
+  "PunkHairAccessories": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "朋克发饰",
+      "哥特发夹",
+      "朋克头饰"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk/gothic hair accessories — spikes, skull clips, safety-pin barrettes"
+  },
+  "VintageHeadbands": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "复古发箍",
+      "复古头箍",
+      "波西米亚发箍"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Vintage/boho style headbands — wide fabric, knotted, floral"
+  },
   "HairCrownsTiaras": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [
@@ -994,6 +1027,17 @@
     "enabled": true,
     "brand_safe": true
   },
+  "RetroBodyChain": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古腰链",
+      "复古身体链",
+      "波西米亚腰链"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro/boho body/waist chains — strong Etsy seller, brand-safe"
+  },
   "EarringJackets": {
     "l1": "Jewelry & Accessories",
     "search_terms_zh": [
@@ -1068,6 +1112,28 @@
     ],
     "enabled": true,
     "brand_safe": true
+  },
+  "VintageBrooches": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古胸针",
+      "复古徽章",
+      "复古别针"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Vintage brooches & enamel lapel pins — safe if original (non-character) designs"
+  },
+  "PunkJewelryFindings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "朋克铆钉配件",
+      "哥特首饰配件",
+      "朋克链条配件"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk rivet/spike/chain components — jewelry findings, structurally brand-impossible"
   },
   "ClipEarrings": {
     "l1": "Jewelry & Accessories",
@@ -1145,6 +1211,28 @@
     ],
     "enabled": true,
     "brand_safe": true
+  },
+  "RetroKeychains": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古钥匙扣",
+      "复古挂件钥匙链",
+      "怀旧钥匙扣"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro-themed keychains (cassettes, cameras, vintage motifs) — brand-safe"
+  },
+  "PunkKeychains": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "朋克骷髅钥匙扣",
+      "哥特钥匙扣",
+      "朋克钥匙链"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk/skull/gothic keychains — brand-safe generic designs"
   },
   "Necklace": {
     "l1": "Jewelry & Accessories",

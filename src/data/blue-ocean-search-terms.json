@@ -1,7 +1,7 @@
 {
   "_meta": {
     "generated": "2026-03-28",
-    "total": 426,
+    "total": 446,
     "description": "1688 search terms for all blue ocean AliExpress categories. Task 1 uses these to discover products."
   },
   "Accessories": {
@@ -3484,5 +3484,225 @@
       "太阳能充电板 折叠 便携 跨境"
     ],
     "enabled": false
+  },
+  "RetroPhoneCases": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "复古手机壳",
+      "朋克手机壳",
+      "哥特手机壳"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro/punk/gothic phone cases — no brand logos, style-driven designs"
+  },
+  "PunkPatches": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "朋克补丁",
+      "朋克布贴",
+      "哥特刺绣布贴"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk embroidered patches & iron-ons — craft supply, massive Etsy category"
+  },
+  "RetroPatches": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "复古刺绣贴",
+      "复古布贴",
+      "复古徽章贴"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Vintage-style embroidered patches — Etsy craft supply staple"
+  },
+  "VintageWashiTape": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古和纸胶带",
+      "复古手账胶带",
+      "复古花纹胶带"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Vintage pattern washi/masking tape — Etsy craft supply, zero brand risk"
+  },
+  "RetroBookmarks": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古书签",
+      "金属书签",
+      "蒸汽朋克书签"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro/steampunk metal bookmarks — giftable, brand-safe"
+  },
+  "GothicCandles": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "哥特蜡烛",
+      "骷髅蜡烛",
+      "创意造型蜡烛"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Gothic/skull/dark aesthetic candles — trending Etsy home decor"
+  },
+  "VintageJournals": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古笔记本",
+      "复古日记本",
+      "复古皮面手账"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Vintage leather-bound journals & notebooks — Etsy giftable"
+  },
+  "SteampunkAccessories": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "蒸汽朋克配饰",
+      "蒸汽朋克眼镜",
+      "蒸汽朋克齿轮饰品"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Steampunk goggles, gear jewelry, cog accessories — niche but high AOV on Etsy"
+  },
+  "RetroEnamelPins": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "原创设计徽章",
+      "创意金属胸针",
+      "复古珐琅别针"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Original-design enamel/lapel pins — NOT character/anime (those have IP risk)"
+  },
+  "VintagePencilCase": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古笔袋",
+      "复古铅笔盒",
+      "复古文具袋"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Vintage-style pencil cases & stationery pouches"
+  },
+  "PunkChokers": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "朋克项圈",
+      "哥特choker",
+      "朋克颈链"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk/gothic chokers — generic chain/leather/spike designs, no brand overlap"
+  },
+  "PunkEarrings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "朋克耳环",
+      "哥特耳环",
+      "骷髅耳钉"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk/gothic earrings — skull, spike, chain designs. Zero luxury brand overlap."
+  },
+  "RetroEarrings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "复古耳环",
+      "复古耳坠",
+      "波西米亚耳环"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro/boho earrings — vintage geometric, ethnic, artisan style"
+  },
+  "PunkRings": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "朋克戒指",
+      "哥特戒指",
+      "骷髅戒指"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk/gothic skull/snake/claw rings — no luxury brand overlap"
+  },
+  "PunkBracelets": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "朋克手链",
+      "哥特手链",
+      "铆钉皮手链"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Punk/gothic leather/chain/rivet bracelets — structurally generic"
+  },
+  "BohoAnklets": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "波西米亚脚链",
+      "复古脚链",
+      "民族风脚链"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Bohemian/retro anklets — beaded, woven, shell — brand-safe"
+  },
+  "RetroSocks": {
+    "l1": "Apparel Accessories",
+    "search_terms_zh": [
+      "复古袜子",
+      "创意花纹袜",
+      "复古中筒袜"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro pattern/art socks — no logos, style-driven designs only"
+  },
+  "VintageCoinPurses": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "复古零钱包",
+      "复古小钱包",
+      "复古口金包"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Vintage clasp/kiss-lock coin purses — brand-safe small accessories"
+  },
+  "RetroToteBags": {
+    "l1": "Luggage & Bags",
+    "search_terms_zh": [
+      "复古帆布包",
+      "复古手提袋",
+      "文艺帆布袋"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Retro/artsy canvas tote bags — no brand logos, art prints only"
+  },
+  "GothicHomeDecor": {
+    "l1": "Jewelry & Accessories",
+    "search_terms_zh": [
+      "哥特风摆件",
+      "暗黑风装饰",
+      "骷髅摆件"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "notes": "Gothic/dark aesthetic home decor — skull figures, dark ornaments — Etsy trending"
   }
 }

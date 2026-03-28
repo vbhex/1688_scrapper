@@ -2729,7 +2729,9 @@ export class Scraper1688 {
 
         if (results.length >= maxResults) break;
 
-        // Click "next page" button
+        // Click "next page" button — register nav listener BEFORE the click to avoid the
+        // race where navigation fires before waitForNavigation() is called.
+        const navPromise = this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
         const hasNextPage = await this.page.evaluate(() => {
           const nextBtns = Array.from(document.querySelectorAll(
             '[class*="next"]:not(.disabled), a[class*="fui-next"]:not(.disabled), .pagination-next:not(.disabled)'
@@ -2744,8 +2746,9 @@ export class Scraper1688 {
         });
 
         if (!hasNextPage) break;
+        await navPromise;  // wait for the navigation triggered by the click
         pageNum++;
-        await randomDelay(3000, 5000);
+        await randomDelay(2000, 3000);
       }
 
       logger.info('Supplier search complete', { keyword, searchType, totalFound: results.length });
@@ -3067,7 +3070,8 @@ export class Scraper1688 {
         }
       }
 
-      await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      // .catch() because amos→wwwebim redirect can temporarily detach the main frame
+      await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
       await randomDelay(3000, 5000);
 
       // Prefer web version button

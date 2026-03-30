@@ -1879,9 +1879,27 @@ export class Scraper1688 {
         }));
 
         if (state.isCaptcha) {
-          logger.warn('CAPTCHA detected, waiting 15s and reloading...', { id: product.id1688, attempt });
-          await sleep(15000);
-          await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+          if (!this.headless) {
+            // Non-headless: wait for user to solve CAPTCHA manually (up to 3 minutes)
+            logger.warn('CAPTCHA detected — please solve it in the browser window', { id: product.id1688 });
+            const maxWait = 180000;
+            const pollInterval = 3000;
+            let waited = 0;
+            while (waited < maxWait) {
+              await sleep(pollInterval);
+              waited += pollInterval;
+              const stillCaptcha = await this.page.evaluate(() => document.title.includes('Captcha')).catch(() => true);
+              if (!stillCaptcha) {
+                logger.info('CAPTCHA solved, resuming...', { id: product.id1688 });
+                break;
+              }
+              if (waited % 15000 === 0) logger.info(`Waiting for CAPTCHA solve... (${Math.ceil((maxWait - waited) / 1000)}s remaining)`);
+            }
+          } else {
+            logger.warn('CAPTCHA detected, waiting 15s and reloading...', { id: product.id1688, attempt });
+            await sleep(15000);
+            await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 });
+          }
           continue;
         }
 

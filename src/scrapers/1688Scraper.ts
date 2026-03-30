@@ -2359,13 +2359,40 @@ export class Scraper1688 {
         pageIndex++;
         await randomDelay(1500, 2500);
       } catch (err) {
+        xhrCapturing = false;
         logger.warn('Store page failed, stopping', { pageIndex, error: (err as Error).message });
+        // If XHR already captured offer IDs before the frame detached, use them
+        if (xhrOffers.length > 0) {
+          logger.info('Using XHR-captured products from failed page', { count: xhrOffers.length });
+          const xhrProducts = xhrOffers.map(o => ({
+            id1688: o.id1688,
+            title: o.title,
+            description: '',
+            priceCNY: o.priceCNY,
+            images: o.imageUrl ? [o.imageUrl] : [],
+            specifications: [],
+            seller: { name: '' },
+            category: '',
+            minOrderQty: 1,
+            url: `https://detail.1688.com/offer/${o.id1688}.html`,
+            scrapedAt: new Date(),
+          })) as ScrapedProduct[];
+          for (const p of xhrProducts) {
+            if (!products.find(existing => existing.id1688 === p.id1688)) {
+              products.push(p);
+            }
+          }
+          logger.info('Store page scraped (XHR fallback)', { pageIndex, pageCount: xhrProducts.length, totalSoFar: products.length });
+        }
         break;
       }
     }
 
     // Clean up XHR listener — must match the function reference passed to page.on()
     this.page.off('response', xhrResponseListener);
+
+    // Reset page to about:blank so the next store scrape starts with a clean frame state
+    await this.page.goto('about:blank', { waitUntil: 'load', timeout: 5000 }).catch(() => {});
 
     logger.info('Store scrape complete', { shopUrl, total: products.length });
     return limit > 0 ? products.slice(0, limit) : products;

@@ -498,14 +498,21 @@ export class Scraper1688 {
         return true;
       } else {
         logger.info('Saved session expired, proceeding with fresh login');
+        // Close the current page (which may have detached frames from session validation)
+        // and create a clean new page to avoid "Attempted to use detached Frame" errors
+        if (this.page && !this.page.isClosed()) {
+          await this.page.close().catch(() => {});
+        }
+        this.page = await this.browser!.newPage();
+        // Re-apply viewport and stealth settings on the new page
+        await this.page.setViewport({ width: 1920, height: 1080 });
+        await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+        // Re-inject cookies onto the new page before login attempt
+        await this.loadCookies().catch(() => {});
       }
     }
 
     try {
-      // Clear any in-progress navigation from session validation to avoid frame detachment
-      await this.page.goto('about:blank', { waitUntil: 'load', timeout: 10000 }).catch(() => {});
-      await sleep(500);
-
       // Navigate to 1688 My Alibaba page - it will redirect to login if not authenticated
       await this.page.goto('https://work.1688.com/', {
         waitUntil: 'domcontentloaded',

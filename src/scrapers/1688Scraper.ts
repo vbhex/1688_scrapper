@@ -15,7 +15,8 @@ const logger = createChildLogger('1688Scraper');
 
 // Cookie storage path
 const COOKIES_DIR = path.resolve(__dirname, '../../data');
-const COOKIES_FILE = path.join(COOKIES_DIR, '1688-cookies.json');
+// COOKIES_FILE is now per-instance (see this.cookiesFile property) — this constant is kept as fallback
+const COOKIES_FILE_DEFAULT = path.join(COOKIES_DIR, '1688-cookies.json');
 
 // Chinese keyword mapping for 1688.com search (Chinese-language site)
 // RED OCEAN RULE (2026-03-20): Women's Clothing + Men's Clothing L1 = permanently banned.
@@ -161,17 +162,29 @@ export class Scraper1688 {
   private page: Page | null = null;
   private isLoggedIn: boolean = false;
   private headless: boolean;
+  // 'primary'  = old established account with buying history → Amazon supplier outreach
+  // 'sourcing' = new dedicated account (***REMOVED***)          → Core eBay/Etsy sourcing pipeline
+  private profile: 'primary' | 'sourcing';
+  private cookiesFile: string;
 
-  constructor(headless?: boolean) {
+  constructor(headless?: boolean, profile?: 'primary' | 'sourcing') {
     // Allow headless mode via constructor or env var
     this.headless = headless !== undefined ? headless : (process.env.HEADLESS === 'true');
+    // Allow profile via constructor or SCRAPER_PROFILE env var
+    this.profile = profile ?? ((process.env.SCRAPER_PROFILE === 'sourcing') ? 'sourcing' : 'primary');
+    // Each profile gets its own cookies file to keep sessions completely isolated
+    const cookiesSuffix = this.profile === 'sourcing' ? '-sourcing' : '';
+    this.cookiesFile = path.join(COOKIES_DIR, `1688-cookies${cookiesSuffix}.json`);
   }
 
   async initialize(): Promise<void> {
     logger.info('Initializing 1688 scraper with stealth mode', { headless: this.headless });
 
     // Use persistent Chrome profile to avoid detection
-    const userDataDir = path.resolve(__dirname, '../../data/chrome-profile-1688');
+    // primary  → data/chrome-profile-1688          (old account with buying history, Amazon outreach)
+    // sourcing → data/chrome-profile-1688-sourcing  (new ***REMOVED*** account, core pipeline)
+    const profileSuffix = this.profile === 'sourcing' ? '-sourcing' : '';
+    const userDataDir = path.resolve(__dirname, `../../data/chrome-profile-1688${profileSuffix}`);
     ensureDirectoryExists(userDataDir);
 
     // Kill any stale Chrome processes that are using this profile before launch.
@@ -268,8 +281,8 @@ export class Scraper1688 {
     try {
       ensureDirectoryExists(COOKIES_DIR);
       const cookies = await this.page.cookies();
-      fs.writeFileSync(COOKIES_FILE, JSON.stringify(cookies, null, 2));
-      logger.info('Cookies saved', { count: cookies.length, path: COOKIES_FILE });
+      fs.writeFileSync(this.cookiesFile, JSON.stringify(cookies, null, 2));
+      logger.info('Cookies saved', { count: cookies.length, path: this.cookiesFile });
     } catch (error) {
       logger.error('Failed to save cookies', { error: (error as Error).message });
     }
@@ -280,12 +293,12 @@ export class Scraper1688 {
     if (!this.page) return false;
 
     try {
-      if (!fs.existsSync(COOKIES_FILE)) {
+      if (!fs.existsSync(this.cookiesFile)) {
         logger.info('No saved cookies found');
         return false;
       }
 
-      const cookiesData = fs.readFileSync(COOKIES_FILE, 'utf-8');
+      const cookiesData = fs.readFileSync(this.cookiesFile, 'utf-8');
       const cookies = JSON.parse(cookiesData) as CookieParam[];
 
       if (cookies.length === 0) {
@@ -575,7 +588,7 @@ export class Scraper1688 {
         // Clear and fill username with human-like typing
         await usernameInput.evaluate((el: HTMLInputElement) => { el.value = ''; });
         await usernameInput.focus();
-        await this.humanType(this.page, config.alibaba1688.username);
+        await this.humanType(this.page, (this.profile === 'sourcing' ? config.alibaba1688Sourcing : config.alibaba1688).username);
 
         await randomDelay(800, 1500);
 
@@ -599,7 +612,7 @@ export class Scraper1688 {
         if (passwordInput) {
           await passwordInput.evaluate((el: HTMLInputElement) => { el.value = ''; });
           await passwordInput.focus();
-          await this.humanType(this.page, config.alibaba1688.password);
+          await this.humanType(this.page, (this.profile === 'sourcing' ? config.alibaba1688Sourcing : config.alibaba1688).password);
         }
 
         await randomDelay(1500, 3000);
@@ -752,7 +765,7 @@ export class Scraper1688 {
       if (usernameInput) {
         await usernameInput.evaluate((el: HTMLInputElement) => { el.value = ''; });
         await usernameInput.focus();
-        await this.humanType(this.page, config.alibaba1688.username);
+        await this.humanType(this.page, (this.profile === 'sourcing' ? config.alibaba1688Sourcing : config.alibaba1688).username);
 
         await randomDelay(800, 1500);
         await this.humanMouseMove(this.page);
@@ -774,7 +787,7 @@ export class Scraper1688 {
         if (passwordInput) {
           await passwordInput.evaluate((el: HTMLInputElement) => { el.value = ''; });
           await passwordInput.focus();
-          await this.humanType(this.page, config.alibaba1688.password);
+          await this.humanType(this.page, (this.profile === 'sourcing' ? config.alibaba1688Sourcing : config.alibaba1688).password);
         }
 
         await randomDelay(1500, 2500);
@@ -3260,8 +3273,8 @@ export class Scraper1688 {
   }
 }
 
-export async function create1688Scraper(headless?: boolean): Promise<Scraper1688> {
-  const scraper = new Scraper1688(headless);
+export async function create1688Scraper(headless?: boolean, profile?: 'primary' | 'sourcing'): Promise<Scraper1688> {
+  const scraper = new Scraper1688(headless, profile);
   await scraper.initialize();
   return scraper;
 }

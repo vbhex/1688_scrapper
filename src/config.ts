@@ -8,6 +8,10 @@ export interface Config {
     username: string;
     password: string;
   };
+  alibaba1688Sourcing: {
+    username: string;
+    password: string;
+  };
   google: {
     apiKey: string;
   };
@@ -90,6 +94,10 @@ export function loadConfig(): Config {
     alibaba1688: {
       username: getEnvVar('ALIBABA_1688_USERNAME', ''),
       password: getEnvVar('ALIBABA_1688_PASSWORD', ''),
+    },
+    alibaba1688Sourcing: {
+      username: getEnvVar('ALIBABA_1688_SOURCING_USERNAME', ''),
+      password: getEnvVar('ALIBABA_1688_SOURCING_PASSWORD', ''),
     },
     google: {
       apiKey: getEnvVar('GOOGLE_CLOUD_API_KEY', ''),

@@ -195,12 +195,12 @@ export interface SupplierSearchResult {
  * Used by Task 10 (3C Supplier Discovery).
  */
 export const SUPPLIER_3C_KEYWORDS: Record<string, string[]> = {
-  'earphones':           ['蓝牙耳机'],
+  // REMOVED 'earphones' — BANNED on Amazon (52 policy violations, permanent ban since 2026-03-28)
   'smart watches':       ['智能手表'],
   'action cameras':      ['运动相机'],
   'portable projector':  ['便携投影仪'],
   'vr glasses':          ['VR眼镜'],
-  'power station':       ['户外电源'],
+  // REMOVED 'power station' — pure battery/power products banned on ALL platforms (no shipping methods)
   'ip camera':           ['监控摄像头'],
   'smart doorbell':      ['智能门铃'],
   'soundbar':            ['蓝牙音响条'],

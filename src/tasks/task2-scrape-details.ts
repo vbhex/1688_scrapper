@@ -67,7 +67,7 @@ async function main(): Promise<void> {
 
   logger.info(`Found ${products.length} products to scrape details for`);
 
-  let scraper = await create1688Scraper(headless);
+  let scraper = await create1688Scraper(headless, 'sourcing');
   let scraped = 0;
   let failed = 0;
 
@@ -381,7 +381,7 @@ async function main(): Promise<void> {
           logger.warn('Browser frame detached, recreating scraper and retrying...', { id: prod.id1688 });
           try {
             await scraper.close().catch(() => {});
-            scraper = await create1688Scraper(headless);
+            scraper = await create1688Scraper(headless, 'sourcing');
             const reloggedIn = await scraper.login();
             if (reloggedIn) {
               const basicProduct2: ScrapedProduct = {

@@ -71,7 +71,7 @@ async function main(): Promise<void> {
 
   logger.info(`Found ${rows.length} products with no variant data to re-scrape`);
 
-  const scraper = await create1688Scraper(headless);
+  const scraper = await create1688Scraper(headless, 'sourcing');
   let done = 0;
   let noVariants = 0;
   let failed = 0;

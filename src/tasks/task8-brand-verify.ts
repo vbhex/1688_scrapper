@@ -204,7 +204,7 @@ async function main(): Promise<void> {
   let messageFailed = 0;
 
   if (!options.dryRun) {
-    const scraper = await create1688Scraper(options.headless);
+    const scraper = await create1688Scraper(options.headless, 'sourcing');
     try {
       const loggedIn = await scraper.login();
       if (!loggedIn) {

@@ -277,7 +277,7 @@ async function main(): Promise<void> {
 
   logger.info('Task 1: Product Discovery', { mode: options.allBlueOcean ? 'all-blue-ocean' : 'single', totalSearchTerms: categories.length });
 
-  const scraper = await create1688Scraper(options.headless);
+  const scraper = await create1688Scraper(options.headless, 'sourcing');
   let totalDiscovered = 0;
   let totalSkipped = 0;
   let totalDuplicates = 0;

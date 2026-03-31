@@ -53,7 +53,7 @@ while true; do
   node dist/tasks/task1b-brand-prefilter.js --limit 500 2>&1 | tail -3
 
   echo "[$(date +%H:%M:%S)] Task 2: Scraping details for discovered products..."
-  node dist/tasks/task2-scrape-details.js --limit 200 --headless 2>&1 | tail -5
+  node dist/tasks/task2-scrape-details.js --limit 200 2>&1 | tail -5
   TASK2_EXIT=$?
 
   if [ $TASK2_EXIT -ne 0 ]; then

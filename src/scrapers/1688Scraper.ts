@@ -187,12 +187,16 @@ export class Scraper1688 {
     const userDataDir = path.resolve(__dirname, `../../data/chrome-profile-1688${profileSuffix}`);
     ensureDirectoryExists(userDataDir);
 
-    // Kill any stale Chrome processes that are using this profile before launch.
+    // Kill any stale Chrome processes that are using THIS specific profile before launch.
     // Deleting lock files alone is insufficient if a Chrome process is still running —
     // it either holds the file handle or re-creates the files immediately.
+    // IMPORTANT: Only kill Chrome processes for the CURRENT profile — not other profiles.
+    // e.g. primary kills "chrome-profile-1688 " (with trailing space/quote), sourcing kills "chrome-profile-1688-sourcing"
     try {
       const { execSync } = require('child_process');
-      execSync('pkill -9 -f "chrome-profile-1688" 2>/dev/null || true', { stdio: 'ignore' });
+      const profileDirName = `chrome-profile-1688${profileSuffix}`;
+      // Use exact dir name match to avoid "chrome-profile-1688" matching "chrome-profile-1688-sourcing"
+      execSync(`pkill -9 -f "${profileDirName}[^-]" 2>/dev/null; pkill -9 -f "${profileDirName}$" 2>/dev/null; true`, { stdio: 'ignore' });
       await sleep(1500); // brief wait for processes to fully die
     } catch { /* ignore */ }
 

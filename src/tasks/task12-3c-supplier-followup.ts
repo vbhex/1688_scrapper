@@ -84,18 +84,18 @@ function parseArgs(): CLIOptions {
  * Sent AFTER seller has verbally agreed to provide brand authorization.
  */
 function buildCompanyInfoMessage(): string {
-  return `亲，太感谢啦！以下是我们公司信息，麻烦出授权书的时候用这个~
+  return `太好了，感谢配合！下面是我们公司信息，麻烦授权书按这个填写~
 
-公司名称（英文）: ${HK_COMPANY_INFO.nameEn}
-公司名称（中文）: ${HK_COMPANY_INFO.nameZh}
-商业登记号码: ${HK_COMPANY_INFO.brNumber}
+被授权方（英文）: ${HK_COMPANY_INFO.nameEn}
+被授权方（中文）: ${HK_COMPANY_INFO.nameZh}
+商业登记号: ${HK_COMPANY_INFO.brNumber}
 DUNS编号: ${HK_COMPANY_INFO.duns}
 注册日期: ${HK_COMPANY_INFO.registrationDate}
-地址: ${HK_COMPANY_INFO.address}
+公司地址: ${HK_COMPANY_INFO.address}
 联系人: ${HK_COMPANY_INFO.directorName}
-目标平台: 亚马逊 (Amazon)
+授权平台: 亚马逊全球站（Amazon）
 
-授权书上写明授权 ${HK_COMPANY_INFO.nameEn} 在亚马逊平台销售就好。你们有现成模板更好，没有的话我们也可以提供，不麻烦哈，谢谢亲！`;
+授权书内容只需写明授权 ${HK_COMPANY_INFO.nameEn} 在亚马逊平台销售贵司品牌产品即可，不需要太复杂。你们有现成模板直接用就行，如果没有我们可以提供模板，非常方便的。再次感谢，期待合作！`;
 }
 
 /**
@@ -400,10 +400,14 @@ async function actionFollowupNonresponders(headless: boolean, limit: number): Pr
 
   logger.info(`Sending 7-day follow-up to ${rows.length} non-responsive sellers...`);
 
+  // Follow-up messages take a completely different angle from the first outreach.
+  // Don't reference "上次发消息" (sounds needy). Instead, come in fresh with a
+  // concrete price/sample request — gives them a new reason to reply.
   const followupMessages = [
-    `亲，好！上次发消息不知道有没有看到？我们还在找这类产品的供应商，有兴趣的话方便回复一下吗？不打扰了，谢谢 :)`,
-    `亲，之前聊过采购的事，想再跟进一下。我们现在还在筛选供应商，你家产品挺对口的。方便的话回个消息？谢谢～`,
-    `亲好！忘了之前发过消息，我们还有采购需求，有空聊聊吗 :)`,
+    `你好，想问一下你们这边最小起订量是多少？我们亚马逊美国站在评估几款产品，需要先了解一下价格区间。麻烦回复一下，谢谢！`,
+    `你好，请问能提供一下报价单吗？我们是亚马逊欧美卖家，最近在做选品，你家产品在考虑范围内。谢谢！`,
+    `你好，请问你们有没有现货可以寄样品？我们亚马逊美国站在测品，想先评估一下实物品质，运费我们承担。麻烦告知，谢谢！`,
+    `你好，想了解一下你们做不做私标/贴牌？我们在亚马逊欧美有稳定的销量，如果合适的话希望能长期合作。有空的话回复一下，谢谢！`,
   ];
 
   const scraper = await create1688Scraper(headless);

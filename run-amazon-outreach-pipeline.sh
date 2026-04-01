@@ -41,7 +41,8 @@ while true; do
   NEED_OUTREACH=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM providers p
     WHERE p.source = '3c_outreach' AND p.trust_level = 'new'
-      AND p.id NOT IN (SELECT DISTINCT provider_id FROM compliance_contacts WHERE provider_id IS NOT NULL);" | tail -1)
+      AND p.id NOT IN (SELECT DISTINCT provider_id FROM compliance_contacts WHERE provider_id IS NOT NULL AND outreach_type = '3c_amazon_outreach');" | tail -1)
+  NEED_OUTREACH=${NEED_OUTREACH:-0}
 
   if [ "$NEED_OUTREACH" -gt 0 ]; then
     log "[Step 2] $NEED_OUTREACH suppliers need Wangwang outreach..."
@@ -54,8 +55,9 @@ while true; do
   # ─── Step 3: Check Wangwang replies ───
   NEED_REPLY_CHECK=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM compliance_contacts
-    WHERE contact_type = '3c_amazon_outreach'
-      AND status IN ('contacted','message_sent');" | tail -1)
+    WHERE outreach_type = '3c_amazon_outreach'
+      AND contact_status IN ('contacted','pending');" | tail -1)
+  NEED_REPLY_CHECK=${NEED_REPLY_CHECK:-0}
 
   if [ "$NEED_REPLY_CHECK" -gt 0 ]; then
     log "[Step 3] Checking $NEED_REPLY_CHECK pending replies..."
@@ -69,8 +71,9 @@ while true; do
   CONFIRMED=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM providers
     WHERE source = '3c_outreach'
-      AND trust_level IN ('verified','certs_received')
+      AND trust_level IN ('verified','trusted','preferred')
       AND (last_scraped_at IS NULL OR last_scraped_at < DATE_SUB(NOW(), INTERVAL 30 DAY));" | tail -1)
+  CONFIRMED=${CONFIRMED:-0}
 
   if [ "$CONFIRMED" -gt 0 ]; then
     log "[Step 4] $CONFIRMED confirmed suppliers need store scraping..."
@@ -85,6 +88,7 @@ while true; do
     SELECT COUNT(*) FROM products
     WHERE provider_id IN (SELECT id FROM providers WHERE source = '3c_outreach')
       AND status IN ('discovered','detail_scraped','images_checked');" | tail -1)
+  PIPELINE_TODO=${PIPELINE_TODO:-0}
 
   if [ "$PIPELINE_TODO" -gt 0 ]; then
     log "[Step 5] $PIPELINE_TODO products need processing..."
@@ -93,6 +97,7 @@ while true; do
       SELECT COUNT(*) FROM products
       WHERE provider_id IN (SELECT id FROM providers WHERE source = '3c_outreach')
         AND status = 'discovered';" | tail -1)
+    DISC=${DISC:-0}
     [ "$DISC" -gt 0 ] && {
       log "  Task 2: scraping $DISC products..."
       node dist/tasks/task2-scrape-details.js --limit 300 >> /tmp/task2-amazon-outreach.log 2>&1
@@ -102,6 +107,7 @@ while true; do
       SELECT COUNT(*) FROM products
       WHERE provider_id IN (SELECT id FROM providers WHERE source = '3c_outreach')
         AND status = 'detail_scraped';" | tail -1)
+    SCRAPED=${SCRAPED:-0}
     [ "$SCRAPED" -gt 0 ] && {
       log "  Task 3: image check for $SCRAPED products..."
       node dist/tasks/task3-image-check.js --limit 300 >> /tmp/task3-amazon-outreach.log 2>&1
@@ -115,7 +121,7 @@ FROM products p
 JOIN providers pv ON pv.id = p.provider_id
 WHERE p.status = 'images_checked'
   AND pv.source = '3c_outreach'
-  AND pv.trust_level IN ('verified','certs_received')
+  AND pv.trust_level IN ('verified','trusted','preferred')
   AND p.id NOT IN (SELECT product_id FROM authorized_products WHERE active = TRUE);
 SQL
 

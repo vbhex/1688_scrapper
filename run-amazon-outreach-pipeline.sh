@@ -38,21 +38,25 @@ while true; do
   tail -5 /tmp/task10-discover.log | grep -E "New suppliers|Duplicates|Total found" | while read line; do log "  $line"; done
 
   # ─── Step 2: Wangwang outreach to new suppliers ───
+  # Join via platform_id=seller_id (provider_id col is often NULL in compliance_contacts)
   NEED_OUTREACH=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM providers p
     WHERE p.source = '3c_outreach' AND p.trust_level = 'new'
-      AND p.id NOT IN (SELECT DISTINCT provider_id FROM compliance_contacts WHERE provider_id IS NOT NULL AND outreach_type = '3c_amazon_outreach');" | tail -1)
+      AND p.platform_id NOT IN (
+        SELECT DISTINCT cc.seller_id FROM compliance_contacts cc
+        WHERE cc.outreach_type = '3c_amazon_outreach'
+      );" | tail -1)
   NEED_OUTREACH=${NEED_OUTREACH:-0}
 
   if [ "$NEED_OUTREACH" -gt 0 ]; then
     log "[Step 2] $NEED_OUTREACH suppliers need Wangwang outreach..."
-    node dist/tasks/task11-wangwang-outreach.js --limit 10 >> /tmp/task11-outreach.log 2>&1
+    node dist/tasks/task11-3c-supplier-outreach.js --limit 10 >> /tmp/task11-outreach.log 2>&1
     log "  Task 11 outreach done."
   else
-    log "[Step 2] No new suppliers need outreach."
+    log "[Step 2] All discovered suppliers already contacted."
   fi
 
-  # ─── Step 3: Check Wangwang replies ───
+  # ─── Step 3: Check Wangwang replies (scroll inbox to find buried replies) ───
   NEED_REPLY_CHECK=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM compliance_contacts
     WHERE outreach_type = '3c_amazon_outreach'
@@ -60,11 +64,28 @@ while true; do
   NEED_REPLY_CHECK=${NEED_REPLY_CHECK:-0}
 
   if [ "$NEED_REPLY_CHECK" -gt 0 ]; then
-    log "[Step 3] Checking $NEED_REPLY_CHECK pending replies..."
-    node dist/tasks/task11-wangwang-outreach.js --check-replies --limit 20 >> /tmp/task11-replies.log 2>&1
-    log "  Reply check done."
+    log "[Step 3] Checking inbox for replies from $NEED_REPLY_CHECK contacted sellers..."
+    node dist/tasks/task12-3c-supplier-followup.js --action check-replies --limit 300 >> /tmp/task12-replies.log 2>&1
+    tail -5 /tmp/task12-replies.log | grep -E "replied|summary|REPLIED" | while read line; do log "  $line"; done
   else
-    log "[Step 3] No pending replies to check."
+    log "[Step 3] No contacted sellers to check."
+  fi
+
+  # ─── Step 3.5: Follow-up to 7-day non-responders ───
+  NEED_FOLLOWUP=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+    SELECT COUNT(*) FROM compliance_contacts
+    WHERE outreach_type = '3c_amazon_outreach'
+      AND contact_status = 'contacted'
+      AND message_sent_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
+      AND (notes IS NULL OR notes NOT LIKE '%followup_sent%');" | tail -1)
+  NEED_FOLLOWUP=${NEED_FOLLOWUP:-0}
+
+  if [ "$NEED_FOLLOWUP" -gt 0 ]; then
+    log "[Step 3.5] Sending 7-day follow-up to $NEED_FOLLOWUP non-responsive sellers..."
+    node dist/tasks/task12-3c-supplier-followup.js --action followup-nonresponders --limit 15 >> /tmp/task12-followup.log 2>&1
+    tail -3 /tmp/task12-followup.log | grep -E "sent|failed|summary" | while read line; do log "  $line"; done
+  else
+    log "[Step 3.5] No sellers need a 7-day follow-up yet."
   fi
 
   # ─── Step 4: Scrape stores of confirmed suppliers ───

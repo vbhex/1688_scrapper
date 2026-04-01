@@ -3073,7 +3073,61 @@ export class Scraper1688 {
     // Access the core iframe's DOM via contentDocument (avoids detached Frame errors).
     // Parent frame URL:  def_cbu_web_im/index.html    (wrapper, no conversation items)
     // Core iframe URL:   def_cbu_web_im_core/index.html (has .conversation-item elements)
-    const result = await this.page.evaluate(() => {
+    // Helper to locate the core iframe document that contains .conversation-item elements
+    const getCoreDoc = () => this.page!.evaluate(() => {
+      const iframes = Array.from(document.querySelectorAll('iframe'));
+      for (const iframe of iframes) {
+        const src = (iframe as HTMLIFrameElement).src || '';
+        if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+        try {
+          const d = (iframe as HTMLIFrameElement).contentDocument ||
+                    ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+          if (d && d.querySelectorAll('.conversation-item').length > 0) return true;
+        } catch { /* cross-origin */ }
+      }
+      return false;
+    });
+
+    // Scroll the conversation list down to load more items (virtual scroll).
+    // Each iteration scrolls the list container and waits for new items to render.
+    const scrollInboxList = async (scrollRounds: number) => {
+      for (let i = 0; i < scrollRounds; i++) {
+        await this.page!.evaluate(() => {
+          // Try to find the conversation list scroll container in the core iframe
+          const iframes = Array.from(document.querySelectorAll('iframe'));
+          for (const iframe of iframes) {
+            try {
+              const d = (iframe as HTMLIFrameElement).contentDocument ||
+                        ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+              if (!d) continue;
+              // Try common scroll containers
+              const candidates = [
+                d.querySelector('.conversation-list'),
+                d.querySelector('.im-conversation-list'),
+                d.querySelector('.session-list'),
+                d.querySelector('[class*="conversation-list"]'),
+                d.querySelector('[class*="session-list"]'),
+              ].filter(Boolean);
+              if (candidates.length > 0) {
+                const el = candidates[0] as HTMLElement;
+                el.scrollTop += 600;
+                return;
+              }
+              // Fallback: scroll parent of first conversation-item
+              const first = d.querySelector('.conversation-item');
+              if (first && first.parentElement) {
+                first.parentElement.scrollTop += 600;
+                return;
+              }
+            } catch { continue; }
+          }
+        }).catch(() => {});
+        await sleep(800);
+      }
+    };
+
+    // Initial read
+    const readConversations = () => this.page!.evaluate(() => {
       let doc: Document = document;
       const iframes = Array.from(document.querySelectorAll('iframe'));
       for (const iframe of iframes) {
@@ -3103,16 +3157,42 @@ export class Scraper1688 {
           hasUnread,
         };
       });
-
       return { conversations, domSample };
     });
 
+    // Read initial batch
+    let result = await readConversations();
+    const seenIds = new Set<string>(result.conversations.map((c: any) => c.id || c.name));
+    const allConversations = [...result.conversations];
+
+    // Scroll down up to 15 times (each scroll ~600px, loads ~5-8 more items)
+    // This covers ~100-120 conversations — enough to catch replies from 400 outreach contacts
+    const SCROLL_ROUNDS = 15;
+    for (let round = 0; round < SCROLL_ROUNDS; round++) {
+      await scrollInboxList(1);
+      const batch = await readConversations();
+      let newCount = 0;
+      for (const conv of batch.conversations) {
+        const key = conv.id || conv.name;
+        if (!seenIds.has(key)) {
+          seenIds.add(key);
+          allConversations.push(conv);
+          newCount++;
+        }
+      }
+      // Stop early if no new items appeared (bottom of list)
+      if (newCount === 0) {
+        logger.debug(`Inbox scroll: no new items at round ${round + 1}, stopping`);
+        break;
+      }
+    }
+
     logger.info('Wangwang inbox scanned', {
-      conversationCount: result.conversations.length,
-      unreadCount: result.conversations.filter((c: any) => c.hasUnread).length,
+      conversationCount: allConversations.length,
+      unreadCount: allConversations.filter((c: any) => c.hasUnread).length,
     });
 
-    return result;
+    return { conversations: allConversations, domSample: result.domSample };
   }
 
   /**

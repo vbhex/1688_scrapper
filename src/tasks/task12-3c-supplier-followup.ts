@@ -7,6 +7,7 @@
  *   --action scan-inbox        Open Wangwang inbox and scan for ANY unread conversations (fast overview)
  *   --action debug-reply --seller-id XXXXX   Dump DOM of one seller's chat to diagnose reply detection
  *   --action check-replies     Open each seller's Wangwang chat and detect replies (auto-updates DB)
+ *   --action followup-nonresponders   Send a 7-day follow-up nudge to sellers who haven't replied
  *   --action share-company-info --seller-id XXXXX   Send HK company info to a seller who agreed
  *   --action mark-authorized --seller-id XXXXX [--doc-url URL]   Mark seller as authorized (with optional doc)
  *   --action mark-no-response --seller-id XXXXX     Mark seller as non-responsive
@@ -368,6 +369,75 @@ async function actionMarkAuthorized(sellerId: string, docUrl?: string | null): P
   logger.info(`\nThis seller's store can now be scraped for Amazon products.`);
 }
 
+/**
+ * Send a brief follow-up message to sellers contacted 7+ days ago with no reply.
+ * A second touch on 1688 typically lifts response rate by 20-30%.
+ */
+async function actionFollowupNonresponders(headless: boolean, limit: number): Promise<void> {
+  const pool = await getPool();
+
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    `SELECT cc.seller_id,
+            COALESCE(p.provider_name, cc.seller_name, cc.seller_id) as provider_name,
+            COALESCE(p.shop_url, cc.seller_url, CONCAT('https://shop', cc.seller_id, '.1688.com/')) as shop_url,
+            p.main_categories,
+            cc.message_sent_at
+     FROM compliance_contacts cc
+     LEFT JOIN providers p ON p.platform_id = cc.seller_id AND p.platform = '1688'
+     WHERE cc.outreach_type = '3c_amazon_outreach'
+       AND cc.contact_status = 'contacted'
+       AND cc.message_sent_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
+       AND (cc.notes IS NULL OR cc.notes NOT LIKE '%followup_sent%')
+     ORDER BY cc.message_sent_at ASC
+     LIMIT ?`,
+    [limit]
+  );
+
+  if (rows.length === 0) {
+    logger.info('No sellers need a 7-day follow-up (none contacted > 7 days ago without a reply).');
+    return;
+  }
+
+  logger.info(`Sending 7-day follow-up to ${rows.length} non-responsive sellers...`);
+
+  const followupMessages = [
+    `亲，好！上次发消息不知道有没有看到？我们还在找这类产品的供应商，有兴趣的话方便回复一下吗？不打扰了，谢谢 :)`,
+    `亲，之前聊过采购的事，想再跟进一下。我们现在还在筛选供应商，你家产品挺对口的。方便的话回个消息？谢谢～`,
+    `亲好！忘了之前发过消息，我们还有采购需求，有空聊聊吗 :)`,
+  ];
+
+  const scraper = await create1688Scraper(headless);
+  let sent = 0;
+  let failed = 0;
+
+  try {
+    for (const row of rows) {
+      const msg = followupMessages[Math.floor(Math.random() * followupMessages.length)];
+      logger.info(`Follow-up → ${row.provider_name} (${row.seller_id})`);
+
+      const success = await scraper.sendWangwangMessage(row.shop_url, msg);
+      if (success) {
+        // Append followup note, keep original status
+        await pool.execute(
+          `UPDATE compliance_contacts SET notes = CONCAT(IFNULL(notes,''), ' | followup_sent:', NOW()) WHERE seller_id = ?`,
+          [String(row.seller_id)]
+        );
+        sent++;
+        logger.info(`  ✓ Follow-up sent`);
+      } else {
+        failed++;
+        logger.warn(`  ✗ Failed`);
+      }
+
+      await randomDelay(5000, 10000);
+    }
+  } finally {
+    await scraper.close();
+  }
+
+  logger.info(`Follow-up summary: ${sent} sent, ${failed} failed out of ${rows.length} sellers`);
+}
+
 async function actionMarkNoResponse(sellerId: string): Promise<void> {
   const provider = await getProviderByPlatformId('1688', sellerId);
   if (!provider) {
@@ -419,6 +489,10 @@ async function main(): Promise<void> {
         await actionCheckReplies(options.headless, options.limit);
         break;
 
+      case 'followup-nonresponders':
+        await actionFollowupNonresponders(options.headless, options.limit);
+        break;
+
       case 'share-company-info':
         if (!options.sellerId) {
           logger.error('--seller-id is required for share-company-info action');
@@ -449,7 +523,7 @@ async function main(): Promise<void> {
 
       default:
         logger.error(`Unknown action: ${options.action}`);
-        logger.info('Available actions: list, scan-inbox, debug-reply, check-replies, share-company-info, mark-authorized, mark-no-response, stats');
+        logger.info('Available actions: list, scan-inbox, debug-reply, check-replies, followup-nonresponders, share-company-info, mark-authorized, mark-no-response, stats');
         process.exit(1);
     }
   } finally {

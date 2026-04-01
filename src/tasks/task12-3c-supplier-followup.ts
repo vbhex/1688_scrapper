@@ -389,8 +389,8 @@ async function actionFollowupNonresponders(headless: boolean, limit: number): Pr
        AND cc.message_sent_at < DATE_SUB(NOW(), INTERVAL 7 DAY)
        AND (cc.notes IS NULL OR cc.notes NOT LIKE '%followup_sent%')
      ORDER BY cc.message_sent_at ASC
-     LIMIT ?`,
-    [limit]
+     LIMIT ${Math.min(Math.max(1, Math.floor(Number(limit))), 500)}`,
+    []
   );
 
   if (rows.length === 0) {

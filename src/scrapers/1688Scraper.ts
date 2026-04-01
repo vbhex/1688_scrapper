@@ -3088,88 +3088,147 @@ export class Scraper1688 {
       return false;
     });
 
-    // Scroll the conversation list down to load more items (virtual scroll).
-    // Each iteration scrolls the list container and waits for new items to render.
-    const scrollInboxList = async (scrollRounds: number) => {
-      for (let i = 0; i < scrollRounds; i++) {
-        await this.page!.evaluate(() => {
-          // Try to find the conversation list scroll container in the core iframe
-          const iframes = Array.from(document.querySelectorAll('iframe'));
-          for (const iframe of iframes) {
-            try {
-              const d = (iframe as HTMLIFrameElement).contentDocument ||
-                        ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-              if (!d) continue;
-              // Try common scroll containers
-              const candidates = [
-                d.querySelector('.conversation-list'),
-                d.querySelector('.im-conversation-list'),
-                d.querySelector('.session-list'),
-                d.querySelector('[class*="conversation-list"]'),
-                d.querySelector('[class*="session-list"]'),
-              ].filter(Boolean);
-              if (candidates.length > 0) {
-                const el = candidates[0] as HTMLElement;
-                el.scrollTop += 600;
-                return;
-              }
-              // Fallback: scroll parent of first conversation-item
-              const first = d.querySelector('.conversation-item');
-              if (first && first.parentElement) {
-                first.parentElement.scrollTop += 600;
-                return;
-              }
-            } catch { continue; }
-          }
-        }).catch(() => {});
-        await sleep(800);
-      }
+    // Find the Wangwang core iframe frame via Puppeteer's page.frames() —
+    // this avoids cross-origin access issues from page.evaluate() contentDocument.
+    const getCoreFrame = () => {
+      const frames = this.page!.frames();
+      return frames.find(f =>
+        f.url().includes('def_cbu_web_im_core') ||
+        f.url().includes('web_im_core')
+      ) || null;
     };
 
-    // Initial read
-    const readConversations = () => this.page!.evaluate(() => {
-      let doc: Document = document;
-      const iframes = Array.from(document.querySelectorAll('iframe'));
-      for (const iframe of iframes) {
-        const src = (iframe as HTMLIFrameElement).src || '';
-        if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
-        try {
-          const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
-                            ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-          if (iframeDoc && iframeDoc.querySelectorAll('.conversation-item').length > 0) {
-            doc = iframeDoc;
-            break;
+    // Scroll the conversation list down using the real frame context.
+    // Returns the number of .conversation-item elements visible after scroll.
+    const scrollInboxList = async (scrollAmount: number): Promise<number> => {
+      const frame = getCoreFrame();
+      if (!frame) return 0;
+      try {
+        return await frame.evaluate((amount: number) => {
+          // Try all plausible scroll containers (inspect DOM to find exact class)
+          const containers = [
+            document.querySelector('.conversation-list'),
+            document.querySelector('.im-conversation-list'),
+            document.querySelector('.session-list'),
+            document.querySelector('[class*="conversation-list"]'),
+            document.querySelector('[class*="session-list"]'),
+            document.querySelector('[class*="chatList"]'),
+            document.querySelector('[class*="chat-list"]'),
+            document.querySelector('[class*="msgList"]'),
+            document.querySelector('[class*="msg-list"]'),
+            // Fallback: parent of first conversation item
+            document.querySelector('.conversation-item')?.parentElement,
+          ].filter((el): el is HTMLElement => !!el && el instanceof HTMLElement);
+
+          if (containers.length > 0) {
+            containers[0].scrollTop += amount;
+          } else {
+            // Last resort: scroll the body
+            document.documentElement.scrollTop += amount;
+            document.body.scrollTop += amount;
           }
-        } catch { continue; }
+          return document.querySelectorAll('.conversation-item').length;
+        }, scrollAmount);
+      } catch { return 0; }
+    };
+
+    // Read conversations from the core iframe frame.
+    // Falls back to page.evaluate(contentDocument) if frame isn't found directly.
+    const readConversations = async (): Promise<{ conversations: Array<{ id: string; name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> => {
+      const frame = getCoreFrame();
+
+      const extract = (doc: Document) => {
+        const domSample = doc.body ? doc.body.innerHTML.substring(0, 5000) : '';
+        const convItems = Array.from(doc.querySelectorAll('.conversation-item'));
+        const conversations = convItems.map(item => {
+          const nameEl = item.querySelector('.name');
+          const descEl = item.querySelector('.desc');
+          const badge = item.querySelector('.unread-badge');
+          const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
+          return {
+            id: item.id || '',
+            name: nameEl ? (nameEl.textContent || '').trim() : '',
+            lastMsg: descEl ? (descEl.textContent || '').trim() : '',
+            hasUnread,
+          };
+        });
+        return { conversations, domSample };
+      };
+
+      // Preferred: use the frame directly (no cross-origin issues)
+      if (frame) {
+        try {
+          return await frame.evaluate(() => {
+            const domSample = document.body ? document.body.innerHTML.substring(0, 5000) : '';
+            const convItems = Array.from(document.querySelectorAll('.conversation-item'));
+            const conversations = convItems.map(item => {
+              const nameEl = item.querySelector('.name');
+              const descEl = item.querySelector('.desc');
+              const badge = item.querySelector('.unread-badge');
+              const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
+              return {
+                id: item.id || '',
+                name: nameEl ? (nameEl.textContent || '').trim() : '',
+                lastMsg: descEl ? (descEl.textContent || '').trim() : '',
+                hasUnread,
+              };
+            });
+            return { conversations, domSample };
+          });
+        } catch { /* fall through to page.evaluate */ }
       }
 
-      const domSample = doc.body.innerHTML.substring(0, 5000);
-      const convItems = Array.from(doc.querySelectorAll('.conversation-item'));
-      const conversations = convItems.map(item => {
-        const nameEl = item.querySelector('.name');
-        const descEl = item.querySelector('.desc');
-        const badge = item.querySelector('.unread-badge');
-        const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
-        return {
-          id: item.id || '',
-          name: nameEl ? (nameEl.textContent || '').trim() : '',
-          lastMsg: descEl ? (descEl.textContent || '').trim() : '',
-          hasUnread,
-        };
+      // Fallback: access core iframe via page.evaluate contentDocument
+      return this.page!.evaluate(() => {
+        let doc: Document = document;
+        const iframes = Array.from(document.querySelectorAll('iframe'));
+        for (const iframe of iframes) {
+          const src = (iframe as HTMLIFrameElement).src || '';
+          if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+          try {
+            const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
+                              ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+            if (iframeDoc && iframeDoc.querySelectorAll('.conversation-item').length > 0) {
+              doc = iframeDoc;
+              break;
+            }
+          } catch { continue; }
+        }
+        const domSample = doc.body ? doc.body.innerHTML.substring(0, 5000) : '';
+        const convItems = Array.from(doc.querySelectorAll('.conversation-item'));
+        const conversations = convItems.map(item => {
+          const nameEl = item.querySelector('.name');
+          const descEl = item.querySelector('.desc');
+          const badge = item.querySelector('.unread-badge');
+          const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
+          return {
+            id: item.id || '',
+            name: nameEl ? (nameEl.textContent || '').trim() : '',
+            lastMsg: descEl ? (descEl.textContent || '').trim() : '',
+            hasUnread,
+          };
+        });
+        return { conversations, domSample };
       });
-      return { conversations, domSample };
-    });
+    };
 
     // Read initial batch
     let result = await readConversations();
     const seenIds = new Set<string>(result.conversations.map((c: any) => c.id || c.name));
     const allConversations = [...result.conversations];
 
-    // Scroll down up to 15 times (each scroll ~600px, loads ~5-8 more items)
-    // This covers ~100-120 conversations — enough to catch replies from 400 outreach contacts
-    const SCROLL_ROUNDS = 15;
+    // Auto-save DOM sample to help debug scroll container class names
+    if (result.domSample && result.conversations.length < 20) {
+      const fs = require('fs');
+      fs.writeFileSync('/tmp/wangwang-inbox-dom-auto.txt', result.domSample);
+    }
+
+    // Scroll down up to 20 times (600px per round) to surface buried replies.
+    // Uses the real Puppeteer frame — much more reliable than contentDocument guessing.
+    const SCROLL_ROUNDS = 20;
     for (let round = 0; round < SCROLL_ROUNDS; round++) {
-      await scrollInboxList(1);
+      await scrollInboxList(600);
+      await sleep(700);
       const batch = await readConversations();
       let newCount = 0;
       for (const conv of batch.conversations) {

@@ -2938,68 +2938,172 @@ export class Scraper1688 {
 
       const wwPage = this.page;
 
-      // Step 3: Focus the chat input via contentDocument (avoids detached Frame errors)
-      const focusResult = await wwPage.evaluate(() => {
-        let doc: Document = document;
-        const iframes = Array.from(document.querySelectorAll('iframe'));
-        for (const iframe of iframes) {
-          const src = (iframe as HTMLIFrameElement).src || '';
-          if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
-          try {
-            const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
-                              ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-            if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
-          } catch { continue; }
-        }
-        const selectors = ['textarea', '[contenteditable="true"]', 'div[role="textbox"]',
-                           '[class*="editor"]', '[class*="Editor"]', '[class*="chatInput"]',
-                           '[class*="message-input"]', '.im-input'];
-        for (const sel of selectors) {
-          const el = doc.querySelector(sel) as HTMLElement;
-          if (el && el.offsetHeight > 0) {
-            el.focus();
-            el.click();
-            return { found: true, selector: sel };
-          }
-        }
-        return { found: false, selector: '' };
-      });
+      // Step 3: Find the core IM frame via page.frames() — far more reliable than contentDocument.
+      // The frame URL contains 'def_cbu_web_im_core' or 'web_im_core'.
+      const allFrames = wwPage.frames();
+      logger.info('Finding core IM frame', { totalFrames: allFrames.length, urls: allFrames.map(f => f.url().substring(0, 60)).join(' | ') });
+      let coreFrame = allFrames.find(f =>
+        f.url().includes('def_cbu_web_im_core') ||
+        f.url().includes('web_im_core')
+      ) || null;
 
-      if (!focusResult.found) {
-        logger.warn('Could not find chat input field', { url: wwPage.url().substring(0, 100) });
+      // Wait up to 8s for the core frame to appear if not loaded yet
+      if (!coreFrame) {
+        for (let attempt = 0; attempt < 8; attempt++) {
+          await sleep(1000);
+          const frames = wwPage.frames();
+          coreFrame = frames.find(f =>
+            f.url().includes('def_cbu_web_im_core') ||
+            f.url().includes('web_im_core')
+          ) || null;
+          if (coreFrame) break;
+          logger.debug(`Waiting for core frame (attempt ${attempt + 1}/8)`, { frameUrls: frames.map(f => f.url().substring(0, 50)).join(', ') });
+        }
+      }
+
+      const INPUT_SELECTORS = [
+        'textarea',
+        '[contenteditable="true"]',
+        'div[role="textbox"]',
+        '[class*="editor"]',
+        '[class*="Editor"]',
+        '[class*="chatInput"]',
+        '[class*="message-input"]',
+        '[class*="msg-input"]',
+        '.im-input',
+      ];
+
+      let focusFound = false;
+      let focusSelector = '';
+
+      if (coreFrame) {
+        // Use the frame directly — the most reliable approach
+        logger.info('Using core frame for input', { frameUrl: coreFrame.url().substring(0, 80) });
+        try {
+          const frameResult = await coreFrame.evaluate((selectors: string[]) => {
+            for (const sel of selectors) {
+              const el = document.querySelector(sel) as HTMLElement;
+              if (el && el.offsetHeight > 0) {
+                el.focus();
+                el.click();
+                return { found: true, selector: sel };
+              }
+            }
+            // Debug: dump what's in the doc
+            const domSnip = document.body ? document.body.innerHTML.substring(0, 2000) : 'no body';
+            return { found: false, selector: '', domSnip };
+          }, INPUT_SELECTORS);
+
+          if (frameResult.found) {
+            focusFound = true;
+            focusSelector = frameResult.selector;
+          } else {
+            logger.warn('Core frame found but no input element', { domSnip: (frameResult as any).domSnip?.substring(0, 300) });
+          }
+        } catch (err: any) {
+          logger.warn('frame.evaluate failed', { error: err.message });
+        }
+      }
+
+      // Fallback: try contentDocument approach on main page
+      if (!focusFound) {
+        const fallbackResult = await wwPage.evaluate((selectors: string[]) => {
+          let doc: Document = document;
+          const iframes = Array.from(document.querySelectorAll('iframe'));
+          for (const iframe of iframes) {
+            const src = (iframe as HTMLIFrameElement).src || '';
+            if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+            try {
+              const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
+                                ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+              if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
+            } catch { continue; }
+          }
+          for (const sel of selectors) {
+            const el = doc.querySelector(sel) as HTMLElement;
+            if (el && el.offsetHeight > 0) {
+              el.focus();
+              el.click();
+              return { found: true, selector: sel };
+            }
+          }
+          return { found: false, selector: '' };
+        }, INPUT_SELECTORS);
+
+        if (fallbackResult.found) {
+          focusFound = true;
+          focusSelector = fallbackResult.selector;
+        }
+      }
+
+      if (!focusFound) {
+        logger.warn('Could not find chat input field in any frame', { url: wwPage.url().substring(0, 100) });
+        // Save DOM for debugging
+        await wwPage.evaluate(() => {
+          const allText = document.documentElement.innerHTML.substring(0, 3000);
+          (window as any).__debugDom = allText;
+        }).catch(() => {});
         return false;
       }
 
-      logger.debug('Found chat input', { selector: focusResult.selector });
+      logger.info('Found chat input', { selector: focusSelector, method: coreFrame ? 'frame' : 'contentDocument' });
       await randomDelay(500, 1000);
 
-      // Type the message via keyboard (works after focus via contentDocument)
-      await wwPage.keyboard.type(message, { delay: 20 });
+      // Type the message — use frame if available, otherwise keyboard on page
+      if (coreFrame && focusSelector) {
+        try {
+          await coreFrame.type(focusSelector, message, { delay: 15 });
+        } catch {
+          await wwPage.keyboard.type(message, { delay: 20 });
+        }
+      } else {
+        await wwPage.keyboard.type(message, { delay: 20 });
+      }
       await randomDelay(800, 1500);
 
-      // Step 4: Click send button via contentDocument
-      const sendClicked = await wwPage.evaluate(() => {
-        let doc: Document = document;
-        const iframes = Array.from(document.querySelectorAll('iframe'));
-        for (const iframe of iframes) {
-          const src = (iframe as HTMLIFrameElement).src || '';
-          if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
-          try {
-            const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
-                              ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-            if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
-          } catch { continue; }
-        }
-        const btns = Array.from(doc.querySelectorAll('button, [class*="send"], [class*="Send"]'));
-        for (const btn of btns) {
-          const text = (btn.textContent || '').trim();
-          if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
-            (btn as HTMLElement).click();
-            return true;
+      // Step 4: Click send button
+      let sendClicked = false;
+      if (coreFrame) {
+        try {
+          sendClicked = await coreFrame.evaluate(() => {
+            const btns = Array.from(document.querySelectorAll('button, [class*="send"], [class*="Send"]'));
+            for (const btn of btns) {
+              const text = (btn.textContent || '').trim();
+              if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
+                (btn as HTMLElement).click();
+                return true;
+              }
+            }
+            return false;
+          });
+        } catch { /* fallthrough */ }
+      }
+
+      if (!sendClicked) {
+        // Fallback: contentDocument send
+        sendClicked = await wwPage.evaluate(() => {
+          let doc: Document = document;
+          const iframes = Array.from(document.querySelectorAll('iframe'));
+          for (const iframe of iframes) {
+            const src = (iframe as HTMLIFrameElement).src || '';
+            if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
+            try {
+              const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
+                                ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
+              if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
+            } catch { continue; }
           }
-        }
-        return false;
-      });
+          const btns = Array.from(doc.querySelectorAll('button, [class*="send"], [class*="Send"]'));
+          for (const btn of btns) {
+            const text = (btn.textContent || '').trim();
+            if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
+              (btn as HTMLElement).click();
+              return true;
+            }
+          }
+          return false;
+        });
+      }
 
       if (!sendClicked) {
         await wwPage.keyboard.press('Enter');

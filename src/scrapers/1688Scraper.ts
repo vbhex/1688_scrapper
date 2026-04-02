@@ -2939,15 +2939,27 @@ export class Scraper1688 {
       const wwPage = this.page;
 
       // Helper: always fetch the core frame fresh — never hold a stale reference.
-      // Wangwang re-renders the inner iframe on every conversation switch, so the
-      // frame ID changes. Re-fetching just before each operation prevents detached frame errors.
+      // Wangwang can load in two different ways:
+      //   1. air.1688.com  → opens a nested iframe at def_cbu_web_im_core/index.html
+      //   2. wwwebim.1688.com → single-frame page, chat UI is in the main frame itself
+      // We check for the nested iframe first; fall back to the main frame if the page
+      // is wwwebim and only 1 frame exists.
       const getFreshCoreFrame = async (waitMs = 0) => {
         if (waitMs > 0) await sleep(waitMs);
         const frames = wwPage.frames();
-        return frames.find(f =>
+        // Prefer the dedicated core iframe (air.1688.com flow)
+        const coreIframe = frames.find(f =>
           !f.isDetached() &&
           (f.url().includes('def_cbu_web_im_core') || f.url().includes('web_im_core'))
-        ) || null;
+        );
+        if (coreIframe) return coreIframe;
+        // Fallback: wwwebim single-frame flow — main frame IS the chat
+        const pageUrl = wwPage.url();
+        if (pageUrl.includes('wwwebim.1688.com') || pageUrl.includes('amos.alicdn.com')) {
+          const mainFrame = frames.find(f => !f.isDetached() && f.parentFrame() === null);
+          return mainFrame || null;
+        }
+        return null;
       };
 
       // Safe frame.evaluate that re-fetches the frame fresh and retries on detach.

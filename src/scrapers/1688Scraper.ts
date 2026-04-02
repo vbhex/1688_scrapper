@@ -3181,229 +3181,177 @@ export class Scraper1688 {
    * then the left panel shows the full inbox regardless of which seller we picked.
    */
   async scanWangwangInbox(seedSellerUrl?: string): Promise<{ conversations: Array<{ id: string; name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> {
-    if (!this.page) throw new Error('Browser not initialized');
+    if (!this.browser) throw new Error('Browser not initialized');
 
-    // Build amos URL — use a seed seller to open Wangwang (without uid it never navigates)
-    let seedLoginId = '';
-    if (seedSellerUrl) {
-      const m = seedSellerUrl.match(/https?:\/\/shop([^.]+)\.1688\.com/);
-      if (m) seedLoginId = m[1];
-    }
-    const inboxUrl = seedLoginId
-      ? `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(seedLoginId)}&site=cnalichn`
-      : 'https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&site=cnalichn';
+    // Open a dedicated fresh tab for inbox scanning — avoids all stale-page / detached-frame
+    // issues that occur when reusing this.page across navigations.
+    const inboxTab = await this.browser.newPage();
+    try {
+      await inboxTab.bringToFront();
 
-    // With a uid, the amos URL navigates to Wangwang and networkidle2 works fine.
-    // Without uid, it never navigates — so domcontentloaded is the fallback.
-    const waitUntil = seedLoginId ? 'networkidle2' : 'domcontentloaded';
-    await this.page.goto(inboxUrl, { waitUntil, timeout: 30000 }).catch(() => {});
-    await sleep(3000);
+      // Build amos URL — use a seed seller to open Wangwang (without uid it never navigates)
+      let seedLoginId = '';
+      if (seedSellerUrl) {
+        const m = seedSellerUrl.match(/https?:\/\/shop([^.]+)\.1688\.com/);
+        if (m) seedLoginId = m[1];
+      }
+      const inboxUrl = seedLoginId
+        ? `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(seedLoginId)}&site=cnalichn`
+        : 'https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&site=cnalichn';
 
-    // Prefer web version
-    await this.page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('button'));
-      for (const btn of buttons) {
-        if ((btn.textContent || '').includes('优先使用网页版') && (btn as HTMLElement).offsetHeight > 0) {
-          btn.click();
-          return;
+      // With a uid, the amos URL navigates to Wangwang and networkidle2 works fine.
+      // Without uid, it never navigates — so domcontentloaded is the fallback.
+      const waitUntil = seedLoginId ? 'networkidle2' : 'domcontentloaded';
+      await inboxTab.goto(inboxUrl, { waitUntil, timeout: 30000 }).catch(() => {});
+      await sleep(3000);
+
+      // Prefer web version
+      await inboxTab.evaluate(() => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        for (const btn of buttons) {
+          if ((btn.textContent || '').includes('优先使用网页版') && (btn as HTMLElement).offsetHeight > 0) {
+            btn.click();
+            return;
+          }
+        }
+      }).catch(() => {});
+      await sleep(4000);
+
+      // Identify which tab Wangwang opened in. amos may have opened a new tab (air.1688.com)
+      // or navigated inboxTab itself (wwwebim.1688.com). Check all pages.
+      let wwPage = inboxTab;
+      const allPages = await this.browser.pages();
+      for (const p of allPages) {
+        const u = p.url();
+        if (u.includes('air.1688.com') || u.includes('def_cbu_web_im') || u.includes('wwwebim.1688.com')) {
+          wwPage = p;
+          await p.bringToFront();
+          break;
         }
       }
-    }).catch(() => {});
-    await sleep(4000);
+      await sleep(5000);
 
-    // Find web IM tab (amos opens a new tab with Wangwang)
-    const allPages = await this.browser!.pages();
-    for (const p of allPages) {
-      if (p.url().includes('air.1688.com') || p.url().includes('def_cbu_web_im')) {
-        this.page = p;
-        await p.bringToFront();
-        break;
-      }
-    }
-    await sleep(5000);
-
-    // Access the core iframe's DOM via contentDocument (avoids detached Frame errors).
-    // Parent frame URL:  def_cbu_web_im/index.html    (wrapper, no conversation items)
-    // Core iframe URL:   def_cbu_web_im_core/index.html (has .conversation-item elements)
-    // Helper to locate the core iframe document that contains .conversation-item elements
-    const getCoreDoc = () => this.page!.evaluate(() => {
-      const iframes = Array.from(document.querySelectorAll('iframe'));
-      for (const iframe of iframes) {
-        const src = (iframe as HTMLIFrameElement).src || '';
-        if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
-        try {
-          const d = (iframe as HTMLIFrameElement).contentDocument ||
-                    ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-          if (d && d.querySelectorAll('.conversation-item').length > 0) return true;
-        } catch { /* cross-origin */ }
-      }
-      return false;
-    });
-
-    // Find the Wangwang core iframe frame via Puppeteer's page.frames() —
-    // this avoids cross-origin access issues from page.evaluate() contentDocument.
-    const getCoreFrame = () => {
-      const frames = this.page!.frames();
-      return frames.find(f =>
-        f.url().includes('def_cbu_web_im_core') ||
-        f.url().includes('web_im_core')
-      ) || null;
-    };
-
-    // Scroll the conversation list down using the real frame context.
-    // Returns the number of .conversation-item elements visible after scroll.
-    const scrollInboxList = async (scrollAmount: number): Promise<number> => {
-      const frame = getCoreFrame();
-      if (!frame) return 0;
-      try {
-        return await frame.evaluate((amount: number) => {
-          // Try all plausible scroll containers (inspect DOM to find exact class)
-          const containers = [
-            document.querySelector('.conversation-list'),
-            document.querySelector('.im-conversation-list'),
-            document.querySelector('.session-list'),
-            document.querySelector('[class*="conversation-list"]'),
-            document.querySelector('[class*="session-list"]'),
-            document.querySelector('[class*="chatList"]'),
-            document.querySelector('[class*="chat-list"]'),
-            document.querySelector('[class*="msgList"]'),
-            document.querySelector('[class*="msg-list"]'),
-            // Fallback: parent of first conversation item
-            document.querySelector('.conversation-item')?.parentElement,
-          ].filter((el): el is HTMLElement => !!el && el instanceof HTMLElement);
-
-          if (containers.length > 0) {
-            containers[0].scrollTop += amount;
-          } else {
-            // Last resort: scroll the body
-            document.documentElement.scrollTop += amount;
-            document.body.scrollTop += amount;
-          }
-          return document.querySelectorAll('.conversation-item').length;
-        }, scrollAmount);
-      } catch { return 0; }
-    };
-
-    // Read conversations from the core iframe frame.
-    // Falls back to page.evaluate(contentDocument) if frame isn't found directly.
-    const readConversations = async (): Promise<{ conversations: Array<{ id: string; name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> => {
-      const frame = getCoreFrame();
-
-      const extract = (doc: Document) => {
-        const domSample = doc.body ? doc.body.innerHTML.substring(0, 5000) : '';
-        const convItems = Array.from(doc.querySelectorAll('.conversation-item'));
-        const conversations = convItems.map(item => {
-          const nameEl = item.querySelector('.name');
-          const descEl = item.querySelector('.desc');
-          const badge = item.querySelector('.unread-badge');
-          const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
-          return {
-            id: item.id || '',
-            name: nameEl ? (nameEl.textContent || '').trim() : '',
-            lastMsg: descEl ? (descEl.textContent || '').trim() : '',
-            hasUnread,
-          };
-        });
-        return { conversations, domSample };
+      // Locate the core iframe frame (def_cbu_web_im_core). Re-fetched each time to stay fresh.
+      const getFreshInboxFrame = () => {
+        const frames = wwPage.frames();
+        return frames.find(f =>
+          f.url().includes('def_cbu_web_im_core') ||
+          f.url().includes('web_im_core')
+        ) || null;
       };
 
-      // Preferred: use the frame directly (no cross-origin issues)
-      if (frame) {
+      // Scroll the conversation list down.
+      const scrollInboxList = async (scrollAmount: number): Promise<number> => {
+        const frame = getFreshInboxFrame();
+        if (!frame) return 0;
         try {
-          return await frame.evaluate(() => {
-            const domSample = document.body ? document.body.innerHTML.substring(0, 5000) : '';
-            const convItems = Array.from(document.querySelectorAll('.conversation-item'));
-            const conversations = convItems.map(item => {
-              const nameEl = item.querySelector('.name');
-              const descEl = item.querySelector('.desc');
-              const badge = item.querySelector('.unread-badge');
-              const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
-              return {
-                id: item.id || '',
-                name: nameEl ? (nameEl.textContent || '').trim() : '',
-                lastMsg: descEl ? (descEl.textContent || '').trim() : '',
-                hasUnread,
-              };
-            });
-            return { conversations, domSample };
-          });
-        } catch { /* fall through to page.evaluate */ }
-      }
+          return await frame.evaluate((amount: number) => {
+            // Try all plausible scroll containers
+            const containers = [
+              document.querySelector('.conversation-list'),
+              document.querySelector('.im-conversation-list'),
+              document.querySelector('.session-list'),
+              document.querySelector('[class*="conversation-list"]'),
+              document.querySelector('[class*="session-list"]'),
+              document.querySelector('[class*="chatList"]'),
+              document.querySelector('[class*="chat-list"]'),
+              document.querySelector('[class*="msgList"]'),
+              document.querySelector('[class*="msg-list"]'),
+              document.querySelector('.conversation-item')?.parentElement,
+            ].filter((el): el is HTMLElement => !!el && el instanceof HTMLElement);
 
-      // Fallback: access core iframe via page.evaluate contentDocument
-      return this.page!.evaluate(() => {
-        let doc: Document = document;
-        const iframes = Array.from(document.querySelectorAll('iframe'));
-        for (const iframe of iframes) {
-          const src = (iframe as HTMLIFrameElement).src || '';
-          if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
-          try {
-            const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
-                              ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-            if (iframeDoc && iframeDoc.querySelectorAll('.conversation-item').length > 0) {
-              doc = iframeDoc;
-              break;
+            if (containers.length > 0) {
+              containers[0].scrollTop += amount;
+            } else {
+              document.documentElement.scrollTop += amount;
+              document.body.scrollTop += amount;
             }
-          } catch { continue; }
+            return document.querySelectorAll('.conversation-item').length;
+          }, scrollAmount);
+        } catch { return 0; }
+      };
+
+      // Read conversations from the core frame. Falls back to wwwebim main-frame pattern.
+      const readConversations = async (): Promise<{ conversations: Array<{ id: string; name: string; lastMsg: string; hasUnread: boolean }>, domSample: string }> => {
+        const extract = `
+          const domSample = document.body ? document.body.innerHTML.substring(0, 5000) : '';
+          const convItems = Array.from(document.querySelectorAll('.conversation-item'));
+          const conversations = convItems.map(item => {
+            const nameEl = item.querySelector('.name');
+            const descEl = item.querySelector('.desc');
+            const badge = item.querySelector('.unread-badge');
+            const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
+            return {
+              id: item.id || '',
+              name: nameEl ? (nameEl.textContent || '').trim() : '',
+              lastMsg: descEl ? (descEl.textContent || '').trim() : '',
+              hasUnread,
+            };
+          });
+          return { conversations, domSample };
+        `;
+
+        // Try core iframe frame first
+        const frame = getFreshInboxFrame();
+        if (frame) {
+          try {
+            return await frame.evaluate(new Function(extract) as () => any);
+          } catch { /* fall through */ }
         }
-        const domSample = doc.body ? doc.body.innerHTML.substring(0, 5000) : '';
-        const convItems = Array.from(doc.querySelectorAll('.conversation-item'));
-        const conversations = convItems.map(item => {
-          const nameEl = item.querySelector('.name');
-          const descEl = item.querySelector('.desc');
-          const badge = item.querySelector('.unread-badge');
-          const hasUnread = !!(badge && (badge.textContent || '').trim() !== '');
-          return {
-            id: item.id || '',
-            name: nameEl ? (nameEl.textContent || '').trim() : '',
-            lastMsg: descEl ? (descEl.textContent || '').trim() : '',
-            hasUnread,
-          };
-        });
-        return { conversations, domSample };
+
+        // Fallback: wwwebim puts the chat in the main frame of wwPage directly
+        try {
+          return await wwPage.evaluate(new Function(extract) as () => any);
+        } catch { /* fall through */ }
+
+        return { conversations: [], domSample: '' };
+      };
+
+      // Read initial batch
+      let result = await readConversations();
+      const seenIds = new Set<string>(result.conversations.map((c: any) => c.id || c.name));
+      const allConversations = [...result.conversations];
+
+      // Auto-save DOM sample for debugging if few items found
+      if (result.conversations.length < 20) {
+        const fs = require('fs');
+        fs.writeFileSync('/tmp/wangwang-inbox-dom-auto.txt', result.domSample);
+      }
+
+      // Scroll down up to 20 rounds to surface buried replies
+      const SCROLL_ROUNDS = 20;
+      for (let round = 0; round < SCROLL_ROUNDS; round++) {
+        await scrollInboxList(600);
+        await sleep(700);
+        const batch = await readConversations();
+        let newCount = 0;
+        for (const conv of batch.conversations) {
+          const key = conv.id || conv.name;
+          if (!seenIds.has(key)) {
+            seenIds.add(key);
+            allConversations.push(conv);
+            newCount++;
+          }
+        }
+        if (newCount === 0) {
+          logger.debug(`Inbox scroll: no new items at round ${round + 1}, stopping`);
+          break;
+        }
+      }
+
+      logger.info('Wangwang inbox scanned', {
+        conversationCount: allConversations.length,
+        unreadCount: allConversations.filter((c: any) => c.hasUnread).length,
       });
-    };
 
-    // Read initial batch
-    let result = await readConversations();
-    const seenIds = new Set<string>(result.conversations.map((c: any) => c.id || c.name));
-    const allConversations = [...result.conversations];
-
-    // Auto-save DOM sample to help debug scroll container class names
-    if (result.domSample && result.conversations.length < 20) {
-      const fs = require('fs');
-      fs.writeFileSync('/tmp/wangwang-inbox-dom-auto.txt', result.domSample);
+      return { conversations: allConversations, domSample: result.domSample };
+    } finally {
+      // Always close the inbox tab and restore this.page to a healthy page
+      await inboxTab.close().catch(() => {});
+      const remaining = await this.browser.pages();
+      const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
+      if (healthy) this.page = healthy;
     }
-
-    // Scroll down up to 20 times (600px per round) to surface buried replies.
-    // Uses the real Puppeteer frame — much more reliable than contentDocument guessing.
-    const SCROLL_ROUNDS = 20;
-    for (let round = 0; round < SCROLL_ROUNDS; round++) {
-      await scrollInboxList(600);
-      await sleep(700);
-      const batch = await readConversations();
-      let newCount = 0;
-      for (const conv of batch.conversations) {
-        const key = conv.id || conv.name;
-        if (!seenIds.has(key)) {
-          seenIds.add(key);
-          allConversations.push(conv);
-          newCount++;
-        }
-      }
-      // Stop early if no new items appeared (bottom of list)
-      if (newCount === 0) {
-        logger.debug(`Inbox scroll: no new items at round ${round + 1}, stopping`);
-        break;
-      }
-    }
-
-    logger.info('Wangwang inbox scanned', {
-      conversationCount: allConversations.length,
-      unreadCount: allConversations.filter((c: any) => c.hasUnread).length,
-    });
-
-    return { conversations: allConversations, domSample: result.domSample };
   }
 
   /**

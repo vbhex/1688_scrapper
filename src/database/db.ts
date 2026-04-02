@@ -624,14 +624,15 @@ export async function saveSellerContact(
   sellerName: string,
   wangwangId: string,
   sellerUrl: string,
-  newProductIds: number[]
+  newProductIds: number[],
+  outreachType: string = 'brand_verify'
 ): Promise<void> {
   const p = await getPool();
 
-  // Fetch existing product_ids to merge
+  // Fetch existing product_ids for this specific outreach type to merge
   const [rows] = await p.execute<RowDataPacket[]>(
-    `SELECT product_ids FROM compliance_contacts WHERE seller_id = ?`,
-    [sellerId]
+    `SELECT product_ids FROM compliance_contacts WHERE seller_id = ? AND outreach_type = ?`,
+    [sellerId, outreachType]
   );
   let merged: number[] = newProductIds;
   if (rows.length > 0 && rows[0].product_ids) {
@@ -642,15 +643,15 @@ export async function saveSellerContact(
   }
 
   await p.execute(
-    `INSERT INTO compliance_contacts (seller_id, seller_name, wangwang_id, seller_url, product_ids)
-     VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO compliance_contacts (seller_id, seller_name, wangwang_id, seller_url, product_ids, outreach_type)
+     VALUES (?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        seller_name  = VALUES(seller_name),
        wangwang_id  = COALESCE(VALUES(wangwang_id), wangwang_id),
        seller_url   = COALESCE(VALUES(seller_url), seller_url),
        product_ids  = VALUES(product_ids),
        updated_at   = NOW()`,
-    [sellerId, sellerName || null, wangwangId || null, sellerUrl || null, JSON.stringify(merged)]
+    [sellerId, sellerName || null, wangwangId || null, sellerUrl || null, JSON.stringify(merged), outreachType]
   );
 }
 
@@ -680,7 +681,8 @@ export async function getPendingContacts(): Promise<SellerContact[]> {
 export async function updateContactStatus(
   sellerId: string,
   status: 'contacted' | 'replied' | 'responded' | 'certs_received' | 'no_certs',
-  notes?: string
+  notes?: string,
+  outreachType: string = 'brand_verify'
 ): Promise<void> {
   const p = await getPool();
   const messageSentAt = status === 'contacted' ? new Date() : null;
@@ -690,8 +692,8 @@ export async function updateContactStatus(
          message_sent_at = COALESCE(?, message_sent_at),
          notes = COALESCE(?, notes),
          updated_at = NOW()
-     WHERE seller_id = ?`,
-    [status, messageSentAt, notes || null, sellerId]
+     WHERE seller_id = ? AND outreach_type = ?`,
+    [status, messageSentAt, notes || null, sellerId, outreachType]
   );
 }
 
@@ -1259,13 +1261,19 @@ export async function getCompanyById(companyId: string): Promise<CompanyInfo | n
 export async function getProvidersForOutreach(source: string, limit?: number): Promise<Provider[]> {
   const p = await getPool();
   const limitClause = limit ? `LIMIT ${limit}` : '';
+  // Join specifically on 3c_amazon_outreach so manual providers with brand_verify contacts
+  // are still included (their brand_verify contact row won't block them here).
   const [rows] = await p.execute<RowDataPacket[]>(
     `SELECT prov.* FROM providers prov
-     LEFT JOIN compliance_contacts cc ON cc.seller_id = prov.platform_id
-     WHERE prov.source = ?
-       AND prov.trust_level = 'new'
+     LEFT JOIN compliance_contacts cc
+       ON cc.seller_id = prov.platform_id
+       AND cc.outreach_type = '3c_amazon_outreach'
+     WHERE (
+       (prov.source = ? AND prov.trust_level = 'new')
+       OR prov.sourcing_type = 'manual'
+     )
        AND (cc.id IS NULL OR cc.contact_status = 'pending')
-     ORDER BY prov.created_at ASC
+     ORDER BY prov.sourcing_type DESC, prov.created_at ASC
      ${limitClause}`,
     [source]
   );

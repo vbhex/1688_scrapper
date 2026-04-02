@@ -3232,6 +3232,8 @@ export class Scraper1688 {
       await sleep(5000);
 
       // Locate the core iframe frame (def_cbu_web_im_core). Re-fetched each time to stay fresh.
+      // Also wait until at least one .conversation-item appears (up to 20s) — on a fresh tab
+      // Wangwang needs time to fetch the inbox from the server.
       const getFreshInboxFrame = () => {
         const frames = wwPage.frames();
         return frames.find(f =>

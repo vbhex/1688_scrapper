@@ -245,13 +245,19 @@ async function main(): Promise<void> {
         continue;
       }
 
-      // Parse categories from notes JSON
+      // Parse categories from notes — handles both JSON (automated) and plain text (manual)
       let categories: string[] = [];
       if (provider.notes) {
         try {
           const parsed = JSON.parse(provider.notes);
           if (parsed.category) categories = [parsed.category];
-        } catch { /* not JSON, ignore */ }
+        } catch {
+          // Plain text notes (manual providers) — extract "Amazon category: X" or "Amazon categories: X, Y"
+          const m = provider.notes.match(/[Aa]mazon categor(?:y|ies):\s*([^\n.]+)/);
+          if (m) {
+            categories = m[1].split(/[,，]/).map((s: string) => s.trim().replace(/_/g, ' ')).filter(Boolean);
+          }
+        }
       }
 
       const message = buildOutreachMessage(provider.providerName, categories);
@@ -259,29 +265,23 @@ async function main(): Promise<void> {
       logger.info(`Contacting: ${provider.providerName} (${sellerId})`);
       logger.info(`  Shop: ${provider.shopUrl}`);
 
-      // Save seller contact record first (with outreach_type marker)
+      // Save seller contact record with 3c_amazon_outreach type — creates a NEW row
+      // (separate from any existing brand_verify row for this seller).
+      const targetUrl = provider.shopUrl || `https://shop${sellerId}.1688.com/`;
       await saveSellerContact(
         sellerId,
         provider.providerName,
         provider.wangwangId || '',
-        provider.shopUrl || `https://shop${sellerId}.1688.com/`,
-        [] // no product IDs — this is supplier-level outreach, not product-level
-      );
-
-      // Mark outreach type on compliance_contacts
-      const p = await getPool();
-      await p.execute(
-        `UPDATE compliance_contacts SET outreach_type = '3c_amazon_outreach' WHERE seller_id = ?`,
-        [sellerId]
+        targetUrl,
+        [], // no product IDs — supplier-level outreach, not product-level
+        '3c_amazon_outreach'
       );
 
       // Send Wangwang message
-      // Use shop URL or construct from seller ID
-      const targetUrl = provider.shopUrl || `https://shop${sellerId}.1688.com/`;
       const success = await scraper.sendWangwangMessage(targetUrl, message);
 
       if (success) {
-        await updateContactStatus(sellerId, 'contacted', `3C Amazon outreach — categories: ${categories.join(', ')}`);
+        await updateContactStatus(sellerId, 'contacted', `3C Amazon outreach — categories: ${categories.join(', ')}`, '3c_amazon_outreach');
         sent++;
         logger.info(`  ✓ Message sent to ${provider.providerName}`);
       } else {

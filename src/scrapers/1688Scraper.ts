@@ -2855,26 +2855,29 @@ export class Scraper1688 {
     const wangwangUrl = `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(sellerLoginId)}&site=cnalichn`;
     logger.info('Opening Wangwang web chat', { sellerLoginId, wangwangUrl: wangwangUrl.substring(0, 100) });
 
+    // Open a brand-new tab for each Wangwang message — avoids all stale frame issues.
+    // Declared outside try so the catch block can also close it.
+    const wwTab = await this.browser!.newPage();
     try {
-      // Close stale Wangwang tabs so this.page is always a usable non-WW page
+      await wwTab.bringToFront();
+
+      // Close any leftover Wangwang tabs from prior iterations (keep this tab open)
       const prePages = await this.browser!.pages();
       for (const p of prePages) {
+        if (p === wwTab) continue;
         const pUrl = p.url();
-        if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im') || pUrl.includes('wwwebim.1688.com')) {
+        if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im') || pUrl.includes('wwwebim.1688.com') || pUrl.includes('amos.alicdn.com')) {
           await p.close().catch(() => {});
         }
       }
-      // After closing WW tabs, find a healthy page to use as anchor
-      const remainingPages = await this.browser!.pages();
-      const healthyPage = remainingPages.find(p => !p.isClosed()) || remainingPages[0];
-      if (healthyPage) this.page = healthyPage;
 
-      // .catch() because amos→wwwebim redirect can temporarily detach the main frame
-      await this.page.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+      // Navigate the fresh tab to the amos Wangwang URL
+      await wwTab.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
       await randomDelay(3000, 5000);
 
       // Step 1: Click "优先使用网页版" (Prefer web version) if shown
-      const webVersionClicked = await this.page.evaluate(() => {
+      let wwPage = wwTab;
+      const webVersionClicked = await wwTab.evaluate(() => {
         const buttons = Array.from(document.querySelectorAll('button'));
         for (const btn of buttons) {
           if ((btn.textContent || '').includes('优先使用网页版') && btn.offsetHeight > 0) {
@@ -2887,8 +2890,6 @@ export class Scraper1688 {
 
       if (webVersionClicked) {
         logger.info('Clicked "优先使用网页版" — waiting for web chat tab to open');
-        // The button opens a new tab with the air.1688.com web IM
-        // Wait and poll for the new tab
         let chatTab: any = null;
         for (let attempt = 0; attempt < 10; attempt++) {
           await sleep(2000);
@@ -2902,41 +2903,31 @@ export class Scraper1688 {
           }
           if (chatTab) break;
         }
-
         if (chatTab) {
-          this.page = chatTab;
+          wwPage = chatTab;
           await chatTab.bringToFront();
-          logger.info('Switched to web IM tab');
-          // Wait for the iframe inside to load
+          logger.info('Switched to web IM tab', { url: chatTab.url().substring(0, 80) });
           await sleep(5000);
         } else {
-          // Fallback: use the latest tab
-          const allPages = await this.browser!.pages();
-          if (allPages.length > 1) {
-            this.page = allPages[allPages.length - 1];
-          }
-          logger.warn('Could not find air.1688.com tab, using latest tab');
+          logger.warn('Could not find air.1688.com tab — staying on wwTab');
         }
       }
 
-      logger.info('Chat page loaded', { title: await this.page.title(), url: this.page.url().substring(0, 100) });
-
-      // Step 2: Check ALL tabs for the web IM (it might be in a different tab)
+      // Step 2: If amos opened a separate air.1688.com tab, prefer it
       const allPages2 = await this.browser!.pages();
       for (const p of allPages2) {
         const pUrl = p.url();
         if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im')) {
-          this.page = p;
+          wwPage = p;
           await p.bringToFront();
-          logger.info('Found web IM in tab', { url: pUrl.substring(0, 100) });
+          logger.info('Found web IM in separate tab', { url: pUrl.substring(0, 100) });
           break;
         }
       }
 
       // Wait for page content and inner iframe to fully load
       await sleep(5000);
-
-      const wwPage = this.page;
+      logger.info('Chat page loaded', { title: await wwPage.title().catch(() => '?'), url: wwPage.url().substring(0, 100) });
 
       // Helper: always fetch the core frame fresh — never hold a stale reference.
       // Wangwang can load in two different ways:
@@ -3157,12 +3148,24 @@ export class Scraper1688 {
 
       logger.info('Wangwang message sent', { sellerLoginId, method: sendClicked ? 'send-button' : 'enter-key' });
 
+      // Close the dedicated WW tab — keeps the browser clean for the next sender iteration
+      await wwTab.close().catch(() => {});
+      // Restore this.page to a healthy remaining tab
+      const remaining = await this.browser!.pages();
+      const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
+      if (healthy) this.page = healthy;
+
       return true;
     } catch (error) {
       logger.error('Failed to send Wangwang message', {
         sellerUrl,
         error: (error as Error).message,
       });
+      // Clean up WW tab even on failure
+      await wwTab.close().catch(() => {});
+      const remaining = await this.browser!.pages();
+      const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
+      if (healthy) this.page = healthy;
       return false;
     }
   }

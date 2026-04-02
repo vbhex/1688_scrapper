@@ -2938,27 +2938,51 @@ export class Scraper1688 {
 
       const wwPage = this.page;
 
-      // Step 3: Find the core IM frame via page.frames() — far more reliable than contentDocument.
-      // The frame URL contains 'def_cbu_web_im_core' or 'web_im_core'.
-      const allFrames = wwPage.frames();
-      logger.info('Finding core IM frame', { totalFrames: allFrames.length, urls: allFrames.map(f => f.url().substring(0, 60)).join(' | ') });
-      let coreFrame = allFrames.find(f =>
-        f.url().includes('def_cbu_web_im_core') ||
-        f.url().includes('web_im_core')
-      ) || null;
+      // Helper: always fetch the core frame fresh — never hold a stale reference.
+      // Wangwang re-renders the inner iframe on every conversation switch, so the
+      // frame ID changes. Re-fetching just before each operation prevents detached frame errors.
+      const getFreshCoreFrame = async (waitMs = 0) => {
+        if (waitMs > 0) await sleep(waitMs);
+        const frames = wwPage.frames();
+        return frames.find(f =>
+          !f.isDetached() &&
+          (f.url().includes('def_cbu_web_im_core') || f.url().includes('web_im_core'))
+        ) || null;
+      };
 
-      // Wait up to 8s for the core frame to appear if not loaded yet
-      if (!coreFrame) {
-        for (let attempt = 0; attempt < 8; attempt++) {
-          await sleep(1000);
-          const frames = wwPage.frames();
-          coreFrame = frames.find(f =>
-            f.url().includes('def_cbu_web_im_core') ||
-            f.url().includes('web_im_core')
-          ) || null;
-          if (coreFrame) break;
-          logger.debug(`Waiting for core frame (attempt ${attempt + 1}/8)`, { frameUrls: frames.map(f => f.url().substring(0, 50)).join(', ') });
+      // Safe frame.evaluate that re-fetches the frame fresh and retries on detach.
+      // fn receives the fresh frame and calls frame.evaluate() itself.
+      const safeFrameEval = async <T>(fn: (frame: any) => Promise<T>, retries = 2): Promise<T | null> => {
+        for (let i = 0; i < retries; i++) {
+          const frame = await getFreshCoreFrame(i > 0 ? 1500 : 0);
+          if (!frame) { logger.debug(`safeFrameEval: no frame (attempt ${i + 1})`); continue; }
+          try {
+            return await fn(frame);
+          } catch (err: any) {
+            if (err.message?.includes('detached') && i < retries - 1) {
+              logger.debug(`Frame detached during eval, retrying (${i + 1}/${retries})`);
+              continue;
+            }
+            throw err;
+          }
         }
+        return null;
+      };
+
+      // Step 3: Wait up to 10s for the core frame to appear after page navigation
+      let coreFrame = await getFreshCoreFrame();
+      if (!coreFrame) {
+        const allFrames = wwPage.frames();
+        logger.info('Finding core IM frame', { totalFrames: allFrames.length, urls: allFrames.map(f => f.url().substring(0, 60)).join(' | ') });
+        for (let attempt = 0; attempt < 10; attempt++) {
+          await sleep(1000);
+          coreFrame = await getFreshCoreFrame();
+          if (coreFrame) break;
+          logger.debug(`Waiting for core frame (attempt ${attempt + 1}/10)`);
+        }
+      }
+      if (coreFrame) {
+        logger.info('Using core frame for input', { frameUrl: coreFrame.url().substring(0, 80) });
       }
 
       const INPUT_SELECTORS = [
@@ -2977,31 +3001,32 @@ export class Scraper1688 {
       let focusSelector = '';
 
       if (coreFrame) {
-        // Use the frame directly — the most reliable approach
-        logger.info('Using core frame for input', { frameUrl: coreFrame.url().substring(0, 80) });
-        try {
-          const frameResult = await coreFrame.evaluate((selectors: string[]) => {
+        // Use safeFrameEval — re-fetches frame fresh before each call, retries on detach
+        const frameResult = await safeFrameEval<{ found: boolean; selector: string; domSnip?: string }>(
+          async (frame) => frame.evaluate(() => {
+            const selectors = [
+              'textarea', '[contenteditable="true"]', 'div[role="textbox"]',
+              '[class*="editor"]', '[class*="Editor"]', '[class*="chatInput"]',
+              '[class*="message-input"]', '[class*="msg-input"]', '.im-input',
+            ];
             for (const sel of selectors) {
               const el = document.querySelector(sel) as HTMLElement;
               if (el && el.offsetHeight > 0) {
                 el.focus();
                 el.click();
-                return { found: true, selector: sel };
+                return { found: true, selector: sel, domSnip: '' };
               }
             }
-            // Debug: dump what's in the doc
             const domSnip = document.body ? document.body.innerHTML.substring(0, 2000) : 'no body';
             return { found: false, selector: '', domSnip };
-          }, INPUT_SELECTORS);
+          })
+        );
 
-          if (frameResult.found) {
-            focusFound = true;
-            focusSelector = frameResult.selector;
-          } else {
-            logger.warn('Core frame found but no input element', { domSnip: (frameResult as any).domSnip?.substring(0, 300) });
-          }
-        } catch (err: any) {
-          logger.warn('frame.evaluate failed', { error: err.message });
+        if (frameResult?.found) {
+          focusFound = true;
+          focusSelector = frameResult.selector;
+        } else if (frameResult) {
+          logger.warn('Core frame found but no input element', { domSnip: frameResult.domSnip?.substring(0, 300) });
         }
       }
 
@@ -3049,11 +3074,20 @@ export class Scraper1688 {
       logger.info('Found chat input', { selector: focusSelector, method: coreFrame ? 'frame' : 'contentDocument' });
       await randomDelay(500, 1000);
 
-      // Type the message — use frame if available, otherwise keyboard on page
-      if (coreFrame && focusSelector) {
-        try {
-          await coreFrame.type(focusSelector, message, { delay: 15 });
-        } catch {
+      // Type via frame.type() — re-fetch frame fresh to avoid detached frame on type
+      if (focusFound && focusSelector) {
+        const typedViaFrame = await (async () => {
+          const freshFrame = await getFreshCoreFrame();
+          if (!freshFrame) return false;
+          try {
+            await freshFrame.type(focusSelector, message, { delay: 15 });
+            return true;
+          } catch (err: any) {
+            logger.warn('frame.type failed, falling back to keyboard', { error: err.message });
+            return false;
+          }
+        })();
+        if (!typedViaFrame) {
           await wwPage.keyboard.type(message, { delay: 20 });
         }
       } else {
@@ -3061,23 +3095,22 @@ export class Scraper1688 {
       }
       await randomDelay(800, 1500);
 
-      // Step 4: Click send button
+      // Step 4: Click send button — re-fetch frame fresh again
       let sendClicked = false;
-      if (coreFrame) {
-        try {
-          sendClicked = await coreFrame.evaluate(() => {
-            const btns = Array.from(document.querySelectorAll('button, [class*="send"], [class*="Send"]'));
-            for (const btn of btns) {
-              const text = (btn.textContent || '').trim();
-              if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
-                (btn as HTMLElement).click();
-                return true;
-              }
+      const sendResult = await safeFrameEval<boolean>(
+        async (frame) => frame.evaluate(() => {
+          const btns = Array.from(document.querySelectorAll('button, [class*="send"], [class*="Send"]'));
+          for (const btn of btns) {
+            const text = (btn.textContent || '').trim();
+            if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
+              (btn as HTMLElement).click();
+              return true;
             }
-            return false;
-          });
-        } catch { /* fallthrough */ }
-      }
+          }
+          return false;
+        })
+      );
+      sendClicked = sendResult === true;
 
       if (!sendClicked) {
         // Fallback: contentDocument send

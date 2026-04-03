@@ -3202,40 +3202,16 @@ export class Scraper1688 {
       // With a uid, the amos URL navigates to Wangwang and networkidle2 works fine.
       // Without uid, it never navigates — so domcontentloaded is the fallback.
       const waitUntil = seedLoginId ? 'networkidle2' : 'domcontentloaded';
-      await inboxTab.goto(inboxUrl, { waitUntil, timeout: 30000 }).catch(() => {});
-      await sleep(3000);
-
-      // Prefer web version
-      await inboxTab.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('button'));
-        for (const btn of buttons) {
-          if ((btn.textContent || '').includes('优先使用网页版') && (btn as HTMLElement).offsetHeight > 0) {
-            btn.click();
-            return;
-          }
-        }
-      }).catch(() => {});
-      await sleep(4000);
-
-      // Poll for the Wangwang tab for up to 20s — amos may open it slowly, and the
-      // "prefer web version" click triggers a navigation that can take several seconds.
-      // Also check if inboxTab itself has navigated to air.1688.com (same-tab redirect).
-      let wwPage = inboxTab;
-      for (let attempt = 0; attempt < 20; attempt++) {
-        const allPages = await this.browser.pages();
-        for (const p of allPages) {
-          const u = p.url();
-          if (u.includes('air.1688.com') || u.includes('def_cbu_web_im') || u.includes('wwwebim.1688.com')) {
-            wwPage = p;
-            await p.bringToFront();
-            break;
-          }
-        }
-        if (wwPage !== inboxTab) break;
-        await sleep(1000);
-      }
-      logger.debug('Wangwang inbox tab resolved', { url: wwPage.url().substring(0, 80) });
-      await sleep(3000); // let the page settle after tab switch
+      // Navigate directly to the Wangwang web interface — skip amos entirely.
+      // amos only offers a native-app popup; the web version URL is always accessible
+      // when already logged in to 1688 (cookies are shared across tabs).
+      // With a seed seller UID we open that seller's chat and the full inbox sidebar loads.
+      const directUrl = seedLoginId
+        ? `https://air.1688.com/app/ocms-fusion-components-1688/def_cbu_web_im/index.html?touid=cnalichn${encodeURIComponent(seedLoginId)}`
+        : `https://air.1688.com/app/ocms-fusion-components-1688/def_cbu_web_im/index.html`;
+      await inboxTab.goto(directUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+      logger.debug('Wangwang inbox tab loaded', { url: inboxTab.url().substring(0, 80) });
+      const wwPage = inboxTab;
 
       // Locate the core iframe frame (def_cbu_web_im_core). Re-fetched each time to stay fresh.
       const getFreshInboxFrame = () => {

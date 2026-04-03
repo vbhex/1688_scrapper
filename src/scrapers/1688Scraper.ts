@@ -3232,8 +3232,6 @@ export class Scraper1688 {
       await sleep(5000);
 
       // Locate the core iframe frame (def_cbu_web_im_core). Re-fetched each time to stay fresh.
-      // Also wait until at least one .conversation-item appears (up to 20s) — on a fresh tab
-      // Wangwang needs time to fetch the inbox from the server.
       const getFreshInboxFrame = () => {
         const frames = wwPage.frames();
         return frames.find(f =>
@@ -3241,6 +3239,25 @@ export class Scraper1688 {
           f.url().includes('web_im_core')
         ) || null;
       };
+
+      // Wait up to 20s for at least one .conversation-item to appear — on a fresh tab
+      // Wangwang fetches the inbox list from the server after load, so items arrive late.
+      for (let w = 0; w < 20; w++) {
+        const frame = getFreshInboxFrame();
+        if (frame) {
+          try {
+            const count = await frame.evaluate(() => document.querySelectorAll('.conversation-item').length);
+            if (count > 0) break;
+          } catch { /* frame may not be ready yet */ }
+        } else {
+          // wwwebim pattern: no nested iframe — check main wwPage directly
+          try {
+            const count = await wwPage.evaluate(() => document.querySelectorAll('.conversation-item').length);
+            if (count > 0) break;
+          } catch { /* not ready */ }
+        }
+        await sleep(1000);
+      }
 
       // Scroll the conversation list down.
       const scrollInboxList = async (scrollAmount: number): Promise<number> => {

@@ -60,6 +60,7 @@ interface VerifiedProvider {
   shop_url: string;
   target_platforms: string[];
   last_scraped_at: Date | null;
+  category_keywords: string[] | null; // if set, only products whose title contains ≥1 keyword are imported
 }
 
 function parseArgs(): CLIOptions {
@@ -182,7 +183,7 @@ async function discoverCategory(
 async function getVerifiedProviders(reScrapeAfterDays: number): Promise<VerifiedProvider[]> {
   const pool = await getPool();
   const [rows] = await pool.query<RowDataPacket[]>(
-    `SELECT id, provider_name, shop_url, target_platforms, last_scraped_at
+    `SELECT id, provider_name, shop_url, target_platforms, last_scraped_at, category_keywords
      FROM providers
      WHERE trust_level = 'verified'
        AND shop_url IS NOT NULL
@@ -203,6 +204,12 @@ async function getVerifiedProviders(reScrapeAfterDays: number): Promise<Verified
       } catch { return []; }
     })(),
     last_scraped_at: r.last_scraped_at || null,
+    category_keywords: (() => {
+      try {
+        const k = typeof r.category_keywords === 'string' ? JSON.parse(r.category_keywords) : r.category_keywords;
+        return Array.isArray(k) && k.length > 0 ? k : null;
+      } catch { return null; }
+    })(),
   }));
 }
 
@@ -356,6 +363,16 @@ async function main(): Promise<void> {
           let providerDuplicates = 0;
 
           for (const product of storeProducts) {
+            // Category keyword filter — skip products not matching the provider's target category
+            if (provider.category_keywords) {
+              const titleLower = product.title.toLowerCase();
+              const matches = provider.category_keywords.some(kw => titleLower.includes(kw.toLowerCase()));
+              if (!matches) {
+                providerSkipped++;
+                continue;
+              }
+            }
+
             if (isBannedBrand(product.title)) {
               logger.info('Provider product: skipping banned brand', { title: product.title.substring(0, 60) });
               providerSkipped++;

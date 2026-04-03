@@ -3217,19 +3217,25 @@ export class Scraper1688 {
       }).catch(() => {});
       await sleep(4000);
 
-      // Identify which tab Wangwang opened in. amos may have opened a new tab (air.1688.com)
-      // or navigated inboxTab itself (wwwebim.1688.com). Check all pages.
+      // Poll for the Wangwang tab for up to 20s — amos may open it slowly, and the
+      // "prefer web version" click triggers a navigation that can take several seconds.
+      // Also check if inboxTab itself has navigated to air.1688.com (same-tab redirect).
       let wwPage = inboxTab;
-      const allPages = await this.browser.pages();
-      for (const p of allPages) {
-        const u = p.url();
-        if (u.includes('air.1688.com') || u.includes('def_cbu_web_im') || u.includes('wwwebim.1688.com')) {
-          wwPage = p;
-          await p.bringToFront();
-          break;
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const allPages = await this.browser.pages();
+        for (const p of allPages) {
+          const u = p.url();
+          if (u.includes('air.1688.com') || u.includes('def_cbu_web_im') || u.includes('wwwebim.1688.com')) {
+            wwPage = p;
+            await p.bringToFront();
+            break;
+          }
         }
+        if (wwPage !== inboxTab) break;
+        await sleep(1000);
       }
-      await sleep(5000);
+      logger.debug('Wangwang inbox tab resolved', { url: wwPage.url().substring(0, 80) });
+      await sleep(3000); // let the page settle after tab switch
 
       // Locate the core iframe frame (def_cbu_web_im_core). Re-fetched each time to stay fresh.
       const getFreshInboxFrame = () => {

@@ -1189,7 +1189,12 @@ export class Scraper1688 {
       await this.scrollToLoadContent();
 
       let emptyPageCount = 0;
-      while (products.length < maxProducts) {
+      const MAX_PAGES = 30;
+      while (products.length < maxProducts && page <= MAX_PAGES) {
+        if (page > MAX_PAGES) {
+          logger.warn('Max page limit reached, stopping search', { page, maxPages: MAX_PAGES });
+          break;
+        }
         // Wait for product list to load — try multiple selectors
         await this.page.waitForSelector(
           '.sm-offer-list, .offer-list, [class*="offer-item"], [class*="offer-card"], [class*="CardContainer"], [class*="offerCard"]',

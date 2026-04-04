@@ -205,14 +205,20 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
 
   logger.info(`Checking inbox for replies from ${rows.length} contacted sellers...`);
 
-  // Build lookup: seller_id (and numeric variant) → row
+  // Build THREE lookups: by seller_id, by numeric-only ID, and by seller NAME.
+  // The seller_id in our DB (e.g. "741584806m402") is the 1688 member ID,
+  // but Wangwang conversation IDs use a DIFFERENT numeric UID format (e.g. "938596378").
+  // Name-based matching is the most reliable cross-reference.
   const sellerById: Record<string, RowDataPacket> = {};
+  const sellerByName: Record<string, RowDataPacket> = {};
   for (const row of rows) {
     const sid = String(row.seller_id);
     sellerById[sid] = row;
-    // Also index by numeric-only ID for matching alphanumeric seller IDs like "4597814480s45"
     const numeric = sid.replace(/[^0-9]/g, '');
     if (numeric && numeric !== sid) sellerById[numeric] = row;
+    // Index by seller name (trimmed, for fuzzy match below)
+    const name = (row.seller_name || '').trim();
+    if (name) sellerByName[name] = row;
   }
 
   // Use first seller's shop URL as seed to open Wangwang inbox
@@ -222,64 +228,80 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
   let repliedCount = 0;
 
   try {
-    // Single bulk scan — far more reliable than 275 individual checkWangwangReply calls.
-    // When a seller replies, their conversation bubbles to the top of the inbox list.
-    // scanWangwangInbox reads up to ~20 visible conversations in the virtual scroll list.
     logger.info('Opening Wangwang inbox for bulk scan...');
     const inbox = await scraper.scanWangwangInbox(seedUrl);
     const unread = inbox.conversations.filter(c => c.hasUnread);
 
     logger.info(`Inbox: ${inbox.conversations.length} conversations visible, ${unread.length} unread`);
 
+    // Check ALL conversations (not just unread) — replies may already be read
     for (const conv of inbox.conversations) {
-      if (!conv.hasUnread) continue;
-
-      // Extract seller ID from conversation ID: "BUYER.1-SELLER_ID.1#CHANNEL@cntaobao"
+      // Try matching by ID first (for rare cases where formats align)
       const idMatch = (conv.id || '').match(/\.1-([^.]+)\.1#/);
-      if (!idMatch) {
-        logger.debug(`Could not extract seller ID from conv id: ${conv.id}`);
-        continue;
-      }
-      const convSellerId = idMatch[1];
-      const convSellerNumeric = convSellerId.replace(/[^0-9]/g, '');
+      let row: RowDataPacket | undefined;
+      let matchMethod = '';
 
-      // Cross-reference against our contacted sellers
-      const row = sellerById[convSellerId] || (convSellerNumeric ? sellerById[convSellerNumeric] : undefined);
-      if (!row) {
-        logger.debug(`Unread from non-outreach seller: ${conv.name} (${convSellerId})`);
-        continue;
+      if (idMatch) {
+        const convSellerId = idMatch[1];
+        const convSellerNumeric = convSellerId.replace(/[^0-9]/g, '');
+        row = sellerById[convSellerId] || (convSellerNumeric ? sellerById[convSellerNumeric] : undefined);
+        if (row) matchMethod = 'id';
       }
 
-      // This is one of our 3C outreach sellers — they replied!
+      // Fall back to NAME matching — most reliable since Wangwang UIDs differ from 1688 member IDs
+      if (!row && conv.name) {
+        const convName = conv.name.trim();
+        // Exact match first
+        row = sellerByName[convName];
+        if (row) {
+          matchMethod = 'name-exact';
+        } else {
+          // Substring match: check if conv.name is contained in any seller_name or vice versa
+          for (const [dbName, dbRow] of Object.entries(sellerByName)) {
+            if (dbName.includes(convName) || convName.includes(dbName)) {
+              row = dbRow;
+              matchMethod = 'name-substring';
+              break;
+            }
+          }
+        }
+      }
+
+      if (!row) continue;
+
+      // Skip if the last message is OUR outreach message (no reply yet)
+      const lastMsg = conv.lastMsg || '';
+      const isOurMessage = lastMsg.includes('亚马逊') && (lastMsg.includes('方便回复') || lastMsg.includes('有空的话回复') || lastMsg.includes('麻烦回复'));
+      if (isOurMessage) {
+        logger.debug(`  Matched ${conv.name} (via ${matchMethod}) but last msg is our outreach — no reply yet`);
+        continue;
+      }
+
+      // Skip system messages (评价邀请, 询价, card messages that are system-generated)
+      const isSystemMsg = lastMsg.includes('客服评价邀请') || lastMsg === '批量询价';
+      if (isSystemMsg) {
+        logger.debug(`  Matched ${conv.name} (via ${matchMethod}) but last msg is system notification — skipping`);
+        continue;
+      }
+
+      // This seller replied!
       await updateContactStatus(
         String(row.seller_id),
         'replied',
-        `Wangwang inbox reply detected: ${conv.lastMsg.substring(0, 200)}`
+        `Wangwang reply detected (${matchMethod}${conv.hasUnread ? ', unread' : ', read'}): ${lastMsg.substring(0, 200)}`
       );
       repliedCount++;
-      logger.info(`  ✓ REPLIED: ${conv.name} (${row.seller_id}): ${conv.lastMsg.substring(0, 100)}`);
+      logger.info(`  ✓ REPLIED: ${conv.name} (${row.seller_id}, match=${matchMethod}): ${lastMsg.substring(0, 100)}`);
     }
 
-    // Report any unread conversations that didn't match our seller list (for info)
-    const otherUnread = unread.filter(conv => {
-      const idMatch = (conv.id || '').match(/\.1-([^.]+)\.1#/);
-      if (!idMatch) return true;
-      const sid = idMatch[1];
-      return !sellerById[sid] && !sellerById[sid.replace(/[^0-9]/g, '')];
-    });
-    if (otherUnread.length > 0) {
-      logger.info(`  (${otherUnread.length} unread from non-outreach sellers — check Wangwang manually)`);
-      for (const c of otherUnread) {
-        logger.info(`    [OTHER UNREAD] ${c.name}: ${c.lastMsg.substring(0, 60)}`);
-      }
-    }
-
-    logger.info(`\nCheck-replies summary: ${inbox.conversations.length} inbox items scanned, ${repliedCount} matched our sellers`);
+    // Report unmatched conversations for debugging
+    const unmatchedCount = inbox.conversations.length - repliedCount;
+    logger.info(`\nCheck-replies summary: ${inbox.conversations.length} inbox items scanned, ${repliedCount} matched our sellers (via ID + name matching)`);
     if (repliedCount > 0) {
       logger.info(`Run --action list to see replied sellers, then --action share-company-info --seller-id XXX for each.`);
     } else {
-      logger.info(`No replies yet from ${rows.length} contacted sellers (only top ~${inbox.conversations.length} inbox items are visible).`);
-      logger.info(`Note: Sellers who reply bubble to the top of the inbox — run --action scan-inbox for a detailed view.`);
+      logger.info(`No replies detected from ${rows.length} contacted sellers in top ${inbox.conversations.length} inbox items.`);
+      logger.info(`Note: Wangwang virtual scroll shows limited items. Sellers who reply bubble to top.`);
     }
   } finally {
     await scraper.close();

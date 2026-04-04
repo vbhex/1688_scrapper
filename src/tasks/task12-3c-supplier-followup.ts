@@ -217,7 +217,8 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
     const numeric = sid.replace(/[^0-9]/g, '');
     if (numeric && numeric !== sid) sellerById[numeric] = row;
     // Index by seller name (trimmed, for fuzzy match below)
-    const name = (row.seller_name || '').trim();
+    // Query aliases seller name as 'provider_name' via COALESCE
+    const name = (row.provider_name || row.seller_name || '').trim();
     if (name) sellerByName[name] = row;
   }
 
@@ -232,7 +233,7 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
     const inbox = await scraper.scanWangwangInbox(seedUrl);
     const unread = inbox.conversations.filter(c => c.hasUnread);
 
-    logger.info(`Inbox: ${inbox.conversations.length} conversations visible, ${unread.length} unread`);
+    logger.info(`Inbox: ${inbox.conversations.length} conversations visible, ${unread.length} unread, ${Object.keys(sellerByName).length} seller names loaded`);
 
     // Check ALL conversations (not just unread) — replies may already be read
     for (const conv of inbox.conversations) {

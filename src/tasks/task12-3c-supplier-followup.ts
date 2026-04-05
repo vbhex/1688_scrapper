@@ -188,7 +188,8 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
     `SELECT cc.seller_id,
             COALESCE(p.provider_name, cc.seller_name, cc.seller_id) as provider_name,
             COALESCE(p.shop_url, cc.seller_url, CONCAT('https://shop', cc.seller_id, '.1688.com/')) as shop_url,
-            cc.message_sent_at as contacted_at
+            cc.message_sent_at as contacted_at,
+            cc.wangwang_id
      FROM compliance_contacts cc
      LEFT JOIN providers p ON p.platform_id = cc.seller_id AND p.platform = '1688'
      WHERE cc.outreach_type = '3c_amazon_outreach'
@@ -203,12 +204,9 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
     return;
   }
 
-  logger.info(`Checking inbox for replies from ${rows.length} contacted sellers...`);
+  logger.info(`Checking replies for ${rows.length} contacted sellers (2-phase: inbox scan + individual chat check)...`);
 
-  // Build THREE lookups: by seller_id, by numeric-only ID, and by seller NAME.
-  // The seller_id in our DB (e.g. "741584806m402") is the 1688 member ID,
-  // but Wangwang conversation IDs use a DIFFERENT numeric UID format (e.g. "938596378").
-  // Name-based matching is the most reliable cross-reference.
+  // Build lookups by seller_id, numeric-only ID, and seller NAME.
   const sellerById: Record<string, RowDataPacket> = {};
   const sellerByName: Record<string, RowDataPacket> = {};
   for (const row of rows) {
@@ -216,28 +214,22 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
     sellerById[sid] = row;
     const numeric = sid.replace(/[^0-9]/g, '');
     if (numeric && numeric !== sid) sellerById[numeric] = row;
-    // Index by seller name (trimmed, for fuzzy match below)
-    // Query aliases seller name as 'provider_name' via COALESCE
     const name = (row.provider_name || row.seller_name || '').trim();
     if (name) sellerByName[name] = row;
   }
 
-  // Use first seller's shop URL as seed to open Wangwang inbox
   const seedUrl = rows[0].shop_url || `https://shop${rows[0].seller_id}.1688.com/`;
-
   const scraper = await create1688Scraper(headless);
   let repliedCount = 0;
+  const matchedSellerIds = new Set<string>(); // Track sellers found in inbox to skip in Phase 2
 
   try {
-    logger.info('Opening Wangwang inbox for bulk scan...');
+    // ── PHASE 1: Inbox scan (fast, catches recent replies in top ~10-20 items) ──
+    logger.info('Phase 1: Scanning Wangwang inbox for recent replies...');
     const inbox = await scraper.scanWangwangInbox(seedUrl);
-    const unread = inbox.conversations.filter(c => c.hasUnread);
+    logger.info(`Inbox: ${inbox.conversations.length} conversations visible, ${inbox.conversations.filter(c => c.hasUnread).length} unread, ${Object.keys(sellerByName).length} seller names loaded`);
 
-    logger.info(`Inbox: ${inbox.conversations.length} conversations visible, ${unread.length} unread, ${Object.keys(sellerByName).length} seller names loaded`);
-
-    // Check ALL conversations (not just unread) — replies may already be read
     for (const conv of inbox.conversations) {
-      // Try matching by ID first (for rare cases where formats align)
       const idMatch = (conv.id || '').match(/\.1-([^.]+)\.1#/);
       let row: RowDataPacket | undefined;
       let matchMethod = '';
@@ -249,15 +241,12 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
         if (row) matchMethod = 'id';
       }
 
-      // Fall back to NAME matching — most reliable since Wangwang UIDs differ from 1688 member IDs
       if (!row && conv.name) {
         const convName = conv.name.trim();
-        // Exact match first
         row = sellerByName[convName];
         if (row) {
           matchMethod = 'name-exact';
         } else {
-          // Substring match: check if conv.name is contained in any seller_name or vice versa
           for (const [dbName, dbRow] of Object.entries(sellerByName)) {
             if (dbName.includes(convName) || convName.includes(dbName)) {
               row = dbRow;
@@ -269,40 +258,94 @@ async function actionCheckReplies(headless: boolean, limit: number): Promise<voi
       }
 
       if (!row) continue;
+      matchedSellerIds.add(String(row.seller_id));
 
-      // Skip if the last message is OUR outreach message (no reply yet)
       const lastMsg = conv.lastMsg || '';
       const isOurMessage = lastMsg.includes('亚马逊') && (lastMsg.includes('方便回复') || lastMsg.includes('有空的话回复') || lastMsg.includes('麻烦回复'));
-      if (isOurMessage) {
-        logger.debug(`  Matched ${conv.name} (via ${matchMethod}) but last msg is our outreach — no reply yet`);
-        continue;
-      }
+      if (isOurMessage) continue;
 
-      // Skip system messages (评价邀请, 询价, card messages that are system-generated)
       const isSystemMsg = lastMsg.includes('客服评价邀请') || lastMsg === '批量询价';
-      if (isSystemMsg) {
-        logger.debug(`  Matched ${conv.name} (via ${matchMethod}) but last msg is system notification — skipping`);
-        continue;
-      }
+      if (isSystemMsg) continue;
 
-      // This seller replied!
       await updateContactStatus(
         String(row.seller_id),
         'replied',
-        `Wangwang reply detected (${matchMethod}${conv.hasUnread ? ', unread' : ', read'}): ${lastMsg.substring(0, 200)}`
+        `Wangwang reply detected (phase1-${matchMethod}${conv.hasUnread ? ', unread' : ', read'}): ${lastMsg.substring(0, 200)}`
       );
       repliedCount++;
-      logger.info(`  ✓ REPLIED: ${conv.name} (${row.seller_id}, match=${matchMethod}): ${lastMsg.substring(0, 100)}`);
+      logger.info(`  ✓ REPLIED (inbox): ${conv.name} (${row.seller_id}): ${lastMsg.substring(0, 100)}`);
     }
 
-    // Report unmatched conversations for debugging
-    const unmatchedCount = inbox.conversations.length - repliedCount;
-    logger.info(`\nCheck-replies summary: ${inbox.conversations.length} inbox items scanned, ${repliedCount} matched our sellers (via ID + name matching)`);
+    logger.info(`Phase 1 done: ${repliedCount} replies from inbox (${inbox.conversations.length} items scanned)`);
+
+    // ── PHASE 2: Individual chat check for sellers NOT found in inbox ──
+    // The inbox only shows ~10-20 items. To detect replies from ALL 469 sellers,
+    // we open each seller's chat individually using checkWangwangReply().
+    // This is slower (~3-5s per seller) but comprehensive.
+    // We check oldest-contacted sellers first (most likely to have replied by now).
+    const uncheckedRows = rows.filter(r => !matchedSellerIds.has(String(r.seller_id)));
+    const phase2Limit = Math.min(uncheckedRows.length, safeLimit); // Respect the --limit flag
+    logger.info(`Phase 2: Checking ${phase2Limit} individual seller chats (not found in inbox)...`);
+
+    let phase2Checked = 0;
+    let phase2Replied = 0;
+    let phase2Errors = 0;
+
+    for (const row of uncheckedRows.slice(0, phase2Limit)) {
+      phase2Checked++;
+      const sellerId = String(row.seller_id);
+      // Build the seller's Wangwang URL from their 1688 member ID
+      const sellerUrl = row.shop_url || `https://shop${sellerId}.1688.com/`;
+
+      if (phase2Checked % 25 === 0 || phase2Checked === 1) {
+        logger.info(`  Phase 2 progress: ${phase2Checked}/${phase2Limit} checked, ${phase2Replied} replies found, ${phase2Errors} errors`);
+      }
+
+      try {
+        const result = await scraper.checkWangwangReply(sellerUrl, false);
+        if (result.hasReply) {
+          await updateContactStatus(
+            sellerId,
+            'replied',
+            `Wangwang reply detected (phase2-individual): ${result.replyText.substring(0, 200)}`
+          );
+          phase2Replied++;
+          repliedCount++;
+          logger.info(`  ✓ REPLIED (chat): ${row.provider_name} (${sellerId}): ${result.replyText.substring(0, 100)}`);
+        }
+      } catch (err) {
+        phase2Errors++;
+        if (phase2Errors <= 5) {
+          logger.debug(`  Error checking ${row.provider_name} (${sellerId}): ${(err as Error).message.substring(0, 80)}`);
+        }
+        // If too many consecutive errors, the browser may be broken — recreate
+        if (phase2Errors > 0 && phase2Errors % 10 === 0) {
+          logger.warn(`  ${phase2Errors} errors so far — recreating browser...`);
+          try {
+            await scraper.close();
+          } catch { /* ignore */ }
+          // Re-initialize scraper. The variable is const but we can call methods on it.
+          const newScraper = await create1688Scraper(headless);
+          // Copy the new scraper's browser/page to the existing reference
+          Object.assign(scraper, newScraper);
+        }
+      }
+
+      // Small delay between checks to avoid rate limiting
+      await randomDelay(1500, 3000);
+    }
+
+    logger.info(`Phase 2 done: ${phase2Replied} replies from ${phase2Checked} individual chats (${phase2Errors} errors)`);
+
+    // ── Summary ──
+    logger.info(`\n${'═'.repeat(60)}`);
+    logger.info(`Check-replies TOTAL: ${repliedCount} replies detected`);
+    logger.info(`  Phase 1 (inbox):     ${repliedCount - phase2Replied} from ${inbox.conversations.length} inbox items`);
+    logger.info(`  Phase 2 (individual): ${phase2Replied} from ${phase2Checked} seller chats`);
+    logger.info(`  Errors: ${phase2Errors}`);
+    logger.info(`${'═'.repeat(60)}`);
     if (repliedCount > 0) {
       logger.info(`Run --action list to see replied sellers, then --action share-company-info --seller-id XXX for each.`);
-    } else {
-      logger.info(`No replies detected from ${rows.length} contacted sellers in top ${inbox.conversations.length} inbox items.`);
-      logger.info(`Note: Wangwang virtual scroll shows limited items. Sellers who reply bubble to top.`);
     }
   } finally {
     await scraper.close();

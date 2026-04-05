@@ -3247,30 +3247,52 @@ export class Scraper1688 {
       }
 
       // Scroll the conversation list down.
+      // Wangwang uses react-virtualized: the actual scrollable container is
+      // a div with `overflow: auto; will-change: transform` (grandparent of items).
+      // Scrolling `.conversation-list` does nothing because it has `overflow: visible`.
       const scrollInboxList = async (scrollAmount: number): Promise<number> => {
         const frame = getFreshInboxFrame();
-        if (!frame) return 0;
+        const target = frame || wwPage;
         try {
-          return await frame.evaluate((amount: number) => {
-            // Try all plausible scroll containers
-            const containers = [
-              document.querySelector('.conversation-list'),
-              document.querySelector('.im-conversation-list'),
-              document.querySelector('.session-list'),
-              document.querySelector('[class*="conversation-list"]'),
-              document.querySelector('[class*="session-list"]'),
-              document.querySelector('[class*="chatList"]'),
-              document.querySelector('[class*="chat-list"]'),
-              document.querySelector('[class*="msgList"]'),
-              document.querySelector('[class*="msg-list"]'),
-              document.querySelector('.conversation-item')?.parentElement,
-            ].filter((el): el is HTMLElement => !!el && el instanceof HTMLElement);
+          return await target.evaluate((amount: number) => {
+            // Strategy 1: Find the react-virtualized scroll container
+            // It's the element with overflow:auto and will-change:transform
+            const allDivs = Array.from(document.querySelectorAll('div'));
+            let scrollContainer: HTMLElement | null = null;
+            for (const div of allDivs) {
+              const style = window.getComputedStyle(div);
+              if ((style.overflow === 'auto' || style.overflowY === 'auto') &&
+                  style.willChange === 'transform' &&
+                  div.scrollHeight > div.clientHeight) {
+                scrollContainer = div;
+                break;
+              }
+            }
 
-            if (containers.length > 0) {
-              containers[0].scrollTop += amount;
+            // Strategy 2: Walk up from .conversation-item to find scrollable ancestor
+            if (!scrollContainer) {
+              let el: HTMLElement | null = document.querySelector('.conversation-item');
+              while (el) {
+                const style = window.getComputedStyle(el);
+                if ((style.overflow === 'auto' || style.overflowY === 'auto' || style.overflow === 'scroll') &&
+                    el.scrollHeight > el.clientHeight) {
+                  scrollContainer = el;
+                  break;
+                }
+                el = el.parentElement;
+              }
+            }
+
+            if (scrollContainer) {
+              scrollContainer.scrollTop += amount;
             } else {
-              document.documentElement.scrollTop += amount;
-              document.body.scrollTop += amount;
+              // Last resort: try all known class names
+              const fallbacks = [
+                document.querySelector('.conversation-list'),
+                document.querySelector('.ww_conversation_list'),
+                document.querySelector('.conversation-item')?.parentElement?.parentElement,
+              ].filter((e): e is HTMLElement => !!e);
+              if (fallbacks.length > 0) fallbacks[0].scrollTop += amount;
             }
             return document.querySelectorAll('.conversation-item').length;
           }, scrollAmount);
@@ -3324,11 +3346,12 @@ export class Scraper1688 {
         fs.writeFileSync('/tmp/wangwang-inbox-dom-auto.txt', result.domSample);
       }
 
-      // Scroll down up to 20 rounds to surface buried replies
-      const SCROLL_ROUNDS = 20;
+      // Scroll down to load all conversations — virtual scroll renders items on demand.
+      // Each item is ~54px tall, scroll 500px (~9 items) per round, wait for render.
+      const SCROLL_ROUNDS = 100; // Up to ~900 conversations (100 rounds × 9 items)
       for (let round = 0; round < SCROLL_ROUNDS; round++) {
-        await scrollInboxList(600);
-        await sleep(700);
+        await scrollInboxList(500);
+        await sleep(800);
         const batch = await readConversations();
         let newCount = 0;
         for (const conv of batch.conversations) {

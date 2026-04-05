@@ -2336,10 +2336,13 @@ export class Scraper1688 {
           // If redirected to 1688's "wrong page" error, this URL pattern is invalid.
           // Skip to the next pattern immediately — do NOT use XHR data from the error page
           // (it contains recommendation widget IDs, not the store's actual products).
-          if (actualUrl.includes('wrongpage') || actualUrl.includes('error')) {
-            logger.info('Store URL pattern redirected to error page — skipping to next pattern', { patternIndex });
+          if (actualUrl.includes('wrongpage') || actualUrl.includes('error') || actualUrl.includes('notfound') || actualUrl.includes('theme=index')) {
+            logger.info('Store URL pattern redirected to error/home page — skipping to next pattern', { patternIndex });
             xhrCapturing = false;
             xhrOffers.length = 0;
+            // Navigate to about:blank to reset frame state — 1688 error pages can
+            // detach the frame, making subsequent navigations fail.
+            await this.page.goto('about:blank', { waitUntil: 'load', timeout: 5000 }).catch(() => {});
             if (patternIndex < urlPatterns.length - 1) {
               patternIndex++;
               pageIndex = 1;
@@ -2519,7 +2522,10 @@ export class Scraper1688 {
     // search page. This uses the regular search infrastructure which is more reliable.
     // Threshold: < 5 products means the store page likely didn't load properly.
     if (products.length < 5) {
-      logger.info('Store page returned 0 products — trying seller search fallback', { shopUrl });
+      logger.info('Store page returned < 5 products — trying seller search fallback', { shopUrl, currentCount: products.length });
+
+      // Reset page state before fallback — previous store page may have corrupted the frame
+      await this.page.goto('about:blank', { waitUntil: 'load', timeout: 5000 }).catch(() => {});
 
       // Extract seller/member ID from the shop URL
       // Patterns: shop{ID}.1688.com, {wangwang}.1688.com

@@ -2513,6 +2513,40 @@ export class Scraper1688 {
     // Clean up XHR listener — must match the function reference passed to page.on()
     this.page.off('response', xhrResponseListener);
 
+    // ── Fallback: Seller search page ──
+    // If the store page scraper found 0 products (React SPA didn't render, session
+    // expired, etc.), search 1688.com FOR the seller's products using the seller
+    // search page. This uses the regular search infrastructure which is more reliable.
+    if (products.length === 0) {
+      logger.info('Store page returned 0 products — trying seller search fallback', { shopUrl });
+
+      // Extract seller/member ID from the shop URL
+      // Patterns: shop{ID}.1688.com, {wangwang}.1688.com
+      const memberIdMatch = shopUrl.match(/shop(\w+)\.1688\.com/) || shopUrl.match(/\/\/(\w+)\.1688\.com/);
+      if (memberIdMatch) {
+        const memberId = memberIdMatch[1];
+        const searchUrl = `https://s.1688.com/selloffer/offer_search.htm?keywords=&memberId=${memberId}`;
+        logger.info('Navigating to seller search page', { searchUrl, memberId });
+
+        try {
+          await this.page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 45000 });
+          await randomDelay(2000, 3000);
+
+          // Use the existing extractProductsFromPage which works well on search result pages
+          const searchProducts = await this.extractProductsFromPage();
+          logger.info('Seller search fallback result', { count: searchProducts.length });
+
+          for (const p of searchProducts) {
+            if (!products.find(existing => existing.id1688 === p.id1688)) {
+              products.push(p);
+            }
+          }
+        } catch (searchErr) {
+          logger.warn('Seller search fallback failed', { error: (searchErr as Error).message });
+        }
+      }
+    }
+
     // Reset page to about:blank so the next store scrape starts with a clean frame state
     await this.page.goto('about:blank', { waitUntil: 'load', timeout: 5000 }).catch(() => {});
 

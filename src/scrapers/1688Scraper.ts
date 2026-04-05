@@ -2275,6 +2275,9 @@ export class Scraper1688 {
       const respUrl: string = response.url();
       // Only inspect responses from 1688 / Alibaba domains
       if (!respUrl.includes('1688.com') && !respUrl.includes('alibaba.com')) return;
+      // Skip recommendation widget responses — these are NOT store product data.
+      // getpokerirecomcard returns random recommendations from the error/wrong page.
+      if (respUrl.includes('getpokerirecomcard') || respUrl.includes('recommend')) return;
 
       try {
         const ct: string = response.headers()['content-type'] || '';

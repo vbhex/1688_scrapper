@@ -2286,6 +2286,23 @@ export class Scraper1688 {
         const actualUrl = this.page.url();
         if (actualUrl !== url) {
           logger.info('Store page redirected', { from: url, to: actualUrl });
+
+          // If redirected to 1688's "wrong page" error, this URL pattern is invalid.
+          // Skip to the next pattern immediately — do NOT use XHR data from the error page
+          // (it contains recommendation widget IDs, not the store's actual products).
+          if (actualUrl.includes('wrongpage') || actualUrl.includes('error')) {
+            logger.info('Store URL pattern redirected to error page — skipping to next pattern', { patternIndex });
+            xhrCapturing = false;
+            xhrOffers.length = 0;
+            if (patternIndex < urlPatterns.length - 1) {
+              patternIndex++;
+              pageIndex = 1;
+              continue;
+            } else {
+              logger.warn('All store URL patterns failed (redirected to error page)');
+              break;
+            }
+          }
         }
 
         // For store pages: scroll to viewport bottom to trigger lazy-loading,

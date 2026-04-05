@@ -1557,6 +1557,49 @@ export class Scraper1688 {
         }
       }
 
+      // Strategy F: New 1688 store page React SPA — product cards render as classless divs
+      // with CDN images. Extract offer IDs from the full page HTML by looking for
+      // 1688 offer URL patterns, CDN image URLs containing offer/seller IDs, or
+      // any 10+ digit numbers near price-like patterns (¥XX).
+      if (items.length === 0) {
+        const fullHtml = document.documentElement.innerHTML;
+
+        // Look for offer detail URLs embedded anywhere in the page
+        const detailUrlMatches = Array.from(fullHtml.matchAll(/detail\.1688\.com\/offer\/(\d{10,})\.html/g));
+        const djUrlMatches = Array.from(fullHtml.matchAll(/dj\.1688\.com\/[^"]*offerId=(\d{10,})/g));
+        // Also look for offerId in any JSON-like data attributes or inline data
+        const offerIdDataMatches = Array.from(fullHtml.matchAll(/["']offerId["']\s*[:=]\s*["']?(\d{10,})["']?/g));
+        // Look for offer IDs in href attributes (may use relative or short URLs)
+        const hrefOfferMatches = Array.from(fullHtml.matchAll(/href=["'][^"']*?(\d{12,})[^"']*?["']/g));
+
+        const allMatches = [...detailUrlMatches, ...djUrlMatches, ...offerIdDataMatches, ...hrefOfferMatches];
+        const uniqueIds = new Set<string>();
+        for (const m of allMatches) {
+          if (m[1] && !seenIds.has(m[1])) {
+            uniqueIds.add(m[1]);
+          }
+        }
+
+        if (uniqueIds.size > 0) {
+          for (const id1688 of uniqueIds) {
+            seenIds.add(id1688);
+            items.push({
+              id1688,
+              title: '', // Task 2 will scrape the full title
+              description: '',
+              priceCNY: 0,
+              images: [],
+              specifications: [],
+              seller: { name: '' },
+              category: '',
+              minOrderQty: 1,
+              url: `https://detail.1688.com/offer/${id1688}.html`,
+              scrapedAt: new Date().toISOString(),
+            });
+          }
+        }
+      }
+
       return items;
     });
 
@@ -2305,19 +2348,31 @@ export class Scraper1688 {
           }
         }
 
-        // For store pages: scroll to viewport bottom to trigger lazy-loading,
-        // then wait for product price elements to appear in the DOM.
-        // The product grid renders asynchronously after networkidle2 in the new
-        // /page/offerlist.html React format — .price elements confirm products are ready.
-        await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
-        await this.page.waitForSelector('.price, .sm-offer-item, .offer-item, a[href*="offerId="]', {
-          timeout: 20000,
-        }).catch(() => {
+        // For store pages: scroll progressively to trigger lazy-loading of products.
+        // The new /page/offerlist.html React SPA loads product cards asynchronously
+        // via moduleasyncservice API — scrolling triggers the widget hydration.
+        for (let scrollStep = 0; scrollStep < 3; scrollStep++) {
+          await this.page.evaluate((step) => {
+            const h = document.body.scrollHeight;
+            window.scrollTo(0, Math.min(h, (step + 1) * (h / 3)));
+          }, scrollStep);
+          await randomDelay(800, 1200);
+        }
+        // Scroll back to top to ensure first-page products are in viewport
+        await this.page.evaluate(() => window.scrollTo(0, 0));
+        await randomDelay(500, 800);
+
+        // Wait for product elements — try multiple selectors covering old and new formats.
+        // New store format uses img[src*="cbu01.alicdn.com"] inside product cards.
+        await this.page.waitForSelector(
+          '.price, .sm-offer-item, .offer-item, a[href*="offerId="], img[src*="cbu01.alicdn.com/img/ibank"]',
+          { timeout: 25000 }
+        ).catch(() => {
           // Products didn't appear — fall through, extractProductsFromPage will try anyway
         });
 
-        // Extra settle time — some API calls arrive slightly after networkidle2
-        await randomDelay(1500, 2500);
+        // Extra settle time — async API calls + React rendering
+        await randomDelay(2000, 3000);
         xhrCapturing = false;
 
         // Try DOM extraction first (Strategies A-E). If that fails, use XHR-captured data.

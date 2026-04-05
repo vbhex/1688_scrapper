@@ -2514,10 +2514,11 @@ export class Scraper1688 {
     this.page.off('response', xhrResponseListener);
 
     // ── Fallback: Seller search page ──
-    // If the store page scraper found 0 products (React SPA didn't render, session
+    // If the store page scraper found very few products (React SPA didn't render, session
     // expired, etc.), search 1688.com FOR the seller's products using the seller
     // search page. This uses the regular search infrastructure which is more reliable.
-    if (products.length === 0) {
+    // Threshold: < 5 products means the store page likely didn't load properly.
+    if (products.length < 5) {
       logger.info('Store page returned 0 products — trying seller search fallback', { shopUrl });
 
       // Extract seller/member ID from the shop URL

@@ -2524,8 +2524,17 @@ export class Scraper1688 {
     if (products.length < 5) {
       logger.info('Store page returned < 5 products — trying seller search fallback', { shopUrl, currentCount: products.length });
 
-      // Reset page state before fallback — previous store page may have corrupted the frame
-      await this.page.goto('about:blank', { waitUntil: 'load', timeout: 5000 }).catch(() => {});
+      // Reset page state before fallback — previous store page may have corrupted the frame.
+      // If the frame is detached, create a fresh page tab.
+      try {
+        await this.page.goto('about:blank', { waitUntil: 'load', timeout: 5000 });
+      } catch (resetErr) {
+        logger.info('Page frame detached — creating fresh tab for seller search fallback');
+        const browser = this.page.browser();
+        try { await this.page.close(); } catch (_) {}
+        this.page = await browser.newPage();
+        await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36');
+      }
 
       // Extract seller/member ID from the shop URL
       // Patterns: shop{ID}.1688.com, {wangwang}.1688.com

@@ -2658,17 +2658,32 @@ export class Scraper1688 {
       await resolveTab.goto(shopUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
       await sleep(4000);
 
-      // Strategy 1: Extract wangwang ID from store page DOM
+      // Strategy 1: Extract sellerMemberId from window.shopPageDataApi (most reliable)
+      // Every 1688 store page sets: window.shopPageDataApi = 'https://...?sellerMemberId=b2b-XXXX...'
+      // This sellerMemberId works as the amos uid parameter for Wangwang messaging.
       const fromStorePage = await resolveTab.evaluate(() => {
-        // Check data-nick / nick attributes
+        // Method A: window.shopPageDataApi (set by the store page SPA)
+        const w = window as any;
+        if (w.shopPageDataApi) {
+          const m = (w.shopPageDataApi as string).match(/sellerMemberId=([^&]+)/);
+          if (m) return m[1];
+        }
+
+        // Method B: Script tags containing sellerMemberId
+        const scripts = Array.from(document.querySelectorAll('script'));
+        for (const s of scripts) {
+          const t = s.textContent || '';
+          const m = t.match(/sellerMemberId\s*[=:]\s*['"]?([a-z0-9-]+)['"]?/i);
+          if (m && m[1] !== 'b2b') return m[1]; // skip bare "b2b" prefix
+        }
+
+        // Method C: data-nick / nick attributes (works for branded stores like senylon.1688.com)
         const wwEl =
           document.querySelector('[data-nick]') ||
           document.querySelector('[nick]') ||
           document.querySelector('a[href*="amos.alicdn.com"]') ||
           document.querySelector('a[href*="wangwang"]') ||
           document.querySelector('a[href*="ww.alicdn.com"]') ||
-          document.querySelector('[class*="wangwang"]') ||
-          document.querySelector('[data-memberId]') ||
           document.querySelector('[data-loginid]');
 
         if (wwEl) {
@@ -2677,23 +2692,9 @@ export class Scraper1688 {
                        (wwEl as HTMLElement).getAttribute('data-loginid') || '';
           if (nick) return nick;
 
-          // Extract from href
           const href = (wwEl as HTMLAnchorElement).href || (wwEl as HTMLElement).getAttribute('href') || '';
           const m = href.match(/[?&](?:nick|toNick|uid|touid)=([^&]+)/i);
           if (m) return decodeURIComponent(m[1]).replace(/^cnalichn/, '');
-        }
-
-        // Check all links for amos/wangwang URLs with uid parameter
-        const links = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
-        for (const a of links) {
-          const href = a.href || '';
-          if (href.includes('amos.alicdn.com') || href.includes('ww.alicdn.com')) {
-            const m = href.match(/[?&]uid=([^&]+)/);
-            if (m) {
-              const uid = decodeURIComponent(m[1]).replace(/^cnalichn/, '');
-              if (uid) return uid;
-            }
-          }
         }
 
         return null;

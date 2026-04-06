@@ -19,6 +19,8 @@ import {
   getProvidersForOutreach,
   saveSellerContact,
   updateContactStatus,
+  updateProviderWangwangId,
+  lookupWangwangIdFromProducts,
   closeDatabase,
   getPool,
 } from '../database/db';
@@ -265,28 +267,66 @@ async function main(): Promise<void> {
       logger.info(`Contacting: ${provider.providerName} (${sellerId})`);
       logger.info(`  Shop: ${provider.shopUrl}`);
 
-      // Save seller contact record with 3c_amazon_outreach type — creates a NEW row
-      // (separate from any existing brand_verify row for this seller).
+      // ── Resolve Wangwang login ID (the actual IM identifier) ──
+      // The platform_id (e.g. "741584806m402") is NOT the Wangwang UID.
+      // We need the actual login ID (e.g. "senylon") for the amos gateway.
+      let wangwangId = provider.wangwangId || '';
+
+      if (!wangwangId) {
+        // Step 1: Check products_raw (fast DB lookup — works if Task 2 scraped a product from this seller)
+        const fromProducts = await lookupWangwangIdFromProducts(sellerId);
+        if (fromProducts) {
+          wangwangId = fromProducts;
+          logger.info(`  Resolved wangwang ID from products_raw: ${wangwangId}`);
+        }
+      }
+
+      if (!wangwangId && !options.dryRun) {
+        // Step 2: Navigate to seller's store page and extract from DOM
+        const shopUrl = provider.shopUrl || `https://shop${sellerId}.1688.com/`;
+        const resolved = await scraper.resolveWangwangId(shopUrl);
+        if (resolved) {
+          wangwangId = resolved;
+          logger.info(`  Resolved wangwang ID from store page: ${wangwangId}`);
+        }
+      }
+
+      if (wangwangId) {
+        // Cache for future runs
+        await updateProviderWangwangId(sellerId, wangwangId);
+      } else {
+        logger.warn(`  ✗ Could not resolve wangwang ID for ${provider.providerName} — skipping`);
+        failed++;
+        continue;
+      }
+
+      // Save seller contact record with 3c_amazon_outreach type
       const targetUrl = provider.shopUrl || `https://shop${sellerId}.1688.com/`;
       await saveSellerContact(
         sellerId,
         provider.providerName,
-        provider.wangwangId || '',
+        wangwangId,
         targetUrl,
         [], // no product IDs — supplier-level outreach, not product-level
         '3c_amazon_outreach'
       );
 
-      // Send Wangwang message
-      const success = await scraper.sendWangwangMessage(targetUrl, message);
+      if (options.dryRun) {
+        logger.info(`  [DRY RUN] Would send to ${provider.providerName} via wangwang=${wangwangId}`);
+        sent++;
+        continue;
+      }
+
+      // Send Wangwang message using the RESOLVED wangwang login ID (not the shop URL)
+      const success = await scraper.sendWangwangMessage(wangwangId, message);
 
       if (success) {
         await updateContactStatus(sellerId, 'contacted', `3C Amazon outreach — categories: ${categories.join(', ')}`, '3c_amazon_outreach');
         sent++;
-        logger.info(`  ✓ Message sent to ${provider.providerName}`);
+        logger.info(`  ✓ Message sent to ${provider.providerName} (ww=${wangwangId})`);
       } else {
         failed++;
-        logger.warn(`  ✗ Failed to send message to ${provider.providerName}`);
+        logger.warn(`  ✗ Failed to send message to ${provider.providerName} (ww=${wangwangId})`);
       }
 
       // Delay between sellers (5-10 seconds to appear human-paced)

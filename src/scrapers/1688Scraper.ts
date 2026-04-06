@@ -2643,6 +2643,114 @@ export class Scraper1688 {
   }
 
   /**
+   * Navigate to a seller's store page and extract their Wangwang login ID.
+   * The store page contains IM widgets / contact links with the actual wangwang nick.
+   * Falls back to finding a product link on the store page and extracting from the product page.
+   */
+  async resolveWangwangId(shopUrl: string): Promise<string | null> {
+    if (!this.browser) throw new Error('Browser not initialized');
+
+    const resolveTab = await this.browser.newPage();
+    try {
+      await resolveTab.bringToFront();
+
+      // Navigate to the store homepage
+      await resolveTab.goto(shopUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+      await sleep(4000);
+
+      // Strategy 1: Extract wangwang ID from store page DOM
+      const fromStorePage = await resolveTab.evaluate(() => {
+        // Check data-nick / nick attributes
+        const wwEl =
+          document.querySelector('[data-nick]') ||
+          document.querySelector('[nick]') ||
+          document.querySelector('a[href*="amos.alicdn.com"]') ||
+          document.querySelector('a[href*="wangwang"]') ||
+          document.querySelector('a[href*="ww.alicdn.com"]') ||
+          document.querySelector('[class*="wangwang"]') ||
+          document.querySelector('[data-memberId]') ||
+          document.querySelector('[data-loginid]');
+
+        if (wwEl) {
+          const nick = (wwEl as HTMLElement).getAttribute('data-nick') ||
+                       (wwEl as HTMLElement).getAttribute('nick') ||
+                       (wwEl as HTMLElement).getAttribute('data-loginid') || '';
+          if (nick) return nick;
+
+          // Extract from href
+          const href = (wwEl as HTMLAnchorElement).href || (wwEl as HTMLElement).getAttribute('href') || '';
+          const m = href.match(/[?&](?:nick|toNick|uid|touid)=([^&]+)/i);
+          if (m) return decodeURIComponent(m[1]).replace(/^cnalichn/, '');
+        }
+
+        // Check all links for amos/wangwang URLs with uid parameter
+        const links = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+        for (const a of links) {
+          const href = a.href || '';
+          if (href.includes('amos.alicdn.com') || href.includes('ww.alicdn.com')) {
+            const m = href.match(/[?&]uid=([^&]+)/);
+            if (m) {
+              const uid = decodeURIComponent(m[1]).replace(/^cnalichn/, '');
+              if (uid) return uid;
+            }
+          }
+        }
+
+        return null;
+      });
+
+      if (fromStorePage) {
+        logger.info('Resolved wangwang ID from store page', { shopUrl: shopUrl.substring(0, 60), wangwangId: fromStorePage });
+        return fromStorePage;
+      }
+
+      // Strategy 2: Find a product link on the store page → navigate → extract from product page
+      const productUrl = await resolveTab.evaluate(() => {
+        const links = Array.from(document.querySelectorAll('a[href]')) as HTMLAnchorElement[];
+        for (const a of links) {
+          if (a.href && a.href.includes('detail.1688.com/offer/')) return a.href;
+        }
+        return null;
+      });
+
+      if (productUrl) {
+        logger.info('Trying product page fallback for wangwang ID', { productUrl: productUrl.substring(0, 80) });
+        await resolveTab.goto(productUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
+        await sleep(4000);
+
+        const fromProductPage = await resolveTab.evaluate(() => {
+          const wwEl =
+            document.querySelector('[data-nick]') ||
+            document.querySelector('[nick]') ||
+            document.querySelector('a[href*="amos.alicdn.com"]') ||
+            document.querySelector('a[href*="wangwang"]');
+
+          if (wwEl) {
+            const nick = (wwEl as HTMLElement).getAttribute('data-nick') ||
+                         (wwEl as HTMLElement).getAttribute('nick') || '';
+            if (nick) return nick;
+
+            const href = (wwEl as HTMLAnchorElement).href || (wwEl as HTMLElement).getAttribute('href') || '';
+            const m = href.match(/[?&](?:nick|toNick|uid|touid)=([^&]+)/i);
+            if (m) return decodeURIComponent(m[1]).replace(/^cnalichn/, '');
+          }
+          return null;
+        });
+
+        if (fromProductPage) {
+          logger.info('Resolved wangwang ID from product page', { wangwangId: fromProductPage });
+          return fromProductPage;
+        }
+      }
+
+      logger.warn('Could not resolve wangwang ID', { shopUrl: shopUrl.substring(0, 60) });
+      return null;
+    } finally {
+      await resolveTab.close().catch(() => {});
+    }
+  }
+
+  /**
    * Scan the currently-loaded product page for compliance certifications.
    * Returns an array of certs found (may be empty).
    */

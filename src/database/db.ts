@@ -904,6 +904,31 @@ export async function updateProviderTrustLevel(
 }
 
 /**
+ * Cache a resolved Wangwang login ID for a provider (by platform_id).
+ */
+export async function updateProviderWangwangId(platformId: string, wangwangId: string): Promise<void> {
+  const p = await getPool();
+  await p.execute(
+    `UPDATE providers SET wangwang_id = ?, updated_at = NOW() WHERE platform = '1688' AND platform_id = ?`,
+    [wangwangId, platformId]
+  );
+}
+
+/**
+ * Look up a seller's Wangwang ID from products_raw (extracted by Task 2).
+ */
+export async function lookupWangwangIdFromProducts(platformMemberId: string): Promise<string | null> {
+  const p = await getPool();
+  const [rows] = await p.execute<RowDataPacket[]>(
+    `SELECT seller_wangwang_id FROM products_raw
+     WHERE seller_id = ? AND seller_wangwang_id IS NOT NULL AND seller_wangwang_id != ''
+     LIMIT 1`,
+    [platformMemberId]
+  );
+  return rows.length > 0 ? rows[0].seller_wangwang_id : null;
+}
+
+/**
  * Increment provider total_products count.
  */
 export async function incrementProviderProductCount(providerId: number): Promise<void> {

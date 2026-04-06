@@ -213,7 +213,10 @@ async function main(): Promise<void> {
   logger.info(`Found ${providers.length} suppliers to contact`);
 
   if (options.dryRun) {
+    let resolvable = 0;
+    let unresolvable = 0;
     for (const provider of providers) {
+      const sellerId = provider.platformId;
       const categories = provider.notes
         ? (() => {
             try {
@@ -223,12 +226,21 @@ async function main(): Promise<void> {
           })()
         : [];
       const message = buildOutreachMessage(provider.providerName, categories);
-      logger.info(`[DRY RUN] Would contact: ${provider.providerName}`);
-      logger.info(`  Shop: ${provider.shopUrl}`);
-      logger.info(`  Seller ID: ${provider.platformId}`);
-      logger.info(`  Message (${message.length} chars):`);
-      logger.info(`  ${message.substring(0, 200)}...`);
+
+      // Check wangwang ID availability (DB only, no browser navigation in dry-run)
+      let wangwangId = provider.wangwangId || '';
+      if (!wangwangId && sellerId) {
+        const fromProducts = await lookupWangwangIdFromProducts(sellerId);
+        if (fromProducts) wangwangId = fromProducts;
+      }
+
+      const wwStatus = wangwangId ? `✓ ww=${wangwangId}` : `✗ needs resolution (platform_id=${sellerId})`;
+      if (wangwangId) resolvable++; else unresolvable++;
+
+      logger.info(`[DRY RUN] ${provider.providerName} — ${wwStatus}`);
+      logger.info(`  Message (${message.length} chars): ${message.substring(0, 120)}...`);
     }
+    logger.info(`\n[DRY RUN] Summary: ${resolvable} have wangwang ID, ${unresolvable} need store page resolution`);
     closeDatabase();
     return;
   }

@@ -2537,28 +2537,48 @@ export class Scraper1688 {
       }
 
       // Extract seller/member ID from the shop URL
-      // Patterns: shop{ID}.1688.com, {wangwang}.1688.com
-      const memberIdMatch = shopUrl.match(/shop(\w+)\.1688\.com/) || shopUrl.match(/\/\/(\w+)\.1688\.com/);
+      // The 1688 seller search API needs the wangwang/login ID (subdomain).
+      // Patterns: shop{ID}.1688.com → numeric shop ID, {wangwang}.1688.com → wangwang name
+      const memberIdMatch = shopUrl.match(/\/\/(\w+)\.1688\.com/);
       if (memberIdMatch) {
         const memberId = memberIdMatch[1];
-        const searchUrl = `https://s.1688.com/selloffer/offer_search.htm?keywords=&memberId=${memberId}`;
-        logger.info('Navigating to seller search page', { searchUrl, memberId });
 
-        try {
-          await this.page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 45000 });
-          await randomDelay(2000, 3000);
+        // Try multiple seller search URL formats
+        const searchUrls = [
+          // Format 1: company search (most reliable for finding all products from a seller)
+          `https://s.1688.com/company/company_search.htm?keywords=${memberId}&button_click=top&n=y`,
+          // Format 2: offer search with seller ID
+          `https://s.1688.com/selloffer/offer_search.htm?keywords=&memberId=${memberId}`,
+          // Format 3: search by company name (if memberId is a wangwang)
+          `https://s.1688.com/selloffer/offer_search.htm?keywords=${encodeURIComponent(memberId)}`,
+        ];
 
-          // Use the existing extractProductsFromPage which works well on search result pages
-          const searchProducts = await this.extractProductsFromPage();
-          logger.info('Seller search fallback result', { count: searchProducts.length });
+        for (const searchUrl of searchUrls) {
+          logger.info('Trying seller search fallback', { searchUrl, memberId });
+          try {
+            await this.page.goto(searchUrl, { waitUntil: 'networkidle2', timeout: 45000 });
+            await randomDelay(2000, 3000);
 
-          for (const p of searchProducts) {
-            if (!products.find(existing => existing.id1688 === p.id1688)) {
-              products.push(p);
+            // Scroll to trigger lazy loading
+            await this.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight / 2));
+            await randomDelay(1500, 2000);
+
+            const searchProducts = await this.extractProductsFromPage();
+            logger.info('Seller search fallback result', { url: searchUrl, count: searchProducts.length });
+
+            if (searchProducts.length > 0) {
+              for (const p of searchProducts) {
+                if (!products.find(existing => existing.id1688 === p.id1688)) {
+                  products.push(p);
+                }
+              }
+              break; // Found products, stop trying other URLs
             }
+          } catch (searchErr) {
+            logger.warn('Seller search attempt failed', { url: searchUrl, error: (searchErr as Error).message });
+            // Reset page for next attempt
+            await this.page.goto('about:blank', { waitUntil: 'load', timeout: 5000 }).catch(() => {});
           }
-        } catch (searchErr) {
-          logger.warn('Seller search fallback failed', { error: (searchErr as Error).message });
         }
       }
     }

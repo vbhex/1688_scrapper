@@ -2678,26 +2678,13 @@ export class Scraper1688 {
       await resolveTab.goto(shopUrl, { waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {});
       await sleep(4000);
 
-      // Strategy 1: Extract sellerMemberId from window.shopPageDataApi (most reliable)
-      // Every 1688 store page sets: window.shopPageDataApi = 'https://...?sellerMemberId=b2b-XXXX...'
-      // This sellerMemberId works as the amos uid parameter for Wangwang messaging.
+      // Strategy 1: Try to extract Wangwang LOGIN NICK from store page DOM.
+      // CRITICAL: Wangwang needs the actual LOGIN NICK (e.g. "senylon", "huayi09"),
+      // NOT the sellerMemberId (b2b-XXX). The b2b-XXX format does NOT open valid chats —
+      // pressing Enter after typing shows "Please select a contact first".
+      // The login nick is found in chat widgets / amos links.
       const fromStorePage = await resolveTab.evaluate(() => {
-        // Method A: window.shopPageDataApi (set by the store page SPA)
-        const w = window as any;
-        if (w.shopPageDataApi) {
-          const m = (w.shopPageDataApi as string).match(/sellerMemberId=([^&]+)/);
-          if (m) return m[1];
-        }
-
-        // Method B: Script tags containing sellerMemberId
-        const scripts = Array.from(document.querySelectorAll('script'));
-        for (const s of scripts) {
-          const t = s.textContent || '';
-          const m = t.match(/sellerMemberId\s*[=:]\s*['"]?([a-z0-9-]+)['"]?/i);
-          if (m && m[1] !== 'b2b') return m[1]; // skip bare "b2b" prefix
-        }
-
-        // Method C: data-nick / nick attributes (works for branded stores like senylon.1688.com)
+        // Look for chat/Wangwang widgets that contain the actual login nick
         const wwEl =
           document.querySelector('[data-nick]') ||
           document.querySelector('[nick]') ||
@@ -2710,11 +2697,15 @@ export class Scraper1688 {
           const nick = (wwEl as HTMLElement).getAttribute('data-nick') ||
                        (wwEl as HTMLElement).getAttribute('nick') ||
                        (wwEl as HTMLElement).getAttribute('data-loginid') || '';
-          if (nick) return nick;
+          if (nick && !nick.startsWith('b2b-')) return nick;
 
           const href = (wwEl as HTMLAnchorElement).href || (wwEl as HTMLElement).getAttribute('href') || '';
           const m = href.match(/[?&](?:nick|toNick|uid|touid)=([^&]+)/i);
-          if (m) return decodeURIComponent(m[1]).replace(/^cnalichn/, '');
+          if (m) {
+            const id = decodeURIComponent(m[1]).replace(/^cnalichn/, '');
+            // Reject b2b-XXX member IDs — they don't work for messaging
+            if (id && !id.startsWith('b2b-')) return id;
+          }
         }
 
         return null;
@@ -2740,20 +2731,26 @@ export class Scraper1688 {
         await sleep(4000);
 
         const fromProductPage = await resolveTab.evaluate(() => {
-          const wwEl =
-            document.querySelector('[data-nick]') ||
-            document.querySelector('[nick]') ||
-            document.querySelector('a[href*="amos.alicdn.com"]') ||
-            document.querySelector('a[href*="wangwang"]');
+          // Look in ALL chat/wangwang widgets for the actual login nick
+          const wwEls = [
+            ...Array.from(document.querySelectorAll('[data-nick]')),
+            ...Array.from(document.querySelectorAll('[nick]')),
+            ...Array.from(document.querySelectorAll('a[href*="amos.alicdn.com"]')),
+            ...Array.from(document.querySelectorAll('a[href*="wangwang"]')),
+            ...Array.from(document.querySelectorAll('a[href*="ww.alicdn.com"]')),
+          ];
 
-          if (wwEl) {
+          for (const wwEl of wwEls) {
             const nick = (wwEl as HTMLElement).getAttribute('data-nick') ||
                          (wwEl as HTMLElement).getAttribute('nick') || '';
-            if (nick) return nick;
+            if (nick && !nick.startsWith('b2b-')) return nick;
 
             const href = (wwEl as HTMLAnchorElement).href || (wwEl as HTMLElement).getAttribute('href') || '';
             const m = href.match(/[?&](?:nick|toNick|uid|touid)=([^&]+)/i);
-            if (m) return decodeURIComponent(m[1]).replace(/^cnalichn/, '');
+            if (m) {
+              const id = decodeURIComponent(m[1]).replace(/^cnalichn/, '');
+              if (id && !id.startsWith('b2b-')) return id;
+            }
           }
           return null;
         });
@@ -3357,15 +3354,49 @@ export class Scraper1688 {
       }
       await randomDelay(800, 1500);
 
-      // Step 4: Click send button — re-fetch frame fresh again
+      // PRE-CHECK: verify a contact is actually selected.
+      // If the chat says "Please select a contact first" / "您尚未选择联系人", the send WILL fail.
+      const contactSelected = await safeFrameEval<boolean>(
+        async (frame) => frame.evaluate(() => {
+          // Look for warning text indicating no contact
+          const body = document.body ? document.body.innerText : '';
+          if (body.includes('Please select a contact') ||
+              body.includes('您尚未选择联系人') ||
+              body.includes('请先选择联系人') ||
+              body.includes('请选择联系人')) {
+            return false;
+          }
+          return true;
+        })
+      );
+
+      if (contactSelected === false) {
+        logger.warn('Cannot send: chat shows "no contact selected" — invalid wangwang ID', { sellerLoginId });
+        await wwTab.close().catch(() => {});
+        const remaining = await this.browser!.pages();
+        const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
+        if (healthy) this.page = healthy;
+        return false;
+      }
+
+      // Step 4: Click the actual Send button (button.send-btn)
       let sendClicked = false;
       const sendResult = await safeFrameEval<boolean>(
         async (frame) => frame.evaluate(() => {
-          const btns = Array.from(document.querySelectorAll('button, [class*="send"], [class*="Send"]'));
-          for (const btn of btns) {
-            const text = (btn.textContent || '').trim();
-            if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
-              (btn as HTMLElement).click();
+          // Try the specific .send-btn selector first (debug confirmed this is the real button)
+          let btn = document.querySelector('button.send-btn') as HTMLElement | null;
+          if (btn && btn.offsetHeight > 0 && !(btn as HTMLButtonElement).disabled) {
+            btn.click();
+            return true;
+          }
+          // Fallback: any visible button with "send" text or class
+          const btns = Array.from(document.querySelectorAll('button, [class*="send-btn"]'));
+          for (const b of btns) {
+            const text = (b.textContent || '').trim().toLowerCase();
+            const cls = (b.className || '').toString().toLowerCase();
+            if ((text === '发送' || text === 'send' || cls.includes('send-btn')) &&
+                (b as HTMLElement).offsetHeight > 0 && !(b as HTMLButtonElement).disabled) {
+              (b as HTMLElement).click();
               return true;
             }
           }
@@ -3375,37 +3406,45 @@ export class Scraper1688 {
       sendClicked = sendResult === true;
 
       if (!sendClicked) {
-        // Fallback: contentDocument send
-        sendClicked = await wwPage.evaluate(() => {
-          let doc: Document = document;
-          const iframes = Array.from(document.querySelectorAll('iframe'));
-          for (const iframe of iframes) {
-            const src = (iframe as HTMLIFrameElement).src || '';
-            if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
-            try {
-              const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
-                                ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-              if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
-            } catch { continue; }
-          }
-          const btns = Array.from(doc.querySelectorAll('button, [class*="send"], [class*="Send"]'));
-          for (const btn of btns) {
-            const text = (btn.textContent || '').trim();
-            if ((text === '发送' || text === 'Send' || text.includes('发送')) && (btn as HTMLElement).offsetHeight > 0) {
-              (btn as HTMLElement).click();
-              return true;
+        // Last resort: Enter (rarely works for Wangwang)
+        await wwPage.keyboard.press('Enter');
+        logger.warn('Send button not found, fell back to Enter key', { sellerLoginId });
+      }
+      await randomDelay(2000, 3000);
+
+      // VERIFY: did the message actually appear in the chat history?
+      // After successful send, the input should be empty AND a new sent message bubble should exist.
+      const verified = await safeFrameEval<{ inputEmpty: boolean; messageInHistory: boolean }>(
+        async (frame) => frame.evaluate(() => {
+          // Check input is now empty (sent successfully clears it)
+          const input = document.querySelector('[contenteditable="true"]') as HTMLElement | null;
+          const inputText = input ? (input.innerText || '').trim() : '';
+          const inputEmpty = inputText.length === 0;
+
+          // Check for the sent message in the chat (look for outgoing message bubbles)
+          const msgs = Array.from(document.querySelectorAll('[class*="message"]'));
+          let messageInHistory = false;
+          // Check if any message bubble contains text we just typed (we won't know the exact text here,
+          // so we just check if there's at least one "outgoing"/"send"/"my" class message)
+          for (const m of msgs) {
+            const cls = (m.className || '').toString().toLowerCase();
+            if (cls.includes('out') || cls.includes('mine') || cls.includes('self') || cls.includes('me')) {
+              messageInHistory = true;
+              break;
             }
           }
-          return false;
-        });
-      }
 
-      if (!sendClicked) {
-        await wwPage.keyboard.press('Enter');
-      }
-      await randomDelay(1000, 2000);
+          return { inputEmpty, messageInHistory };
+        })
+      );
 
-      logger.info('Wangwang message sent', { sellerLoginId, method: sendClicked ? 'send-button' : 'enter-key' });
+      const sendSucceeded = verified && verified.inputEmpty;
+
+      if (sendSucceeded) {
+        logger.info('Wangwang message sent + verified', { sellerLoginId, method: sendClicked ? 'send-button' : 'enter-key', inputEmpty: verified.inputEmpty });
+      } else {
+        logger.warn('Wangwang send failed verification — input still has text', { sellerLoginId, verified });
+      }
 
       // Close the dedicated WW tab — keeps the browser clean for the next sender iteration
       await wwTab.close().catch(() => {});
@@ -3414,7 +3453,7 @@ export class Scraper1688 {
       const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
       if (healthy) this.page = healthy;
 
-      return true;
+      return sendSucceeded;
     } catch (error) {
       logger.error('Failed to send Wangwang message', {
         sellerUrl,

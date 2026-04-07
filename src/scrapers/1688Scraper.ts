@@ -3,6 +3,7 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { Browser, Page, CookieParam } from 'puppeteer';
 import path from 'path';
 import fs from 'fs';
+import { exec } from 'child_process';
 import { createChildLogger } from '../utils/logger';
 import { config } from '../config';
 import { ScrapedProduct, ProductSpecification, SellerInfo, ProductVariants, SupplierSearchResult } from '../models/product';
@@ -3086,386 +3087,43 @@ export class Scraper1688 {
   }
 
   /**
-   * Navigate to a seller's 1688 shop and send a Wangwang IM message requesting cert docs.
-   * Returns true if message was sent, false if the chat window couldn't be opened.
+   * Send a Wangwang message via the native Ali1688Buyer desktop app (aliim:// URL scheme).
+   * Much more reliable than the web-based approach — no iframes, no DOM fragility.
+   * Runs: open "aliim://sendmsg?uid=SELLER_ID&message=TEXT" via osascript.
+   * Returns true if the command was dispatched without error.
    */
   async sendWangwangMessage(sellerUrl: string, message: string): Promise<boolean> {
-    if (!this.page) throw new Error('Browser not initialized');
-
     // Extract seller login ID from URL patterns:
-    //   https://detail.1688.com/offer/XXXXX.html → need seller_id from caller
     //   https://shopXXXXX.1688.com/ → extract XXXXX
-    //   direct seller ID string
+    //   direct seller ID string (passed from Task 8)
     let sellerLoginId = sellerUrl;
     const shopMatch = sellerUrl.match(/https?:\/\/shop([^.]+)\.1688\.com/);
     if (shopMatch) {
       sellerLoginId = shopMatch[1];
-    } else if (sellerUrl.match(/^https?:\/\//)) {
-      // It's a URL but not a shop URL — could be product URL
-      // In this case, the sellerUrl might actually be the seller login ID
-      // passed directly from Task 8
-      sellerLoginId = sellerUrl;
     }
 
-    // Use direct Wangwang web IM URL — most reliable approach (2026-03-22)
-    const wangwangUrl = `https://amos.alicdn.com/getcid.aw?v=3&groupid=0&s=1&charset=utf-8&uid=${encodeURIComponent(sellerLoginId)}&site=cnalichn`;
-    logger.info('Opening Wangwang web chat', { sellerLoginId, wangwangUrl: wangwangUrl.substring(0, 100) });
+    logger.info('Sending Wangwang message via Ali1688Buyer', { sellerLoginId });
 
-    // Open a brand-new tab for each Wangwang message — avoids all stale frame issues.
-    // Declared outside try so the catch block can also close it.
-    const wwTab = await this.browser!.newPage();
-    try {
-      await wwTab.bringToFront();
+    // Build aliim:// URL — Ali1688Buyer handles the IM natively, no browser needed.
+    // The app opens the chat window and pre-fills the message.
+    const aliimUrl = `aliim://sendmsg?uid=${encodeURIComponent(sellerLoginId)}&message=${encodeURIComponent(message)}`;
 
-      // Close any leftover Wangwang tabs from prior iterations (keep this tab open)
-      const prePages = await this.browser!.pages();
-      for (const p of prePages) {
-        if (p === wwTab) continue;
-        const pUrl = p.url();
-        if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im') || pUrl.includes('wwwebim.1688.com') || pUrl.includes('amos.alicdn.com')) {
-          await p.close().catch(() => {});
+    return new Promise<boolean>((resolve) => {
+      // osascript opens the aliim:// URL via the macOS URL scheme handler (Ali1688Buyer).
+      // Using osascript rather than `open` directly ensures it works even when called
+      // from a non-GUI process (e.g. a script launched via SSH).
+      const cmd = `osascript -e 'open location "${aliimUrl.replace(/'/g, "\\'")}"'`;
+      exec(cmd, { timeout: 15000 }, (error, stdout, stderr) => {
+        if (error) {
+          logger.error('Ali1688Buyer aliim:// dispatch failed', { sellerLoginId, error: error.message, stderr });
+          resolve(false);
+          return;
         }
-      }
-
-      // Navigate the fresh tab to the amos Wangwang URL
-      await wwTab.goto(wangwangUrl, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
-      await randomDelay(3000, 5000);
-
-      // Step 1: Click "优先使用网页版" (Prefer web version) if shown
-      let wwPage = wwTab;
-      const webVersionClicked = await wwTab.evaluate(() => {
-        const buttons = Array.from(document.querySelectorAll('button'));
-        for (const btn of buttons) {
-          if ((btn.textContent || '').includes('优先使用网页版') && btn.offsetHeight > 0) {
-            btn.click();
-            return true;
-          }
-        }
-        return false;
+        logger.info('Wangwang message dispatched via Ali1688Buyer', { sellerLoginId });
+        // Give Ali1688Buyer time to open the chat and process the message
+        setTimeout(() => resolve(true), 3000);
       });
-
-      if (webVersionClicked) {
-        logger.info('Clicked "优先使用网页版" — waiting for web chat tab to open');
-        let chatTab: any = null;
-        for (let attempt = 0; attempt < 10; attempt++) {
-          await sleep(2000);
-          const allPages = await this.browser!.pages();
-          for (const p of allPages) {
-            const pUrl = p.url();
-            if (pUrl.includes('air.1688.com') || pUrl.includes('web_im')) {
-              chatTab = p;
-              break;
-            }
-          }
-          if (chatTab) break;
-        }
-        if (chatTab) {
-          wwPage = chatTab;
-          await chatTab.bringToFront();
-          logger.info('Switched to web IM tab', { url: chatTab.url().substring(0, 80) });
-          await sleep(5000);
-        } else {
-          logger.warn('Could not find air.1688.com tab — staying on wwTab');
-        }
-      }
-
-      // Step 2: If amos opened a separate air.1688.com tab, prefer it
-      const allPages2 = await this.browser!.pages();
-      for (const p of allPages2) {
-        const pUrl = p.url();
-        if (pUrl.includes('air.1688.com') || pUrl.includes('def_cbu_web_im')) {
-          wwPage = p;
-          await p.bringToFront();
-          logger.info('Found web IM in separate tab', { url: pUrl.substring(0, 100) });
-          break;
-        }
-      }
-
-      // Wait for page content and inner iframe to fully load
-      await sleep(5000);
-      logger.info('Chat page loaded', { title: await wwPage.title().catch(() => '?'), url: wwPage.url().substring(0, 100) });
-
-      // Helper: always fetch the core frame fresh — never hold a stale reference.
-      // Wangwang can load in two different ways:
-      //   1. air.1688.com  → opens a nested iframe at def_cbu_web_im_core/index.html
-      //   2. wwwebim.1688.com → single-frame page, chat UI is in the main frame itself
-      // We check for the nested iframe first; fall back to the main frame if the page
-      // is wwwebim and only 1 frame exists.
-      const getFreshCoreFrame = async (waitMs = 0) => {
-        if (waitMs > 0) await sleep(waitMs);
-        const frames = wwPage.frames();
-        // Prefer the dedicated core iframe (air.1688.com flow)
-        const coreIframe = frames.find(f =>
-          !f.isDetached() &&
-          (f.url().includes('def_cbu_web_im_core') || f.url().includes('web_im_core'))
-        );
-        if (coreIframe) return coreIframe;
-        // Fallback: wwwebim single-frame flow — main frame IS the chat
-        const pageUrl = wwPage.url();
-        if (pageUrl.includes('wwwebim.1688.com') || pageUrl.includes('amos.alicdn.com')) {
-          const mainFrame = frames.find(f => !f.isDetached() && f.parentFrame() === null);
-          return mainFrame || null;
-        }
-        return null;
-      };
-
-      // Safe frame.evaluate that re-fetches the frame fresh and retries on detach.
-      // fn receives the fresh frame and calls frame.evaluate() itself.
-      const safeFrameEval = async <T>(fn: (frame: any) => Promise<T>, retries = 2): Promise<T | null> => {
-        for (let i = 0; i < retries; i++) {
-          const frame = await getFreshCoreFrame(i > 0 ? 1500 : 0);
-          if (!frame) { logger.debug(`safeFrameEval: no frame (attempt ${i + 1})`); continue; }
-          try {
-            return await fn(frame);
-          } catch (err: any) {
-            if (err.message?.includes('detached') && i < retries - 1) {
-              logger.debug(`Frame detached during eval, retrying (${i + 1}/${retries})`);
-              continue;
-            }
-            throw err;
-          }
-        }
-        return null;
-      };
-
-      // Step 3: Wait up to 10s for the core frame to appear after page navigation
-      let coreFrame = await getFreshCoreFrame();
-      if (!coreFrame) {
-        const allFrames = wwPage.frames();
-        logger.info('Finding core IM frame', { totalFrames: allFrames.length, urls: allFrames.map(f => f.url().substring(0, 60)).join(' | ') });
-        for (let attempt = 0; attempt < 10; attempt++) {
-          await sleep(1000);
-          coreFrame = await getFreshCoreFrame();
-          if (coreFrame) break;
-          logger.debug(`Waiting for core frame (attempt ${attempt + 1}/10)`);
-        }
-      }
-      if (coreFrame) {
-        logger.info('Using core frame for input', { frameUrl: coreFrame.url().substring(0, 80) });
-      }
-
-      const INPUT_SELECTORS = [
-        'textarea',
-        '[contenteditable="true"]',
-        'div[role="textbox"]',
-        '[class*="editor"]',
-        '[class*="Editor"]',
-        '[class*="chatInput"]',
-        '[class*="message-input"]',
-        '[class*="msg-input"]',
-        '.im-input',
-      ];
-
-      let focusFound = false;
-      let focusSelector = '';
-
-      if (coreFrame) {
-        // Use safeFrameEval — re-fetches frame fresh before each call, retries on detach
-        const frameResult = await safeFrameEval<{ found: boolean; selector: string; domSnip?: string }>(
-          async (frame) => frame.evaluate(() => {
-            const selectors = [
-              'textarea', '[contenteditable="true"]', 'div[role="textbox"]',
-              '[class*="editor"]', '[class*="Editor"]', '[class*="chatInput"]',
-              '[class*="message-input"]', '[class*="msg-input"]', '.im-input',
-            ];
-            for (const sel of selectors) {
-              const el = document.querySelector(sel) as HTMLElement;
-              if (el && el.offsetHeight > 0) {
-                el.focus();
-                el.click();
-                return { found: true, selector: sel, domSnip: '' };
-              }
-            }
-            const domSnip = document.body ? document.body.innerHTML.substring(0, 2000) : 'no body';
-            return { found: false, selector: '', domSnip };
-          })
-        );
-
-        if (frameResult?.found) {
-          focusFound = true;
-          focusSelector = frameResult.selector;
-        } else if (frameResult) {
-          logger.warn('Core frame found but no input element', { domSnip: frameResult.domSnip?.substring(0, 300) });
-        }
-      }
-
-      // Fallback: try contentDocument approach on main page
-      if (!focusFound) {
-        const fallbackResult = await wwPage.evaluate((selectors: string[]) => {
-          let doc: Document = document;
-          const iframes = Array.from(document.querySelectorAll('iframe'));
-          for (const iframe of iframes) {
-            const src = (iframe as HTMLIFrameElement).src || '';
-            if (!src.includes('def_cbu_web_im_core') && !src.includes('web_im_core')) continue;
-            try {
-              const iframeDoc = (iframe as HTMLIFrameElement).contentDocument ||
-                                ((iframe as HTMLIFrameElement).contentWindow as any)?.document;
-              if (iframeDoc && iframeDoc.body) { doc = iframeDoc; break; }
-            } catch { continue; }
-          }
-          for (const sel of selectors) {
-            const el = doc.querySelector(sel) as HTMLElement;
-            if (el && el.offsetHeight > 0) {
-              el.focus();
-              el.click();
-              return { found: true, selector: sel };
-            }
-          }
-          return { found: false, selector: '' };
-        }, INPUT_SELECTORS);
-
-        if (fallbackResult.found) {
-          focusFound = true;
-          focusSelector = fallbackResult.selector;
-        }
-      }
-
-      if (!focusFound) {
-        logger.warn('Could not find chat input field in any frame', { url: wwPage.url().substring(0, 100) });
-        // Save DOM for debugging
-        await wwPage.evaluate(() => {
-          const allText = document.documentElement.innerHTML.substring(0, 3000);
-          (window as any).__debugDom = allText;
-        }).catch(() => {});
-        return false;
-      }
-
-      logger.info('Found chat input', { selector: focusSelector, method: coreFrame ? 'frame' : 'contentDocument' });
-      await randomDelay(500, 1000);
-
-      // Type via frame.type() — re-fetch frame fresh to avoid detached frame on type
-      if (focusFound && focusSelector) {
-        const typedViaFrame = await (async () => {
-          const freshFrame = await getFreshCoreFrame();
-          if (!freshFrame) return false;
-          try {
-            await freshFrame.type(focusSelector, message, { delay: 15 });
-            return true;
-          } catch (err: any) {
-            logger.warn('frame.type failed, falling back to keyboard', { error: err.message });
-            return false;
-          }
-        })();
-        if (!typedViaFrame) {
-          await wwPage.keyboard.type(message, { delay: 20 });
-        }
-      } else {
-        await wwPage.keyboard.type(message, { delay: 20 });
-      }
-      await randomDelay(800, 1500);
-
-      // PRE-CHECK: verify a contact is actually selected.
-      // If the chat says "Please select a contact first" / "您尚未选择联系人", the send WILL fail.
-      const contactSelected = await safeFrameEval<boolean>(
-        async (frame) => frame.evaluate(() => {
-          // Look for warning text indicating no contact
-          const body = document.body ? document.body.innerText : '';
-          if (body.includes('Please select a contact') ||
-              body.includes('您尚未选择联系人') ||
-              body.includes('请先选择联系人') ||
-              body.includes('请选择联系人')) {
-            return false;
-          }
-          return true;
-        })
-      );
-
-      if (contactSelected === false) {
-        logger.warn('Cannot send: chat shows "no contact selected" — invalid wangwang ID', { sellerLoginId });
-        await wwTab.close().catch(() => {});
-        const remaining = await this.browser!.pages();
-        const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
-        if (healthy) this.page = healthy;
-        return false;
-      }
-
-      // Step 4: Click the actual Send button (button.send-btn)
-      let sendClicked = false;
-      const sendResult = await safeFrameEval<boolean>(
-        async (frame) => frame.evaluate(() => {
-          // Try the specific .send-btn selector first (debug confirmed this is the real button)
-          let btn = document.querySelector('button.send-btn') as HTMLElement | null;
-          if (btn && btn.offsetHeight > 0 && !(btn as HTMLButtonElement).disabled) {
-            btn.click();
-            return true;
-          }
-          // Fallback: any visible button with "send" text or class
-          const btns = Array.from(document.querySelectorAll('button, [class*="send-btn"]'));
-          for (const b of btns) {
-            const text = (b.textContent || '').trim().toLowerCase();
-            const cls = (b.className || '').toString().toLowerCase();
-            if ((text === '发送' || text === 'send' || cls.includes('send-btn')) &&
-                (b as HTMLElement).offsetHeight > 0 && !(b as HTMLButtonElement).disabled) {
-              (b as HTMLElement).click();
-              return true;
-            }
-          }
-          return false;
-        })
-      );
-      sendClicked = sendResult === true;
-
-      if (!sendClicked) {
-        // Last resort: Enter (rarely works for Wangwang)
-        await wwPage.keyboard.press('Enter');
-        logger.warn('Send button not found, fell back to Enter key', { sellerLoginId });
-      }
-      await randomDelay(2000, 3000);
-
-      // VERIFY: did the message actually appear in the chat history?
-      // After successful send, the input should be empty AND a new sent message bubble should exist.
-      const verified = await safeFrameEval<{ inputEmpty: boolean; messageInHistory: boolean }>(
-        async (frame) => frame.evaluate(() => {
-          // Check input is now empty (sent successfully clears it)
-          const input = document.querySelector('[contenteditable="true"]') as HTMLElement | null;
-          const inputText = input ? (input.innerText || '').trim() : '';
-          const inputEmpty = inputText.length === 0;
-
-          // Check for the sent message in the chat (look for outgoing message bubbles)
-          const msgs = Array.from(document.querySelectorAll('[class*="message"]'));
-          let messageInHistory = false;
-          // Check if any message bubble contains text we just typed (we won't know the exact text here,
-          // so we just check if there's at least one "outgoing"/"send"/"my" class message)
-          for (const m of msgs) {
-            const cls = (m.className || '').toString().toLowerCase();
-            if (cls.includes('out') || cls.includes('mine') || cls.includes('self') || cls.includes('me')) {
-              messageInHistory = true;
-              break;
-            }
-          }
-
-          return { inputEmpty, messageInHistory };
-        })
-      );
-
-      const sendSucceeded = verified && verified.inputEmpty;
-
-      if (sendSucceeded) {
-        logger.info('Wangwang message sent + verified', { sellerLoginId, method: sendClicked ? 'send-button' : 'enter-key', inputEmpty: verified.inputEmpty });
-      } else {
-        logger.warn('Wangwang send failed verification — input still has text', { sellerLoginId, verified });
-      }
-
-      // Close the dedicated WW tab — keeps the browser clean for the next sender iteration
-      await wwTab.close().catch(() => {});
-      // Restore this.page to a healthy remaining tab
-      const remaining = await this.browser!.pages();
-      const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
-      if (healthy) this.page = healthy;
-
-      return sendSucceeded;
-    } catch (error) {
-      logger.error('Failed to send Wangwang message', {
-        sellerUrl,
-        error: (error as Error).message,
-      });
-      // Clean up WW tab even on failure
-      await wwTab.close().catch(() => {});
-      const remaining = await this.browser!.pages();
-      const healthy = remaining.find(p => !p.isClosed()) || remaining[0];
-      if (healthy) this.page = healthy;
-      return false;
-    }
+    });
   }
 
   /**

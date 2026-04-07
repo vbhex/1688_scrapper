@@ -1,4 +1,14 @@
 /**
+ * ⚠️ DEPRECATED (2026-04-07) — DO NOT RUN ⚠️
+ *
+ * Sends Wangwang messages using Task 10's discovered platform_ids.
+ * Messages route to Taobao accounts and bounce server-side.
+ *
+ * REPLACEMENT: Task 8 (brand_verify) handles 3C outreach now.
+ * 3C products flow through normal Task 1→2→3→8→4→5 pipeline.
+ *
+ * Postmortem: documents/3C_OUTREACH_LESSONS_LEARNED.md
+ *
  * Task 11: 3C Supplier Outreach via Wangwang (Amazon Brand Authorization)
  *
  * Contacts 3C suppliers discovered by Task 10 via Wangwang IM.

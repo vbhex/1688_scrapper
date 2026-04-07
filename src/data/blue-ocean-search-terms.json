@@ -3406,84 +3406,108 @@
     "search_terms_zh": [
       "智能手表 运动 心率 血氧 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "ActionCameras": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "运动相机 4K 防水 WiFi 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "PortableProjector": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "投影仪 便携式 迷你 家用 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "VRGlasses": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "VR眼镜 一体机 游戏 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "PowerStation": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "户外电源 太阳能 磷酸铁锂 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "Soundbar": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "回音壁 蓝牙 家庭影院 电视 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "IPCamera": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "网络摄像头 WiFi 夜视 双向语音 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "SmartDoorbell": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "智能可视门铃 WiFi 远程 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "GimbalStabilizer": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "手持稳定器 手机云台 三轴 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "LavalierMicrophone": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "无线领夹麦克风 直播 一拖二 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "SmartRing": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "智能戒指 健康监测 NFC 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "SolarPanel": {
     "l1": "Amazon 3C",
     "search_terms_zh": [
       "太阳能充电板 折叠 便携 跨境"
     ],
-    "enabled": false
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon"
   },
   "RetroPhoneCases": {
     "l1": "Apparel Accessories",

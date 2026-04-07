@@ -2,6 +2,13 @@
 
 ## CRITICAL RULES — HIGHEST PRIORITY
 
+**3C AMAZON STRATEGY (2026-04-07): Use the normal pipeline (Task 1→2→3→8→4→5).**
+- 12 Amazon 3C categories are now enabled in `src/data/blue-ocean-search-terms.json` (`l1: "Amazon 3C"`, `enabled: true`, `target_platform: "amazon"`).
+- Banned: **Earphones** (52 violations history — see root CLAUDE.md).
+- Discovery flow: Task 1 finds 3C products → Task 2 scrapes details (extracts seller info from product pages) → Task 8 brand_verify outreach uses real wangwang nicks from `products_raw.seller_wangwang_id`.
+- **DEPRECATED: Task 10 + Task 11** (`task10-3c-supplier-discover.ts`, `task11-3c-supplier-outreach.ts`) — these search 1688's company directory for factories and try to outreach by `platform_id`. The platform_id routes to Taobao accounts which bounce server-side. **Do not run these tasks**. Full postmortem: `documents/3C_OUTREACH_LESSONS_LEARNED.md`.
+- The OLD `compliance_contacts.outreach_type='3c_amazon_outreach'` rows (469 sellers, mostly `pending`) are stale and unreachable via that path. They should be left alone — when their products get discovered via Task 1's normal flow, they'll automatically be re-contacted via Task 8 with correct routing.
+
 **BRAND SAFETY — 548+ brands in `1688_source.brand_list` DB.**
 - `isBannedBrand()` in `src/utils/helpers.ts` checks against the DB (with JSON fallback).
 - Checked at Task 1 (title) and Task 2 (title, description, specs, variants, seller name).

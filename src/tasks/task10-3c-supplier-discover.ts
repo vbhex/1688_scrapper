@@ -1,4 +1,20 @@
 /**
+ * ⚠️ DEPRECATED (2026-04-07) — DO NOT RUN ⚠️
+ *
+ * This task discovers 3C factories via 1688's company search but only captures
+ * platform_id (numeric/alphanumeric member IDs). When Task 11 then tries to
+ * outreach using those IDs, messages route to Taobao accounts which bounce
+ * server-side with: "对方账号为淘宝账号，无法接收您发送的消息".
+ *
+ * Of 469 contacted via this path: 0 actual deliveries to 1688 accounts.
+ *
+ * REPLACEMENT: 3C products are now discovered via the normal Task 1 → 2 → 8
+ * pipeline (12 Amazon 3C categories enabled in blue-ocean-search-terms.json).
+ * Task 8 (brand_verify) uses real wangwang nicks extracted by Task 2 from
+ * product detail pages → routes to 1688 accounts → delivers reliably.
+ *
+ * Postmortem: documents/3C_OUTREACH_LESSONS_LEARNED.md
+ *
  * Task 10: 3C Supplier Discovery for Amazon
  *
  * Searches 1688 for 3C electronics factories/suppliers using company search.

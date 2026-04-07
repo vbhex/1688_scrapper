@@ -246,10 +246,20 @@ async function main(): Promise<void> {
   }
 
   // Initialize browser for Wangwang messaging
-  const scraper = await create1688Scraper(options.headless);
+  let scraper = await create1688Scraper(options.headless);
 
   let sent = 0;
   let failed = 0;
+  let consecutiveErrors = 0;
+
+  // Helper to recreate the browser when it dies (detached frame, connection closed)
+  const recreateBrowser = async () => {
+    try { await scraper.close(); } catch { /* ignore */ }
+    await new Promise(r => setTimeout(r, 3000));
+    scraper = await create1688Scraper(options.headless);
+    consecutiveErrors = 0;
+    logger.info('Browser recreated after errors');
+  };
 
   try {
     for (const provider of providers) {
@@ -296,10 +306,20 @@ async function main(): Promise<void> {
       if (!wangwangId && !options.dryRun) {
         // Step 2: Navigate to seller's store page and extract from DOM
         const shopUrl = provider.shopUrl || `https://shop${sellerId}.1688.com/`;
-        const resolved = await scraper.resolveWangwangId(shopUrl);
-        if (resolved) {
-          wangwangId = resolved;
-          logger.info(`  Resolved wangwang ID from store page: ${wangwangId}`);
+        try {
+          const resolved = await scraper.resolveWangwangId(shopUrl);
+          if (resolved) {
+            wangwangId = resolved;
+            logger.info(`  Resolved wangwang ID from store page: ${wangwangId}`);
+          }
+        } catch (err) {
+          logger.warn(`  Resolve error: ${(err as Error).message.substring(0, 80)}`);
+          consecutiveErrors++;
+          if (consecutiveErrors >= 3) {
+            await recreateBrowser();
+          }
+          failed++;
+          continue;
         }
       }
 
@@ -330,15 +350,26 @@ async function main(): Promise<void> {
       }
 
       // Send Wangwang message using the RESOLVED wangwang login ID (not the shop URL)
-      const success = await scraper.sendWangwangMessage(wangwangId, message);
+      try {
+        const success = await scraper.sendWangwangMessage(wangwangId, message);
 
-      if (success) {
-        await updateContactStatus(sellerId, 'contacted', `3C Amazon outreach — categories: ${categories.join(', ')}`, '3c_amazon_outreach');
-        sent++;
-        logger.info(`  ✓ Message sent to ${provider.providerName} (ww=${wangwangId})`);
-      } else {
+        if (success) {
+          await updateContactStatus(sellerId, 'contacted', `3C Amazon outreach — categories: ${categories.join(', ')}`, '3c_amazon_outreach');
+          sent++;
+          consecutiveErrors = 0;
+          logger.info(`  ✓ Message sent to ${provider.providerName} (ww=${wangwangId})`);
+        } else {
+          failed++;
+          consecutiveErrors++;
+          logger.warn(`  ✗ Failed to send message to ${provider.providerName} (ww=${wangwangId})`);
+        }
+      } catch (err) {
         failed++;
-        logger.warn(`  ✗ Failed to send message to ${provider.providerName} (ww=${wangwangId})`);
+        consecutiveErrors++;
+        logger.warn(`  ✗ Send exception for ${provider.providerName}: ${(err as Error).message.substring(0, 80)}`);
+        if (consecutiveErrors >= 3) {
+          await recreateBrowser();
+        }
       }
 
       // Delay between sellers (5-10 seconds to appear human-paced)

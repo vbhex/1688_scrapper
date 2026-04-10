@@ -39,7 +39,7 @@ while true; do
 
   # ─── Step 2: Wangwang outreach to new suppliers ───
   # Join via platform_id=seller_id (provider_id col is often NULL in compliance_contacts)
-  NEED_OUTREACH=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+  NEED_OUTREACH=$(mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM providers p
     WHERE p.source = '3c_outreach' AND p.trust_level = 'new'
       AND p.platform_id NOT IN (
@@ -57,7 +57,7 @@ while true; do
   fi
 
   # ─── Step 3: Check Wangwang replies (scroll inbox to find buried replies) ───
-  NEED_REPLY_CHECK=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+  NEED_REPLY_CHECK=$(mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM compliance_contacts
     WHERE outreach_type = '3c_amazon_outreach'
       AND contact_status IN ('contacted','pending');" | tail -1)
@@ -72,7 +72,7 @@ while true; do
   fi
 
   # ─── Step 3.5: Follow-up to 7-day non-responders ───
-  NEED_FOLLOWUP=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+  NEED_FOLLOWUP=$(mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM compliance_contacts
     WHERE outreach_type = '3c_amazon_outreach'
       AND contact_status = 'contacted'
@@ -89,7 +89,7 @@ while true; do
   fi
 
   # ─── Step 4: Scrape stores of confirmed suppliers ───
-  CONFIRMED=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+  CONFIRMED=$(mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM providers
     WHERE source = '3c_outreach'
       AND trust_level IN ('verified','trusted','preferred')
@@ -105,7 +105,7 @@ while true; do
   fi
 
   # ─── Step 5: Product pipeline ───
-  PIPELINE_TODO=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+  PIPELINE_TODO=$(mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
     SELECT COUNT(*) FROM products
     WHERE provider_id IN (SELECT id FROM providers WHERE source = '3c_outreach')
       AND status IN ('discovered','detail_scraped','images_checked');" | tail -1)
@@ -114,7 +114,7 @@ while true; do
   if [ "$PIPELINE_TODO" -gt 0 ]; then
     log "[Step 5] $PIPELINE_TODO products need processing..."
 
-    DISC=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+    DISC=$(mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
       SELECT COUNT(*) FROM products
       WHERE provider_id IN (SELECT id FROM providers WHERE source = '3c_outreach')
         AND status = 'discovered';" | tail -1)
@@ -124,7 +124,7 @@ while true; do
       node dist/tasks/task2-scrape-details.js --limit 300 >> /tmp/task2-amazon-outreach.log 2>&1
     }
 
-    SCRAPED=$(mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+    SCRAPED=$(mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
       SELECT COUNT(*) FROM products
       WHERE provider_id IN (SELECT id FROM providers WHERE source = '3c_outreach')
         AND status = 'detail_scraped';" | tail -1)
@@ -134,7 +134,7 @@ while true; do
       node dist/tasks/task3-image-check.js --limit 300 >> /tmp/task3-amazon-outreach.log 2>&1
     }
 
-    mysql -u root -p***REMOVED*** 1688_source 2>/dev/null << 'SQL'
+    mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null << 'SQL'
 INSERT IGNORE INTO authorized_products (product_id, authorization_type, notes, active)
 SELECT p.id, 'seller_confirmed',
   CONCAT('3c_outreach verified: ', pv.provider_name), TRUE
@@ -156,7 +156,7 @@ SQL
 
   # ─── Status ───
   log ""
-  mysql -u root -p***REMOVED*** 1688_source 2>/dev/null -e "
+  mysql -u root -p$MYSQL_PASSWORD 1688_source 2>/dev/null -e "
     SELECT trust_level, COUNT(*) cnt FROM providers WHERE source='3c_outreach' GROUP BY trust_level;" | tee -a $LOG
 
   log "Round $ROUND complete. Sleeping 15 min..."

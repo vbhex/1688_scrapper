@@ -1,7 +1,7 @@
 #!/bin/bash
 # Run the full discovery + scrape + image check + translate pipeline for Amazon categories.
 # Amazon uses 21 of 24 categories (excludes: translator, gps tracker, sim router).
-# Execute on China MacBook: cd ~/projects/autostore/1688_scrapper && bash run-amazon-pipeline.sh
+# Execute on local machine: cd ~/projects/autostore/1688_scrapper && bash run-amazon-pipeline.sh
 
 set -e
 
@@ -23,7 +23,7 @@ echo "  -> Build complete."
 # Reset products that were discovered but not yet scraped
 echo ""
 echo "=== RESET: Removing un-scraped discovered products ==="
-mysql -u root -p***REMOVED*** 1688_source -e "
+mysql -u root -p$MYSQL_PASSWORD 1688_source -e "
   DELETE FROM products WHERE status = 'discovered';
 " 2>/dev/null
 echo "  -> Cleared previously discovered products."
@@ -130,7 +130,7 @@ run_task "AE Enrich (limit 500)" \
 
 echo ""
 echo "=== FINAL STATUS ==="
-mysql -u root -p***REMOVED*** 1688_source -e "
+mysql -u root -p$MYSQL_PASSWORD 1688_source -e "
   SELECT status, category, COUNT(*) as cnt
   FROM products
   GROUP BY status, category

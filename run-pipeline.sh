@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run the full pipeline: discover → scrape → image check → translate → AE enrich
-# Execute on China MacBook: cd ~/projects/autostore/1688_scrapper && bash run-pipeline.sh
+# Execute on local machine: cd ~/projects/autostore/1688_scrapper && bash run-pipeline.sh
 #
 # RED OCEAN RULE (2026-03-20): Women's Clothing + Men's Clothing L1 = permanently BANNED.
 # Active targets: Watches, Apparel Accessories (Hats, Scarves, Hair, Eyewear, Belts, Gloves)
@@ -124,7 +124,7 @@ run_task "AE Enrich (limit 500)" \
 
 echo ""
 echo "=== FINAL STATUS ==="
-mysql -u root -p***REMOVED*** 1688_source -e "
+mysql -u root -p$MYSQL_PASSWORD 1688_source -e "
   SELECT status, category, COUNT(*) as cnt
   FROM products
   GROUP BY status, category

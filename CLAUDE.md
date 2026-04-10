@@ -38,7 +38,7 @@ Output is stored in the `1688_source` MySQL database, ready for consumption by a
 
 | Machine | IP | Role | Tasks |
 |---------|-----|------|-------|
-| **China MacBook** | `config/china-macbook.env` | Inside China firewall, primary scraping | Tasks 1-4 (using Baidu/Tesseract) |
+| **local machine** | `config/china-macbook.env` | Inside China firewall, primary scraping | Tasks 1-4 (using Baidu/Tesseract) |
 | **Main Computer** | localhost | Outside China firewall | Tasks 3-4 (using Google APIs) |
 
 **1688 English Mode (2026-03-25) — IMPORTANT:**
@@ -54,11 +54,11 @@ The Puppeteer browser is launched with `--lang=en-US` (already in the `1688Scrap
 - SSH: see root `config/china-macbook.env`
 - SSH flags needed: `-o PreferredAuthentications=password -o PubkeyAuthentication=no`
 - Remote commands need: `export PATH=/opt/homebrew/bin:$PATH && source ~/.nvm/nvm.sh`
-- MySQL runs on China MacBook: root / `***REMOVED***`, database `1688_source`
+- MySQL runs on local machine: (see .env), database `1688_source`
 
 ### API Providers (auto-detected from .env)
 
-| Service | China MacBook | Main Computer | Notes |
+| Service | local machine | Main Computer | Notes |
 |---------|--------------|---------------|-------|
 | **Translation** | Baidu Translate API | Google Translate | **Rarely called** — skipped when content is already English (see above) |
 | **Image OCR** | Tesseract.js (local) | Google Vision | |
@@ -200,7 +200,7 @@ CREATE TABLE IF NOT EXISTS product_store_targets (
 
 These are redundant with `product_store_targets` but simplify queries in single-store contexts.
 
-**Migration** (run on China MacBook MySQL):
+**Migration** (run on local machine MySQL):
 ```sql
 -- Add convenience columns to products table
 ALTER TABLE products
@@ -299,7 +299,7 @@ src/
 
 - **1688.com uses GBK encoding**, not UTF-8. Chinese chars in URLs get garbled. Always type into the search bar via Puppeteer, never construct URL params with Chinese.
 - **MySQL JSON columns return parsed objects**, not strings. Always use: `typeof x === 'string' ? JSON.parse(x) : x`
-- **Build**: Use `./node_modules/.bin/tsc` not `npx tsc` (npx installs wrong package on China MacBook)
+- **Build**: Use `./node_modules/.bin/tsc` not `npx tsc` (npx installs wrong package on local machine)
 
 ---
 
@@ -308,14 +308,14 @@ src/
 Both machines share the same git repo at `git@github.com:vbhex/1688_scrapper.git`:
 
 ```bash
-# On China MacBook (after making changes):
+# On local machine (after making changes):
 git add -A && git commit -m "description" && git push
 
 # On Main Computer (to get latest):
 git pull origin main
 ```
 
-**China MacBook project path**: `~/projects/autostore/1688_scrapper`
+**local machine project path**: `~/projects/autostore/1688_scrapper`
 **Main Computer project path**: `/Library/WebServer/Documents/autostore/1688_scrapper`
 
 ---

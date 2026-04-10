@@ -58,8 +58,8 @@ npm install sharp --platform=darwin --arch=x64
 Your `.env` file already has COS configured:
 
 ```bash
-TENCENT_SECRET_ID=***REMOVED***
-TENCENT_SECRET_KEY=***REMOVED***
+TENCENT_SECRET_ID=your_secret_id_here
+TENCENT_SECRET_KEY=your_secret_key_here
 COS_BUCKET_NAME=autostore1688-1255419904
 COS_REGION=ap-guangzhou
 ```

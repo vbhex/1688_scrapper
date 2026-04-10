@@ -74,7 +74,7 @@ while true; do
 
   # Show pipeline status
   echo "[$(date +%H:%M:%S)] Pipeline status after round $ROUND:"
-  mysql -u root -p***REMOVED*** 1688_source -e "
+  mysql -u root -p$MYSQL_PASSWORD 1688_source -e "
     SELECT status, COUNT(*) cnt FROM products
     WHERE status IN ('discovered','detail_scraped','images_checked','translated','ae_enriched')
     GROUP BY status ORDER BY FIELD(status,'discovered','detail_scraped','images_checked','translated','ae_enriched');

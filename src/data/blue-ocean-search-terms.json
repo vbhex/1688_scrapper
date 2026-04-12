@@ -3728,5 +3728,101 @@
     "enabled": true,
     "brand_safe": true,
     "notes": "Gothic/dark aesthetic home decor — skull figures, dark ornaments — Etsy trending"
+  },
+  "WatchBands": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "硅胶表带 通用 跨境",
+      "智能手表表带 替换 跨境",
+      "尼龙表带 运动 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
+  },
+  "CameraMounts": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "运动相机支架 固定 跨境",
+      "GoPro配件 支架 自行车 跨境",
+      "相机三脚架 手机 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
+  },
+  "PhoneMounts": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "车载手机支架 出风口 跨境",
+      "手机桌面支架 折叠 跨境",
+      "手机三脚架 直播 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
+  },
+  "Tripods": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "三脚架 手机 轻便 跨境",
+      "自拍杆 三脚架 蓝牙 跨境",
+      "迷你三脚架 桌面 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
+  },
+  "ChargingCables": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "USB C数据线 快充 跨境",
+      "苹果数据线 编织 跨境",
+      "多合一充电线 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
+  },
+  "CableOrganizers": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "数据线收纳 桌面 跨境",
+      "线缆管理 整理器 跨境",
+      "绕线器 硅胶 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
+  },
+  "ScreenProtectors": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "钢化膜 通用 跨境",
+      "智能手表保护膜 跨境",
+      "屏幕保护膜 防蓝光 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
+  },
+  "PhoneCases": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "手机壳 透明 防摔 跨境",
+      "手机保护套 硅胶 跨境",
+      "手机壳 磁吸 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
   }
 }

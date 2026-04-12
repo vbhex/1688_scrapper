@@ -226,6 +226,7 @@ export class Scraper1688 {
       '--disable-infobars',
       '--disable-extensions-except=',
       '--disable-plugins-discovery',
+      '--lang=en-US', // 1688.com serves English content when browser language is en-US
     ];
 
     if (config.proxy.server) {

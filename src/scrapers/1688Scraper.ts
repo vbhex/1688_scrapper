@@ -1196,9 +1196,9 @@ export class Scraper1688 {
           logger.warn('Max page limit reached, stopping search', { page, maxPages: MAX_PAGES });
           break;
         }
-        // Wait for product list to load — try multiple selectors
+        // Wait for product list to load — try multiple selectors (2026 layout first)
         await this.page.waitForSelector(
-          '.sm-offer-list, .offer-list, [class*="offer-item"], [class*="offer-card"], [class*="CardContainer"], [class*="offerCard"]',
+          '.feeds-wrapper, .i18n-card-wrap, .sm-offer-list, .offer-list, [class*="offer-item"], [class*="offer-card"]',
           { timeout: 30000 }
         ).catch(() => {
           logger.warn('Product list selector not found, will attempt extraction anyway');
@@ -1323,34 +1323,53 @@ export class Scraper1688 {
 
       function extractFromElement(element: Element): void {
         try {
-          // Extract product ID from link - support both old and new URL formats
-          const linkElement = element.querySelector('a[href*="detail"], a[href*="offer"], a[href*="offerId"]') as HTMLAnchorElement;
-          const href = linkElement?.href || '';
-          // New format: detail.m.1688.com/page/index.html?offerId=768284470894
-          // Old format: detail.1688.com/offer/768284470894.html
-          const idMatch = href.match(/offerId=(\d+)/) || href.match(/offer\/(\d+)\.html/) || href.match(/(\d+)\.html/);
+          // Extract product ID from link — the card itself is often an <a> tag
+          let href = '';
+          if (element.tagName === 'A') {
+            href = (element as HTMLAnchorElement).href;
+          }
+          if (!href) {
+            const linkElement = element.querySelector('a[href*="detail"], a[href*="offer"], a[href*="offerId"]') as HTMLAnchorElement;
+            href = linkElement?.href || '';
+          }
+          // URL formats:
+          // detail.1688.com/offer/742512614310.html
+          // detail.m.1688.com/page/index.html?offerId=768284470894
+          // dj.1688.com/ci_king?... (ad redirect — skip)
+          if (href.includes('dj.1688.com') || href.includes('similar_search')) return;
+          const idMatch = href.match(/offerId=(\d+)/) || href.match(/offer\/(\d+)\.html/) || href.match(/(\d{10,})\.html/);
           const id1688 = idMatch ? idMatch[1] : '';
 
           if (!id1688 || seenIds.has(id1688)) return;
           seenIds.add(id1688);
 
-          // Extract title — try multiple selectors, fall back to link text
+          // Extract title — 2026 layout uses .offer-title
           const titleElement = element.querySelector(
-            '[class*="title"], h4, h3, a[href*="offer"]'
+            '.offer-title, [class*="title"], h4, h3'
           );
           const title = titleElement?.textContent?.trim() || '';
 
-          // Extract price — try multiple selectors, extract first number
+          // Extract price — 2026 layout uses .price-wrap with ¥X.XX≈HK$Y.YY format
           const priceElement = element.querySelector(
-            '.sm-offer-priceNum, [class*="price"], [class*="Price"]'
+            '.price-wrap, .price-card-wrap, [class*="price"]'
           );
-          const priceText = priceElement?.textContent || '0';
-          const priceMatch = priceText.match(/[\d.]+/);
-          const priceCNY = priceMatch ? parseFloat(priceMatch[0]) : 0;
+          let priceCNY = 0;
+          if (priceElement) {
+            const priceText = priceElement.textContent || '';
+            // Match ¥XX.XX (CNY price before ≈)
+            const cnyMatch = priceText.match(/[¥￥]([\d.]+)/);
+            if (cnyMatch) {
+              priceCNY = parseFloat(cnyMatch[1]);
+            } else {
+              // Fallback: first number
+              const numMatch = priceText.match(/[\d.]+/);
+              if (numMatch) priceCNY = parseFloat(numMatch[0]);
+            }
+          }
 
-          // Extract image — try various image selectors and data attributes
+          // Extract image — 2026 layout uses img.main-img
           const imageElement = element.querySelector(
-            'img[src*="cbu01"], img[src*="alicdn"], img[data-src]'
+            'img.main-img, img[src*="cbu01"], img[src*="alicdn"], img[data-src]'
           ) as HTMLImageElement;
           let imageUrl = '';
           if (imageElement) {
@@ -1364,7 +1383,7 @@ export class Scraper1688 {
 
           // Extract minimum order quantity
           const moqElement = element.querySelector(
-            '.sm-offer-minOrder, [class*="minOrder"], [class*="moq"]'
+            '[class*="minOrder"], [class*="moq"], .sm-offer-minOrder'
           );
           const moqText = moqElement?.textContent || '1';
           const moqMatch = moqText.match(/(\d+)/);
@@ -1372,7 +1391,7 @@ export class Scraper1688 {
 
           // Extract seller info
           const sellerElement = element.querySelector(
-            '.sm-offer-companyName, [class*="company"], [class*="seller"], [class*="shop"]'
+            '[class*="company"], [class*="seller"], [class*="shop"], .sm-offer-companyName'
           );
           const sellerName = sellerElement?.textContent?.trim() || '';
 
@@ -1394,12 +1413,19 @@ export class Scraper1688 {
         }
       }
 
-      // Strategy A: Try known selectors first
+      // Strategy A (2026): Product cards are <a class="i18n-card-wrap"> — skip ad cards
       let productElements = document.querySelectorAll(
-        '.sm-offer-item, .offer-item, [class*="offer-card"], .space-offer-card-box'
+        'a.i18n-card-wrap:not(.cardui-adOffer), .i18n-card-wrap:not(.cardui-adOffer)'
       );
 
-      // Strategy B: If A finds nothing, try generic card-like containers
+      // Strategy B: Legacy selectors
+      if (productElements.length === 0) {
+        productElements = document.querySelectorAll(
+          '.sm-offer-item, .offer-item, [class*="offer-card"], .space-offer-card-box'
+        );
+      }
+
+      // Strategy C: Generic card containers
       if (productElements.length === 0) {
         productElements = document.querySelectorAll(
           '[class*="CardContainer"], [class*="cardContainer"], [class*="offerCard"], [class*="OfferCard"]'
@@ -1409,7 +1435,7 @@ export class Scraper1688 {
       if (productElements.length > 0) {
         productElements.forEach(el => extractFromElement(el));
       } else {
-        // Strategy C: Anchor-based extraction — find product links and walk up to container
+        // Strategy D: Anchor-based extraction — find product links and walk up to container
         const productLinks = document.querySelectorAll(
           'a[href*="detail.1688.com/offer/"], a[href*="detail.m.1688.com"], a[href*="offerId="], a[href*="dj.1688.com/"]'
         );

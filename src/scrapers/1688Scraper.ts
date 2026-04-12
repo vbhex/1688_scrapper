@@ -993,22 +993,33 @@ export class Scraper1688 {
     const maxPrice = config.filters.maxPriceCNY;
 
     try {
-      // Close stale tabs from previous search — keep only one tab
-      const allTabs = await this.browser!.pages();
-      if (allTabs.length > 1) {
-        // Keep the first valid tab, close the rest
-        this.page = allTabs[0];
-        for (let i = allTabs.length - 1; i > 0; i--) {
-          try { await allTabs[i].close(); } catch { /* already closed */ }
+      // Check if browser is still alive — if not, relaunch
+      let browserAlive = false;
+      try {
+        const allTabs = await this.browser!.pages();
+        browserAlive = true;
+        if (allTabs.length > 1) {
+          this.page = allTabs[0];
+          for (let i = allTabs.length - 1; i > 0; i--) {
+            try { await allTabs[i].close(); } catch { /* already closed */ }
+          }
+          logger.info('Closed stale tabs before new search', { closed: allTabs.length - 1 });
         }
-        logger.info('Closed stale tabs before new search', { closed: allTabs.length - 1 });
+      } catch {
+        browserAlive = false;
+      }
+
+      if (!browserAlive) {
+        logger.warn('Browser connection lost — relaunching browser');
+        try { await this.browser?.close(); } catch { /* already dead */ }
+        await this.initialize();
+        await this.login();
       }
 
       // Verify page is still usable (not detached)
       try {
-        await this.page.evaluate(() => document.title);
+        await this.page!.evaluate(() => document.title);
       } catch {
-        // Page is detached — create a fresh one
         logger.warn('Page was detached, creating fresh tab');
         this.page = await this.browser!.newPage();
       }

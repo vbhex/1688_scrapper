@@ -1189,17 +1189,14 @@ export class Scraper1688 {
       // Scroll to trigger lazy-loading before first extraction
       await this.scrollToLoadContent();
 
-      let emptyPageCount = 0;
-      const MAX_PAGES = 30;
+      let lowYieldPageCount = 0;
+      const MAX_PAGES = 10; // Reduced from 30 — most results are on pages 1-3
+      const seenIds = new Set<string>();
       while (products.length < maxProducts && page <= MAX_PAGES) {
-        if (page > MAX_PAGES) {
-          logger.warn('Max page limit reached, stopping search', { page, maxPages: MAX_PAGES });
-          break;
-        }
         // Wait for product list to load — try multiple selectors (2026 layout first)
         await this.page.waitForSelector(
           '.feeds-wrapper, .i18n-card-wrap, .sm-offer-list, .offer-list, [class*="offer-item"], [class*="offer-card"]',
-          { timeout: 30000 }
+          { timeout: 15000 } // Reduced from 30s
         ).catch(() => {
           logger.warn('Product list selector not found, will attempt extraction anyway');
         });
@@ -1207,21 +1204,31 @@ export class Scraper1688 {
         // Extract products from current page
         const pageProducts = await this.extractProductsFromPage();
 
+        // Count genuinely NEW products (not seen on previous pages)
+        const newProducts = pageProducts.filter(p => !seenIds.has(p.id1688));
+        newProducts.forEach(p => seenIds.add(p.id1688));
+
         logger.info('Extracted products from page', {
           page,
-          count: pageProducts.length,
+          total: pageProducts.length,
+          new: newProducts.length,
+          accumulated: products.length,
         });
 
-        // If 0 products found, log diagnostics and stop after 2 consecutive empty pages
-        if (pageProducts.length === 0) {
-          await this.logDiagnostics(page);
-          emptyPageCount++;
-          if (emptyPageCount >= 2) {
-            logger.warn('Two consecutive empty pages, stopping search', { page });
+        // Stop early if page yields very few new products (duplicates/stale)
+        if (newProducts.length < 3) {
+          lowYieldPageCount++;
+          if (lowYieldPageCount >= 2) {
+            logger.info('Stopping search: 2 consecutive low-yield pages', { page, accumulated: products.length });
             break;
           }
         } else {
-          emptyPageCount = 0;
+          lowYieldPageCount = 0;
+        }
+
+        // If truly 0 products, log diagnostics
+        if (pageProducts.length === 0) {
+          await this.logDiagnostics(page);
         }
 
         for (const product of pageProducts) {
@@ -1286,12 +1293,12 @@ export class Scraper1688 {
         }
 
         // Wait for page to load after clicking next
-        await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 30000 }).catch(() => {
+        await this.page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {
           logger.warn('Next page navigation timed out');
         });
 
-        // Human-like delay
-        await randomDelay(4000, 7000);
+        // Human-like delay (reduced for faster pipeline)
+        await randomDelay(2000, 4000);
 
         // Check for anti-bot page on each navigation
         const pageAntiBotResolved = await this.handleAntiBotPage();

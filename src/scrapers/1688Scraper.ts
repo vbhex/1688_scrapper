@@ -164,7 +164,7 @@ export class Scraper1688 {
   private isLoggedIn: boolean = false;
   private headless: boolean;
   // 'primary'  = old established account with buying history → Amazon supplier outreach
-  // 'sourcing' = new dedicated account (***REMOVED***)          → Core eBay/Etsy sourcing pipeline
+  // 'sourcing' = dedicated sourcing account → Core eBay/Etsy sourcing pipeline
   private profile: 'primary' | 'sourcing';
   private cookiesFile: string;
 
@@ -183,7 +183,7 @@ export class Scraper1688 {
 
     // Use persistent Chrome profile to avoid detection
     // primary  → data/chrome-profile-1688          (old account with buying history, Amazon outreach)
-    // sourcing → data/chrome-profile-1688-sourcing  (new ***REMOVED*** account, core pipeline)
+    // sourcing → data/chrome-profile-1688-sourcing  (sourcing account, core pipeline)
     const profileSuffix = this.profile === 'sourcing' ? '-sourcing' : '';
     const userDataDir = path.resolve(__dirname, `../../data/chrome-profile-1688${profileSuffix}`);
     ensureDirectoryExists(userDataDir);

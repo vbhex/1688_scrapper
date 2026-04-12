@@ -44,18 +44,9 @@ import { RowDataPacket } from 'mysql2/promise';
 
 const logger = createChildLogger('task12-3c-followup');
 
-// HK company info for brand authorization (from documents/company/hk.txt)
-const HK_COMPANY_INFO = {
-  nameEn: '***REMOVED***',
-  nameZh: '***REMOVED***',
-  brNumber: '***REMOVED***',
-  duns: '***REMOVED***',
-  registrationDate: '2025-04-10',
-  phone: '***REMOVED***',
-  address: '***REMOVED***, TUNG CHAU ST TAI KOK, Yau Tsim Mong Distri, Hong Kong',
-  directorName: '***REMOVED***',
-  email: '***REMOVED***',
-};
+// HK company info loaded from database (company_info table) — never hardcode here
+// Use getDefaultCompanyInfo() from database/db.ts at runtime
+const HK_COMPANY_INFO: Record<string, string> = {}; // populated at runtime from DB
 
 interface CLIOptions {
   action: string;

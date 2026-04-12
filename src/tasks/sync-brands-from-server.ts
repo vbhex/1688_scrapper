@@ -8,7 +8,7 @@
 
 import { getPool, closeDatabase } from '../database/db';
 
-const API_BASE = process.env.AUTOSTORE_API_URL || 'http://***REMOVED***/api';
+const API_BASE = process.env.AUTOSTORE_API_URL || 'https://api.spriterock.com/api';
 
 interface RemoteBrand {
   brand_name_en: string;

@@ -3824,5 +3824,17 @@
     "amazon_3c": true,
     "target_platform": "amazon",
     "brand_safe": true
+  },
+  "3DPrinterAccessories": {
+    "l1": "Amazon Accessories",
+    "search_terms_zh": [
+      "3D打印机配件 喷嘴 跨境",
+      "3D打印机热床 PEI板 跨境",
+      "3D打印机挤出机 齿轮 跨境"
+    ],
+    "enabled": true,
+    "amazon_3c": true,
+    "target_platform": "amazon",
+    "brand_safe": true
   }
 }

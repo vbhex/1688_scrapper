@@ -132,6 +132,7 @@ async function discoverCategory(
   searchTerm: string,
   categoryLabel: string,
   limit: number,
+  brandSafe: boolean = false,
 ): Promise<{ discovered: number; skipped: number; duplicates: number }> {
   let discovered = 0;
   let skipped = 0;
@@ -161,12 +162,14 @@ async function discoverCategory(
     }
 
     const thumbnailUrl = product.images.length > 0 ? product.images[0] : '';
+    const sourceType = brandSafe ? 'brand_safe_discovery' : 'auto_discovery';
     const id = await discoverProduct(
       product.id1688,
       product.url,
       product.title,
       categoryLabel,
       thumbnailUrl,
+      sourceType,
     );
 
     if (id) {
@@ -304,7 +307,7 @@ async function main(): Promise<void> {
         categoriesProcessed++;
         logger.info(`[${categoriesProcessed}/${categories.length}] Processing: ${cat.label} (${cat.searchTerm})`, { l1: cat.l1 });
 
-        const result = await discoverCategory(scraper, cat.searchTerm, cat.label, options.limit);
+        const result = await discoverCategory(scraper, cat.searchTerm, cat.label, options.limit, cat.brandSafe);
         totalDiscovered += result.discovered;
         totalSkipped += result.skipped;
         totalDuplicates += result.duplicates;

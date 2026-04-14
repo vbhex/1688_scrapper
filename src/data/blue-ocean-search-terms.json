@@ -607,8 +607,7 @@
       "偏光太阳镜",
       "墨镜"
     ],
-    "enabled": false,
-    "disabled_reason": "Phase 1: brand-safe only"
+    "enabled": true
   },
   "UltrasonicEyeglassCleaners": {
     "l1": "Apparel Accessories",

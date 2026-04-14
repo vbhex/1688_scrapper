@@ -47,6 +47,11 @@ async function initializeSchema(): Promise<void> {
         thumbnail_url VARCHAR(500) DEFAULT '',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        source_platform VARCHAR(50) DEFAULT '1688',
+        source_type VARCHAR(50) DEFAULT NULL,
+        provider_id INT DEFAULT NULL,
+        target_platform VARCHAR(50) DEFAULT NULL,
+        target_store_id VARCHAR(100) DEFAULT NULL,
         INDEX idx_status (status),
         INDEX idx_id_1688 (id_1688)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

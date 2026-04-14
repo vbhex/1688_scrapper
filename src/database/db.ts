@@ -333,6 +333,11 @@ async function initializeSchema(): Promise<void> {
         notes TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        source VARCHAR(50) DEFAULT 'pipeline',
+        main_categories JSON DEFAULT NULL,
+        target_platforms JSON DEFAULT NULL,
+        last_scraped_at TIMESTAMP NULL DEFAULT NULL,
+        category_keywords JSON DEFAULT NULL,
         UNIQUE KEY uq_platform_seller (platform, platform_id),
         INDEX idx_trust_level (trust_level)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

@@ -109,7 +109,7 @@ async function saveAeMatch(
 
 async function main() {
   const args = process.argv.slice(2);
-  let limit = 10;
+  let limit = 0; // 0 = unlimited, process all available
   const limitIdx = args.indexOf('--limit');
   if (limitIdx >= 0 && args[limitIdx + 1]) {
     limit = parseInt(args[limitIdx + 1]) || limit;

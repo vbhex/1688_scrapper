@@ -42,7 +42,7 @@ function isAlreadyEnglish(text: string | null | undefined): boolean {
 
 function parseArgs(): { limit: number; category?: string } {
   const args = process.argv.slice(2);
-  let limit = 10;
+  let limit = 0; // 0 = unlimited, process all available
   let category: string | undefined;
   for (let i = 0; i < args.length; i++) {
     if ((args[i] === '--limit' || args[i] === '-l') && args[i + 1]) {

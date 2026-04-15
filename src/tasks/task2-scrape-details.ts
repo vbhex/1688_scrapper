@@ -35,7 +35,7 @@ const logger = createChildLogger('task2-scrape');
 
 function parseArgs(): { limit: number; headless: boolean; category?: string } {
   const args = process.argv.slice(2);
-  let limit = 10;
+  let limit = 0; // 0 = unlimited, process all available
   let headless = false;
   let category: string | undefined;
   for (let i = 0; i < args.length; i++) {

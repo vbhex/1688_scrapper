@@ -66,8 +66,8 @@ interface VerifiedProvider {
 function parseArgs(): CLIOptions {
   const args = process.argv.slice(2);
   const options: CLIOptions = {
-    category: 'earphones',
-    allBlueOcean: false,
+    category: '',
+    allBlueOcean: true,  // default: process all blue ocean categories
     l1Filter: '',
     limit: 20,
     headless: false,
@@ -80,6 +80,7 @@ function parseArgs(): CLIOptions {
   for (let i = 0; i < args.length; i++) {
     if ((args[i] === '--category' || args[i] === '-c') && args[i + 1]) {
       options.category = args[++i];
+      options.allBlueOcean = false; // explicit category overrides all-blue-ocean
     } else if (args[i] === '--all-blue-ocean') {
       options.allBlueOcean = true;
     } else if (args[i] === '--l1' && args[i + 1]) {

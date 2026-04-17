@@ -150,8 +150,9 @@ async function main(): Promise<void> {
           let variantBrandFound = '';
           outer: for (const sku of detailed.variants.skus) {
             for (const [key, val] of Object.entries(sku.optionValues)) {
-              if (isBannedBrand(key) || isBannedBrand(val)) {
-                variantBrandFound = `${key}: ${val}`;
+              const valStr = String(val);
+              if (isBannedBrand(key) || isBannedBrand(valStr)) {
+                variantBrandFound = `${key}: ${valStr}`;
                 break outer;
               }
             }

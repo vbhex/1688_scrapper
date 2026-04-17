@@ -233,26 +233,42 @@ export class Scraper1688 {
       args.push(`--proxy-server=${config.proxy.server}`);
     }
 
-    this.browser = await puppeteerExtra.launch({
-      headless: this.headless ? 'new' as any : false,
-      args,
-      userDataDir, // Persistent profile - preserves cookies, history, fingerprint
-      protocolTimeout: 0, // No timeout on CDP protocol messages (prevents detached-frame on slow pages)
-      defaultViewport: {
-        width: 1920,
-        height: 1080,
-      },
-    });
-
-    // Close all stale tabs from previous sessions
-    const existingPages = await this.browser.pages();
-    logger.info('Closing stale tabs from previous session', { count: existingPages.length });
-    for (const p of existingPages) {
-      await p.close().catch(() => {});
+    try {
+      this.browser = await puppeteerExtra.launch({
+        headless: this.headless ? 'new' as any : false,
+        args,
+        userDataDir, // Persistent profile - preserves cookies, history, fingerprint
+        protocolTimeout: 0, // No timeout on CDP protocol messages (prevents detached-frame on slow pages)
+        defaultViewport: {
+          width: 1920,
+          height: 1080,
+        },
+      });
+    } catch (err: any) {
+      logger.error('Failed to launch Puppeteer browser', { error: err?.message || String(err), userDataDir });
+      throw new Error(`Browser launch failed: ${err?.message || err}. Possible causes: Chrome profile locked, missing Chromium, or permissions. Try: rm -rf "${userDataDir}/SingletonLock"`);
     }
 
-    // Always create a fresh page
-    this.page = await this.browser.newPage();
+    // Close all stale tabs from previous sessions
+    try {
+      const existingPages = await this.browser.pages();
+      logger.info('Closing stale tabs from previous session', { count: existingPages.length });
+      for (const p of existingPages) {
+        await p.close().catch(() => {});
+      }
+    } catch (err: any) {
+      logger.warn('Failed to close stale tabs (continuing)', { error: err?.message });
+    }
+
+    // Always create a fresh page — wrap in try/catch as this is a common failure point
+    try {
+      this.page = await this.browser.newPage();
+    } catch (err: any) {
+      logger.error('Failed to create new page', { error: err?.message || String(err) });
+      // Try to recover by closing browser and relaunching
+      await this.browser.close().catch(() => {});
+      throw new Error(`Failed to create browser page: ${err?.message || err}. Browser may have crashed. Please retry the task.`);
+    }
 
     if (config.proxy.server && config.proxy.username) {
       await this.page.authenticate({

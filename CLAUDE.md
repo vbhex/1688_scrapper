@@ -6,7 +6,7 @@
 - 12 Amazon 3C categories are now enabled in `src/data/blue-ocean-search-terms.json` (`l1: "Amazon 3C"`, `enabled: true`, `target_platform: "amazon"`).
 - Banned: **Earphones** (52 violations history — see root CLAUDE.md).
 - Discovery flow: Task 1 finds 3C products → Task 2 scrapes details (extracts seller info from product pages) → Task 8 brand_verify outreach uses real wangwang nicks from `products_raw.seller_wangwang_id`.
-- **DEPRECATED: Task 10 + Task 11** (`task10-3c-supplier-discover.ts`, `task11-3c-supplier-outreach.ts`) — these search 1688's company directory for factories and try to outreach by `platform_id`. The platform_id routes to Taobao accounts which bounce server-side. **Do not run these tasks**. Full postmortem: `documents/3C_OUTREACH_LESSONS_LEARNED.md`.
+- **DEPRECATED: Task 10 + Task 11** (`task10-3c-supplier-discover.ts`, `task11-3c-supplier-outreach.ts`) — these search 1688's company directory for factories and try to outreach by `platform_id`. The platform_id routes to Taobao accounts which bounce server-side. **Do not run these tasks**.
 - The OLD `compliance_contacts.outreach_type='3c_amazon_outreach'` rows (469 sellers, mostly `pending`) are stale and unreachable via that path. They should be left alone — when their products get discovered via Task 1's normal flow, they'll automatically be re-contacted via Task 8 with correct routing.
 
 **BRAND SAFETY — 548+ brands in `1688_source.brand_list` DB.**
@@ -16,7 +16,7 @@
 - Do NOT auto-authorize products based on spec "品牌: 无" — sellers lie. All products must go through Task 8 seller verification.
 - When seller claims a brand not in banned list (likely their own), Task 8 asks for authorization docs. Company info is in `1688_source.company_info` table — only shared after seller agrees.
 - Brand import CLI: `node dist/tasks/task-brand-import.js --source violation --brand "X" --category Y`
-- Full strategy: `documents/aliexpress-store/BRAND_SAFETY_STRATEGY.md`
+- Full strategy: `../rules/aliexpress-store/BRAND_SAFETY_STRATEGY.md`
 
 ---
 
@@ -49,7 +49,7 @@ The Puppeteer browser is launched with `--lang=en-US` (already in the `1688Scrap
 - Translation API (Baidu/Google) is **only called as fallback** if content is genuinely Chinese
 - This eliminates translation API costs for all normally-scraped products
 - The `_zh` field names are kept as-is in the DB schema (no migration needed)
-- **Full doc:** `documents/1688-source/ENGLISH_MODE.md`
+- **Full doc:** `../rules/1688-source/ENGLISH_MODE.md`
 
 - SSH: see root `config/china-macbook.env`
 - SSH flags needed: `-o PreferredAuthentications=password -o PubkeyAuthentication=no`
@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS product_store_targets (
 | AliExpress | `2087779` | Clothing & Apparel + Accessories |
 | Amazon | PENDING | 3C / Consumer Electronics |
 
-Blue-ocean category files: `documents/{platform}-store/{platform}-{store-id}-blue-ocean-categories.md`
+Blue-ocean category files: `../rules/{platform}-store/{platform}-{store-id}-blue-ocean-categories.md`
 
 ---
 

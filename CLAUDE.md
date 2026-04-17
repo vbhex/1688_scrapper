@@ -183,7 +183,7 @@ CREATE TABLE IF NOT EXISTS product_store_targets (
   id               INT AUTO_INCREMENT PRIMARY KEY,
   product_id       INT NOT NULL,
   platform         VARCHAR(50) NOT NULL,     -- 'aliexpress' | 'amazon' | 'etsy' | 'ebay'
-  store_id         VARCHAR(100) NOT NULL,    -- platform store ID (e.g., '2087779' for AliExpress)
+  store_id         VARCHAR(100) NOT NULL,    -- platform store ID (e.g., 'STORE_ID' for AliExpress)
   blue_ocean_category VARCHAR(200),          -- CLI category from the store's blue-ocean file
   status           VARCHAR(50) DEFAULT 'pending',  -- 'pending' | 'exported' | 'listed'
   created_at       TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -192,11 +192,11 @@ CREATE TABLE IF NOT EXISTS product_store_targets (
 );
 ```
 
-**When to populate**: Task 1 (discover) should insert a row here for every discovered product, tagging it with `platform='aliexpress'`, `store_id='2087779'` (or the relevant store). Downstream listing tasks update `status` to `exported` / `listed`.
+**When to populate**: Task 1 (discover) should insert a row here for every discovered product, tagging it with `platform='aliexpress'`, `store_id='STORE_ID'` (or the relevant store). Downstream listing tasks update `status` to `exported` / `listed`.
 
 **Convenience columns on `products`**: For the common single-store case, `products` also has:
 - `target_platform VARCHAR(50)` — primary target platform (default: `aliexpress`)
-- `target_store_id VARCHAR(100)` — primary target store ID (default: `2087779`)
+- `target_store_id VARCHAR(100)` — primary target store ID (default: the configured store)
 
 These are redundant with `product_store_targets` but simplify queries in single-store contexts.
 
@@ -205,7 +205,7 @@ These are redundant with `product_store_targets` but simplify queries in single-
 -- Add convenience columns to products table
 ALTER TABLE products
   ADD COLUMN IF NOT EXISTS target_platform VARCHAR(50) DEFAULT 'aliexpress',
-  ADD COLUMN IF NOT EXISTS target_store_id  VARCHAR(100) DEFAULT '2087779';
+  ADD COLUMN IF NOT EXISTS target_store_id  VARCHAR(100) DEFAULT 'STORE_ID';
 
 -- Create store targets table
 CREATE TABLE IF NOT EXISTS product_store_targets (
@@ -225,16 +225,16 @@ CREATE TABLE IF NOT EXISTS product_store_targets (
 
 | Platform | Store ID | Main Category |
 |----------|----------|---------------|
-| AliExpress | `2087779` | Clothing & Apparel + Accessories |
-| Amazon | PENDING | 3C / Consumer Electronics |
+| AliExpress | (private) | Clothing & Apparel + Accessories |
+| Amazon | (private) | 3C / Consumer Electronics |
 
-Blue-ocean category files: `../rules/{platform}-store/{platform}-{store-id}-blue-ocean-categories.md`
+Generic platform rules: `../rules/{platform}-store/`. Store-specific IDs and approved category files live in the private `documents/{platform}-store/` folder (dev-machine only).
 
 ---
 
 ### `products` (main table, tracks status)
 - `id`, `id_1688` (unique), `status`, `url`, `title_zh`, `category`, `thumbnail_url`
-- `target_platform` (default: `aliexpress`), `target_store_id` (default: `2087779`) — primary target store
+- `target_platform` (default: `aliexpress`), `target_store_id` (default: the configured store) — primary target store
 - `raw_data` (JSON, legacy — normalized tables are the source of truth)
 - Status flow: `discovered` → `detail_scraped` → `images_checked` → `translated` → `ae_enriched`
 

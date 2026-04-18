@@ -3508,6 +3508,28 @@
     "amazon_3c": true,
     "target_platform": "amazon"
   },
+  "CustomEngraveNecklace": {
+    "l1": "Amazon Custom",
+    "search_terms_zh": [
+      "定制项链 刻字",
+      "刻字项链 个性",
+      "刻名字项链"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "target_platform": "amazon"
+  },
+  "CustomPetTag": {
+    "l1": "Amazon Custom",
+    "search_terms_zh": [
+      "宠物吊牌定制 刻字",
+      "狗牌刻字 不锈钢",
+      "宠物身份牌 定制"
+    ],
+    "enabled": true,
+    "brand_safe": true,
+    "target_platform": "amazon"
+  },
   "RetroPhoneCases": {
     "l1": "Apparel Accessories",
     "search_terms_zh": [

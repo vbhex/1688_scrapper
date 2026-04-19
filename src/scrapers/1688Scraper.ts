@@ -2214,6 +2214,38 @@ export class Scraper1688 {
         product.seller = details.seller as SellerInfo;
       }
 
+      // ── Enrich seller info with shopUrl + wangwangId + sellerId ──────
+      // The page.evaluate above only captures seller.name. Call the dedicated
+      // getSellerInfo() extractor to fill in the remaining fields needed for
+      // Task 8 brand verification (Wangwang outreach) and provider tracking.
+      try {
+        const fullSeller = await this.getSellerInfo();
+        product.seller = {
+          ...(product.seller || { name: '' }),
+          name: fullSeller.name || product.seller?.name || '',
+          sellerId: fullSeller.sellerId || product.seller?.sellerId,
+          shopUrl: fullSeller.shopUrl || product.seller?.shopUrl,
+          wangwangId: fullSeller.wangwangId || product.seller?.wangwangId,
+        };
+        // If shopUrl was found but wangwangId still missing, try the
+        // resolveWangwangId fallback (visits the store page).
+        if (product.seller.shopUrl && !product.seller.wangwangId) {
+          const resolved = await this.resolveWangwangId(product.seller.shopUrl).catch(() => null);
+          if (resolved) product.seller.wangwangId = resolved;
+        }
+        logger.info('Seller info enriched', {
+          id: product.id1688,
+          name: product.seller.name?.substring(0, 30),
+          hasShopUrl: !!product.seller.shopUrl,
+          hasWangwang: !!product.seller.wangwangId,
+        });
+      } catch (sellerErr) {
+        logger.warn('Seller enrichment failed', {
+          id: product.id1688,
+          error: (sellerErr as Error).message,
+        });
+      }
+
       // Extract SKU variant data (colors, sizes, per-variant prices/images)
       try {
         const variants = await this.extractVariants();
@@ -2664,10 +2696,17 @@ export class Scraper1688 {
     if (!this.page) throw new Error('Browser not initialized');
 
     return this.page.evaluate(() => {
-      // Seller name — actual 1688 class is "shop-company-name"
-      const name = (
+      // Seller name — try a wide set of 1688 layout class names. 1688 has
+      // several layouts (legacy, ant-based, react SPA) that mount different
+      // class names. Also fall back to any link anchored at the shop subdomain.
+      let name = (
         document.querySelector('[class*="shop-company-name"]')?.textContent ||
         document.querySelector('[class*="companyName"]')?.textContent ||
+        document.querySelector('[class*="company-name"]')?.textContent ||
+        document.querySelector('[class*="store-name"]')?.textContent ||
+        document.querySelector('[class*="shop-name"]')?.textContent ||
+        document.querySelector('[class*="seller-name"]')?.textContent ||
+        document.querySelector('[class*="supplier-name"]')?.textContent ||
         document.querySelector('.company-name')?.textContent ||
         ''
       ).trim();
@@ -2678,7 +2717,16 @@ export class Scraper1688 {
       const shopLinkEl = allLinks.find(a => {
         const h = a.href || '';
         return /\/\/shop[\w]+\.1688\.com/.test(h);
+      }) || allLinks.find(a => {
+        // Newer layouts: winport URLs like //{seller}.1688.com or /winport/
+        const h = a.href || '';
+        return /winport\/|\/cybertron\//i.test(h) && /\.1688\.com/.test(h);
       }) || null;
+
+      // Fallback for seller name: text of the shop link itself
+      if (!name && shopLinkEl) {
+        name = (shopLinkEl.textContent || '').trim();
+      }
 
       // Normalise to base shop URL (strip query params)
       let shopUrl = '';

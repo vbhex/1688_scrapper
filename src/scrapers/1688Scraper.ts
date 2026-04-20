@@ -2691,11 +2691,50 @@ export class Scraper1688 {
   /**
    * Extract extended seller info (Wangwang ID, shop URL, seller ID)
    * from the currently-loaded 1688 product page.
+   *
+   * Primary extraction path (2026-04-20): walk React fiber props on the
+   * "客服" (customer-service) or shop-container link to find
+   * `dataJson.frontSellerMemberModel`. That object is the authoritative
+   * source — 1688's current detail page no longer exposes the seller nick
+   * via visible DOM attributes. For 883 products scraped with the old
+   * DOM-only path, `seller_wangwang_id` was NULL; this React-fiber path
+   * reliably returns the real `frontSellerLoginId` (often the Chinese
+   * company name for newer accounts) plus `frontSellerMemberId` and a
+   * numeric `frontSellerUserId`.
+   *
+   * The DOM-based fallbacks below still run if the fiber isn't populated
+   * yet (e.g. if the product page SSR'd without the shop-navigation
+   * module) so we degrade gracefully on older layouts.
    */
   async getSellerInfo(): Promise<{ name: string; sellerId: string; shopUrl: string; wangwangId: string }> {
     if (!this.page) throw new Error('Browser not initialized');
 
     return this.page.evaluate(() => {
+      // ── React fiber path ──────────────────────────────────────────────
+      // Start from a seller-area anchor, then walk up the fiber tree
+      // (memoizedProps) looking for `dataJson.frontSellerMemberModel`.
+      const fiberSeed = (document.querySelector('a.action-link.customer-service') ||
+                         document.querySelector('a.shop-container') ||
+                         document.querySelector('.od-shop-navigation') ||
+                         document.querySelector('#shopNavigation')) as HTMLElement | null;
+      let fiberModel: any = null;
+      if (fiberSeed) {
+        const fiberKey = Object.keys(fiberSeed).find(k => k.startsWith('__reactFiber'));
+        if (fiberKey) {
+          let node = (fiberSeed as any)[fiberKey];
+          let hops = 0;
+          while (node && hops < 30) {
+            const mp = node.memoizedProps;
+            if (mp && mp.dataJson && mp.dataJson.frontSellerMemberModel) {
+              fiberModel = mp.dataJson.frontSellerMemberModel;
+              break;
+            }
+            node = node.return;
+            hops += 1;
+          }
+        }
+      }
+
       // Seller name — try a wide set of 1688 layout class names. 1688 has
       // several layouts (legacy, ant-based, react SPA) that mount different
       // class names. Also fall back to any link anchored at the shop subdomain.
@@ -2741,7 +2780,7 @@ export class Scraper1688 {
       const sellerIdMatch = shopUrl.match(/\/\/shop([\w]+)\.1688\.com/) ||
                             shopUrl.match(/\/shop\/([\d]+)\.html/) ||
                             shopUrl.match(/\/merchant\/([\d]+)/);
-      const sellerId = sellerIdMatch?.[1] || '';
+      let sellerId = sellerIdMatch?.[1] || '';
 
       // Wangwang ID — look for data-nick / nick attributes, or extract from IM link href
       // Also check for amos.alicdn links which carry the seller nick
@@ -2765,6 +2804,26 @@ export class Scraper1688 {
                             href.match(/[?&]toNick=([^&]+)/) ||
                             href.match(/[?&]sellerId=([^&]+)/);
           if (nickMatch) wangwangId = decodeURIComponent(nickMatch[1]);
+        }
+      }
+
+      // ── React fiber overrides (preferred when available) ──────────────
+      // If we captured the fiber model above, prefer its values. It has:
+      //   frontSellerLoginId  — the real Wangwang uid used as touid=cnalichn<X>
+      //                         (often the Chinese company name on newer accounts)
+      //   frontSellerMemberId — "b2b-<hex>" internal member id
+      //   frontSellerUserId   — numeric 13-digit stable id
+      if (fiberModel) {
+        if (fiberModel.frontSellerLoginId) {
+          wangwangId = String(fiberModel.frontSellerLoginId);
+        }
+        if (fiberModel.frontSellerMemberId) {
+          // sellerId stores the member id; the shop subdomain is also available
+          // but memberId is more stable across shop-URL rotations.
+          sellerId = String(fiberModel.frontSellerMemberId);
+        }
+        if (!name && fiberModel.frontSellerLoginId) {
+          name = String(fiberModel.frontSellerLoginId);
         }
       }
 

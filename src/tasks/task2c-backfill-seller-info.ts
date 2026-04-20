@@ -77,8 +77,8 @@ async function main() {
     return;
   }
 
-  const scraper = create1688Scraper();
-  await scraper.initialize(headless);
+  const scraper = await create1688Scraper();
+  await scraper.initialize();
 
   let okCount = 0;
   let failCount = 0;

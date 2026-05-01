@@ -1,5 +1,17 @@
 # 1688 Scrapper — Project Rules & Context
 
+> ## 🧠 Knowledge Distillation Strategy
+>
+> AutoStore's architectural bet: encode every workflow as a deterministic macro tool so weak models (qwen-plus, glm-4-flash) only need intent matching — multi-step reasoning is pre-computed by Claude offline.
+>
+> Before ending any session, read:
+> - `rules/KNOWLEDGE_DISTILLATION_STRATEGY.md` — the master plan + macro roadmap
+> - `rules/CONTRIBUTING_PLATFORM_KNOWLEDGE.md` — where each kind of knowledge belongs
+> - `rules/COMPUTER_USE_STRATEGY.md` — annotated screenshots + macro-tool rationale
+>
+> **Rule:** if you spent 3+ tool calls on a workflow that could be one macro, encode it in `mac/AutoStore/Sources/Services/PlatformKnowledge.swift` + register the tool in `LocalLLMService.swift` before committing. Push so the next AutoStore release ships with that knowledge.
+
+
 ## CRITICAL RULES — HIGHEST PRIORITY
 
 **3C AMAZON STRATEGY (2026-04-07): Use the normal pipeline (Task 1→2→3→8→4→5).**

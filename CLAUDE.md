@@ -340,3 +340,33 @@ This project produces data in `1688_source` database. Downstream projects read f
 - **Amazon** (`/Library/WebServer/Documents/autostore/amazon/`): Amazon store listing
 - **eBay** (`/Library/WebServer/Documents/autostore/ebay/`): eBay store listing
 - **Etsy** (`/Library/WebServer/Documents/autostore/etsy/`): Etsy store listing
+
+
+---
+
+## Knowledge Contribution Rule — MANDATORY
+
+This project is one of several that share the AutoStore platform. **Anything you learn here is a permanent capability gain for AutoStore users on cheap Chinese LLMs — but only if you encode it.**
+
+Before ending any session in this project, ask yourself:
+
+> Did I discover anything reusable about this platform during this session? A new error code, a UI selector that works, a forbidden phrase, a multi-step workflow that could be one tool, a JS extractor, a failure pattern in the user's LLM output?
+
+**If yes**, encode it into AutoStore before you end the session:
+
+| Finding | Where it goes |
+|---|---|
+| Stable URL | `mac/AutoStore/Sources/Services/PlatformKnowledge.swift` → `PlatformURL` |
+| JS extractor / DOM selector | Same file → `PlatformExtractor` |
+| Error code / format rule / forbidden phrase | `mac/AutoStore/Sources/Services/LocalLLMService.swift` → relevant `LLM_PROMPT_*` section (EBAY / AMAZON / ETSY / ALIEXPRESS / 1688) |
+| Atomic multi-step workflow | `PlatformKnowledge.swift` as a static `func` + register in `LLM_TOOLS` |
+| LLM bail-out pattern | `LocalLLMService.swift` → extend `looksLikeBailout` keyword list |
+| Long-form documentation | `rules/{platform}-store/` |
+
+After editing, build the Mac app (`cd ../mac && xcodebuild ... build`) and commit each repo you touched. **Push to GitHub** so the next AutoStore release ships with the new knowledge.
+
+**Quick path:** invoke `/distill` at the end of any session — it walks you through this systematically.
+
+**Full protocol:** `rules/CONTRIBUTING_PLATFORM_KNOWLEDGE.md`
+
+**Why this matters:** AutoStore's defensive moat is the cumulative macro library (see `rules/BUSINESS_MODEL.md`). Every undocumented learning is a capability that competitors can replicate. Every encoded learning is a permanent advantage.
